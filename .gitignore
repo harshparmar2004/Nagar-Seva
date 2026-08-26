@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.venv/
+env/
+venv/
+
+# Build outputs
+dist/
+build/
+
+# Python cache & SQLite DB
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.db
+nagarmitra.db
+static/uploads/evidence_*
+
+# Environment & Local files
+.env
+.env.local
+.DS_Store
+*.log

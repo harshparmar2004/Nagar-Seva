@@ -1,0 +1,61 @@
+[
+  {
+    "id": "DC-IND-001",
+    "label": "Drainage Overflow & Sewerage Network Crisis",
+    "category": "Sanitation & Drainage",
+    "severity": "CRITICAL",
+    "locality": "Wards 14 & 15 (Rajendra Nagar - South Indore)",
+    "lat": 22.6815,
+    "lng": 75.8255,
+    "complaint_count": 847,
+    "health_risk": true,
+    "demand_score": 94,
+    "poverty_score": 88,
+    "infra_gap_score": 95,
+    "budget_gap_score": 100,
+    "ppi_score": 94.2,
+    "sample_voices": [
+      "Bhaiyaji, humare ward 14 me paani ka nala beh raha hai, bacche bimar ho rahe hain!",
+      "Gutter ka ganda paani gharon ke samne bhara hai 15 din se.",
+      "Peene ke paani ki pipeline aur sewer line mix ho chuki hai."
+    ]
+  },
+  {
+    "id": "DC-IND-002",
+    "label": "Sanwer Road Industrial Arterial Corridor Reconstruction",
+    "category": "Roads & Infrastructure",
+    "severity": "HIGH",
+    "locality": "Ward 8 (Banganga Industrial Area)",
+    "lat": 22.7715,
+    "lng": 75.8458,
+    "complaint_count": 312,
+    "health_risk": false,
+    "demand_score": 82,
+    "poverty_score": 75,
+    "infra_gap_score": 88,
+    "budget_gap_score": 90,
+    "ppi_score": 83.5,
+    "sample_voices": [
+      "Banganga industrial area me sadak me bade bade gaddhe hain, truck phans rahe hain."
+    ]
+  },
+  {
+    "id": "DC-IND-003",
+    "label": "Solar High-Mast & Streetlight Safety Grid Expansion",
+    "category": "Electricity & Streetlights",
+    "severity": "MEDIUM",
+    "locality": "Ward 7 & Ward 10 Peripheral Zones",
+    "lat": 22.7095,
+    "lng": 75.8225,
+    "complaint_count": 185,
+    "health_risk": false,
+    "demand_score": 74,
+    "poverty_score": 68,
+    "infra_gap_score": 78,
+    "budget_gap_score": 80,
+    "ppi_score": 75.0,
+    "sample_voices": [
+      "Chandan nagar square par streetlight picchle 1 mahine se kharab hai."
+    ]
+  }
+]
