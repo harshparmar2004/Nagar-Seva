@@ -6,7 +6,7 @@ import {
   Building2, User, Landmark, Filter, Search, CheckCircle2, RefreshCw,
   SlidersHorizontal, Eye, Clock, Check, Camera, Image, X, Plus, PlusCircle,
   XCircle, CheckCheck, Loader2, DollarSign, Users, Megaphone, CheckSquare, MapPin,
-  Calendar, CheckSquare2, Info, Compass, AlertTriangle, ArrowRight, Activity, Map, Tag, LayoutGrid, List, ArrowUpDown, ChevronLeft, ChevronRight, Phone, CreditCard, Star, Construction, Bus, Sun, Trash2, Droplets, ArrowUpRight, BarChart3, ThumbsUp, PieChart as PieIcon
+  Calendar, CheckSquare2, Info, Compass, AlertTriangle, ArrowRight, Activity, Map, Tag, LayoutGrid, List, ArrowUpDown, ChevronLeft, ChevronRight, Phone, CreditCard, Star, Construction, Bus, Sun, Trash2, Droplets, ArrowUpRight, BarChart3, ThumbsUp, PieChart as PieIcon, ChevronDown, ChevronUp
 } from 'lucide-react';
 
 const createCustomIcon = (color) => {
@@ -53,7 +53,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectPhotoModal, setInspectPhotoModal] = useState(null);
   const [inspectProjectModal, setInspectProjectModal] = useState(null);
-  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [showPublishPortal, setShowPublishPortal] = useState(false);
   const [actionMessage, setActionMessage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState(null);
@@ -176,9 +176,9 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         setProjects(prev => [data.project, ...prev]);
       }
       
-      setActionMessage(`🚀 New Infrastructure Project "${newProject.title}" published successfully to Community Support Portal!`);
+      setActionMessage(`🚀 Infrastructure Project "${newProject.title}" published to Public Community Portal! Citizens can now view & vote.`);
       setTimeout(() => setActionMessage(null), 5000);
-      setIsPublishModalOpen(false);
+      setShowPublishPortal(false);
       setNewProject({
         title: '',
         locality: '',
@@ -194,7 +194,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
     } catch (err) {
       console.error(err);
       alert('Project published!');
-      setIsPublishModalOpen(false);
+      setShowPublishPortal(false);
     }
   };
 
@@ -302,7 +302,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => setIsPublishModalOpen(true)}
+            onClick={() => setShowPublishPortal(prev => !prev)}
             className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-orange-600/20 flex items-center space-x-1.5 transition-all cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
@@ -1277,157 +1277,172 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </div>
       )}
 
-      {/* PUBLISH NEW CITY INFRASTRUCTURE PROJECT MODAL */}
-      {isPublishModalOpen && (
-        <div className="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative animate-fade-in border border-stone-200 text-stone-900">
-            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-              <div className="flex items-center space-x-2">
-                <PlusCircle className="w-5 h-5 text-emerald-600" />
-                <h3 className="font-extrabold text-stone-900 text-base">Publish City Infrastructure Development Project</h3>
-              </div>
-              <button onClick={() => setIsPublishModalOpen(false)} className="p-1 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateProject} className="space-y-3 text-xs">
-              <div className="space-y-1">
-                <label className="font-bold text-stone-700">Project Title</label>
-                <input
-                  type="text"
-                  required
-                  value={newProject.title}
-                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
-                  placeholder="e.g. Bhawarkuan Underpass & Bus Rapid Corridor"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-stone-700">Locality / Sector</label>
-                  <input
-                    type="text"
-                    required
-                    value={newProject.locality}
-                    onChange={(e) => setNewProject({ ...newProject, locality: e.target.value })}
-                    placeholder="e.g. Ward 66, South Indore"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-stone-700">Category</label>
-                  <select
-                    value={newProject.category}
-                    onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500 cursor-pointer"
-                  >
-                    <option value="Public Works & Transportation">Public Works & Transportation</option>
-                    <option value="Sanitation & Urban Infrastructure">Sanitation & Infrastructure</option>
-                    <option value="Water Supply & Infrastructure">Water Supply & Infrastructure</option>
-                    <option value="Energy & Public Safety">Energy & Streetlighting</option>
-                    <option value="Urban Transport">Urban Transit & Metro</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="font-bold text-stone-700">Budget String</label>
-                  <input
-                    type="text"
-                    required
-                    value={newProject.formatted_budget}
-                    onChange={(e) => setNewProject({ ...newProject, formatted_budget: e.target.value })}
-                    placeholder="e.g. ₹45 Crores"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-bold text-stone-700">Target Beneficiaries</label>
-                  <input
-                    type="number"
-                    required
-                    value={newProject.target_beneficiaries}
-                    onChange={(e) => setNewProject({ ...newProject, target_beneficiaries: parseInt(e.target.value) || 0 })}
-                    placeholder="50000"
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-stone-700">Funding Scheme</label>
-                <input
-                  type="text"
-                  required
-                  value={newProject.funding_scheme}
-                  onChange={(e) => setNewProject({ ...newProject, funding_scheme: e.target.value })}
-                  placeholder="e.g. Smart Cities Mission / AMRUT 2.0"
-                  className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-bold text-stone-700">Problem Justification / DPR Summary</label>
-                <textarea
-                  rows={3}
-                  value={newProject.problem_justification}
-                  onChange={(e) => setNewProject({ ...newProject, problem_justification: e.target.value })}
-                  placeholder="Synthesized infrastructure proposal description..."
-                  className="w-full px-3 py-2 border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
-                <button
-                  type="button"
-                  onClick={() => setIsPublishModalOpen(false)}
-                  className="bg-stone-100 text-stone-700 font-bold px-4 py-2 rounded-xl cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2 rounded-xl shadow-md shadow-emerald-600/20 cursor-pointer"
-                >
-                  Publish Project
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 3: COMPACT SUPER ADMIN AI DPR & PUBLIC PRIORITY RANKING DASHBOARD */}
+      {/* SUB-TAB 3: DEDICATED BIGGER IN-PAGE PUBLISH PORTAL & COMPACT PROJECT RANKING DASHBOARD */}
       {(activeSubTab === 'admin-ranking' || activeSubTab === 'admin-dpr') && (
-        <div className="space-y-5">
+        <div className="space-y-6">
           
           {/* Header */}
-          <div className="bg-white border border-stone-200 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+          <div className="bg-white border border-stone-200 rounded-3xl p-6 flex flex-wrap items-center justify-between gap-4 shadow-sm">
             <div>
               <div className="flex items-center space-x-2 text-xs font-extrabold text-orange-600 uppercase tracking-wider">
-                <Sparkles className="w-4 h-4" /> AI Infrastructure Publishing & Citizen Results Control
+                <Sparkles className="w-4 h-4" /> AI Infrastructure Publishing & Public Results Control Portal
               </div>
               <h3 className="text-xl font-extrabold text-stone-900 mt-0.5">
-                Super Admin Project Publishing & Citizen Rating Results
+                Super Admin Infrastructure Publishing & Citizen Results Panel
               </h3>
               <p className="text-xs text-stone-500">
-                Publish infrastructure projects to citizens, inspect live 5-star ratings, and view Gemini AI synthesized DPR reports.
+                Fill project specifications below to publish them live to citizens, inspect live 5-star ratings, and view Gemini AI synthesized DPR reports.
               </p>
             </div>
 
             <button
-              onClick={() => setIsPublishModalOpen(true)}
-              className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-orange-600/20 flex items-center gap-1.5 transition-all cursor-pointer"
+              onClick={() => setShowPublishPortal(prev => !prev)}
+              className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs px-5 py-3 rounded-2xl shadow-md shadow-orange-600/20 flex items-center gap-2 transition-all cursor-pointer"
             >
-              <PlusCircle className="w-4 h-4" />
-              <span>Publish New City Project</span>
+              {showPublishPortal ? <ChevronUp className="w-4 h-4" /> : <PlusCircle className="w-4 h-4" />}
+              <span>{showPublishPortal ? 'Close Creator Portal' : 'Create & Publish New Infrastructure Project'}</span>
             </button>
           </div>
+
+          {/* DEDICATED BIGGER FULL-WIDTH IN-PAGE PUBLISHING CREATOR PORTAL (NO DARK BACKDROP OVERLAY!) */}
+          {showPublishPortal && (
+            <div className="bg-white border-2 border-orange-300 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md animate-fade-in text-stone-900">
+              <div className="flex items-center justify-between border-b border-stone-100 pb-4">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                    <PlusCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-stone-900 text-lg">Super Admin Infrastructure Project Creator Portal</h3>
+                    <p className="text-xs text-stone-500">Information submitted here will be published immediately to the citizen portal with full specifications.</p>
+                  </div>
+                </div>
+
+                <button onClick={() => setShowPublishPortal(false)} className="p-1 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 cursor-pointer">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateProject} className="space-y-4 text-xs font-bold">
+                <div className="space-y-1">
+                  <label className="text-stone-700 uppercase tracking-wider text-[10px]">Project Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProject.title}
+                    onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                    placeholder="e.g. Bhawarkuan Underpass & Bus Rapid Transit Corridor Expansion"
+                    className="w-full px-4 py-3 border border-stone-300 rounded-2xl font-extrabold text-stone-900 text-sm focus:outline-none focus:border-orange-500 shadow-sm"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-stone-700 uppercase tracking-wider text-[10px]">Locality / Sector & Ward</label>
+                    <input
+                      type="text"
+                      required
+                      value={newProject.locality}
+                      onChange={(e) => setNewProject({ ...newProject, locality: e.target.value })}
+                      placeholder="e.g. Ward 66, South Indore Sector"
+                      className="w-full px-3.5 py-2.5 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-stone-700 uppercase tracking-wider text-[10px]">Category Scheme</label>
+                    <select
+                      value={newProject.category}
+                      onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                      className="w-full px-3.5 py-2.5 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer"
+                    >
+                      <option value="Public Works & Transportation">Public Works & Transportation</option>
+                      <option value="Sanitation & Urban Infrastructure">Sanitation & Infrastructure</option>
+                      <option value="Water Supply & Infrastructure">Water Supply & Infrastructure</option>
+                      <option value="Energy & Public Safety">Energy & Streetlighting</option>
+                      <option value="Urban Transport">Urban Transit & Metro</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-stone-700 uppercase tracking-wider text-[10px]">Formatted Budget String</label>
+                    <input
+                      type="text"
+                      required
+                      value={newProject.formatted_budget}
+                      onChange={(e) => setNewProject({ ...newProject, formatted_budget: e.target.value })}
+                      placeholder="e.g. ₹45.0 Crores"
+                      className="w-full px-3.5 py-2.5 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-stone-700 uppercase tracking-wider text-[10px]">Target Beneficiaries Count</label>
+                    <input
+                      type="number"
+                      required
+                      value={newProject.target_beneficiaries}
+                      onChange={(e) => setNewProject({ ...newProject, target_beneficiaries: parseInt(e.target.value) || 0 })}
+                      placeholder="500000"
+                      className="w-full px-3.5 py-2.5 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-stone-700 uppercase tracking-wider text-[10px]">Funding Scheme</label>
+                    <input
+                      type="text"
+                      required
+                      value={newProject.funding_scheme}
+                      onChange={(e) => setNewProject({ ...newProject, funding_scheme: e.target.value })}
+                      placeholder="e.g. PM Gati Shakti / Smart Cities Mission"
+                      className="w-full px-3.5 py-2.5 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-stone-700 uppercase tracking-wider text-[10px]">Responsible Ministry</label>
+                    <input
+                      type="text"
+                      value={newProject.responsible_ministry}
+                      onChange={(e) => setNewProject({ ...newProject, responsible_ministry: e.target.value })}
+                      placeholder="e.g. MoHUA / MoRTH"
+                      className="w-full px-3.5 py-2.5 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-stone-700 uppercase tracking-wider text-[10px]">Problem Justification / Full Synthesized DPR Summary</label>
+                  <textarea
+                    rows={4}
+                    value={newProject.problem_justification}
+                    onChange={(e) => setNewProject({ ...newProject, problem_justification: e.target.value })}
+                    placeholder="Enter thorough infrastructure problem description, congestion relief stats, and travel time improvements..."
+                    className="w-full px-4 py-3 border border-stone-300 rounded-2xl font-medium text-stone-900 focus:outline-none focus:border-orange-500 leading-relaxed"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-3 border-t border-stone-100">
+                  <button
+                    type="button"
+                    onClick={() => setShowPublishPortal(false)}
+                    className="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold px-5 py-2.5 rounded-xl cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs px-6 py-2.5 rounded-xl shadow-md shadow-emerald-600/20 cursor-pointer flex items-center gap-1.5"
+                  >
+                    <PlusCircle className="w-4 h-4" /> Publish Infrastructure Project Live
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
 
           {/* List of Compact AI DPR Project Cards (Clickable for Results Inspection) */}
           <div className="space-y-4">
