@@ -6,7 +6,7 @@ import {
   Building2, User, Landmark, Filter, Search, CheckCircle2, RefreshCw,
   SlidersHorizontal, Eye, Clock, Check, Camera, Image, X, Plus, PlusCircle,
   XCircle, CheckCheck, Loader2, DollarSign, Users, Megaphone, CheckSquare, MapPin,
-  Calendar, CheckSquare2, Info, Compass, AlertTriangle, ArrowRight, Activity, Map, Tag
+  Calendar, CheckSquare2, Info, Compass, AlertTriangle, ArrowRight, Activity, Map, Tag, LayoutGrid, List, ArrowUpDown
 } from 'lucide-react';
 
 const createCustomIcon = (color) => {
@@ -42,6 +42,10 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const [selectedUrgencyFilter, setSelectedUrgencyFilter] = useState('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
   const [showResolvedOnMap, setShowResolvedOnMap] = useState(false);
+  
+  // View Mode & AI Priority Sorting
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' (Small Boxes) or 'table' (Row-wise)
+  const [sortByAI, setSortByAI] = useState('urgency'); // 'urgency' | 'endorsed' | 'newest'
   
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectPhotoModal, setInspectPhotoModal] = useState(null);
@@ -201,8 +205,8 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const greenCount = complaints.filter(c => c.current_status === 'RESOLVED' || getCategoryColor(c.category) === '#10b981').length;
   const todayCount = complaints.filter(c => c.created_at && c.created_at.includes('2026-08-26')).length || 18;
 
-  // Master Complaints Table Filter Logic with Ward & Zone & Token ID search
-  const filteredComplaints = complaints.filter(c => {
+  // Master Complaints Table & Grid Filter Logic with AI Priority Sorting
+  let filteredComplaints = complaints.filter(c => {
     const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
     const matchesStatus = selectedStatusFilter === 'ALL' || 
       (selectedStatusFilter === 'PENDING' && c.current_status === 'PENDING_ADMIN_REVIEW') ||
@@ -221,6 +225,13 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
     return matchesCat && matchesStatus && matchesWard && matchesZone && matchesUrgency && matchesSearch;
   });
+
+  // Sort by AI Priority
+  if (sortByAI === 'urgency') {
+    filteredComplaints.sort((a, b) => (a.urgency === 'Critical' ? -1 : 1));
+  } else if (sortByAI === 'endorsed') {
+    filteredComplaints.sort((a, b) => (b.co_filers_count || 0) - (a.co_filers_count || 0));
+  }
 
   if (!isSuperAdmin) {
     return (
@@ -587,7 +598,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </div>
       )}
 
-      {/* SUB-TAB 2: MASTER CITIZEN COMPLAINTS MANAGEMENT & SUPER ADMIN APPROVAL TABLE */}
+      {/* SUB-TAB 2: MASTER CITIZEN COMPLAINTS MANAGEMENT & SUPER ADMIN APPROVAL PANEL */}
       {activeSubTab === 'admin-clusters' && (
         <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-5 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
@@ -603,32 +614,65 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               </p>
             </div>
 
-            <div className="flex items-center space-x-2">
+            {/* VIEW MODE SWITCHER & COUNTER */}
+            <div className="flex items-center space-x-3">
               <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-3 py-1.5 rounded-full border border-orange-200">
-                {filteredComplaints.length} Matching Token Requests Shown
+                {filteredComplaints.length} Token Requests Shown
               </span>
+
+              {/* View Mode Toggle Buttons */}
+              <div className="bg-stone-100 p-1 rounded-xl flex items-center space-x-1 border border-stone-200">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    viewMode === 'grid' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                  title="Box Cards View"
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Card Boxes</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                    viewMode === 'table' ? 'bg-orange-600 text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                  title="Row List Table View"
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>Row List</span>
+                </button>
+              </div>
             </div>
           </div>
 
           {/* ADVANCED CITY GTA/SECTOR FILTER TOOLBAR */}
           <div className="bg-orange-50/50 border border-orange-200/80 rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-xs font-extrabold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
                 <SlidersHorizontal className="w-3.5 h-3.5 text-orange-600" /> City Ward & Sector Scheme Filters
               </span>
-              <button
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedWardFilter('ALL');
-                  setSelectedZoneFilter('ALL');
-                  setSelectedCategory('ALL');
-                  setSelectedUrgencyFilter('ALL');
-                  setSelectedStatusFilter('ALL');
-                }}
-                className="text-[11px] font-bold text-orange-600 hover:underline cursor-pointer"
-              >
-                Reset All Filters
-              </button>
+
+              {/* AI Priority Sort Selector */}
+              <div className="flex items-center space-x-2 text-xs font-bold">
+                <span className="text-stone-500">AI Priority Sort:</span>
+                <button
+                  onClick={() => setSortByAI('urgency')}
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    sortByAI === 'urgency' ? 'bg-rose-600 text-white' : 'bg-white text-stone-700 border border-stone-200'
+                  }`}
+                >
+                  🔴 Critical First
+                </button>
+                <button
+                  onClick={() => setSortByAI('endorsed')}
+                  className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                    sortByAI === 'endorsed' ? 'bg-purple-600 text-white' : 'bg-white text-stone-700 border border-stone-200'
+                  }`}
+                >
+                  👥 Most Endorsed
+                </button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-6 gap-2.5 text-xs font-bold">
@@ -701,151 +745,286 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
           </div>
 
-          {/* Master Complaints Data Table with Exact Token IDs & Co-Filer Counts */}
-          <div className="overflow-x-auto rounded-2xl border border-stone-200">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase tracking-wider font-extrabold">
-                  <th className="py-3 px-3">Token Complaint ID</th>
-                  <th className="py-3 px-3">Photo Evidence</th>
-                  <th className="py-3 px-3">Citizen & Sector/Ward</th>
-                  <th className="py-3 px-3">Category & Co-Filers</th>
-                  <th className="py-3 px-3">Urgency</th>
-                  <th className="py-3 px-3">Assigned Department</th>
-                  <th className="py-3 px-3">Review Status</th>
-                  <th className="py-3 px-3 text-right">Super Admin Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100 font-medium text-stone-800 bg-white">
-                {filteredComplaints.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-8 text-center text-stone-500 font-bold">
-                      No complaint token IDs match your current filter parameters. Try resetting your search or ward filter.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredComplaints.map((c) => {
-                    const isResolved = c.current_status === 'RESOLVED';
-                    const isApproved = c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS';
-                    const isRejected = c.current_status === 'REJECTED';
-                    const displayPhoto = c.photo_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80';
-                    const coFilers = c.co_filers_count || Math.floor(Math.random() * 45) + 3;
+          {/* VIEW MODE 1: GRID BOX CARDS VIEW (EASY VISUALIZATION) */}
+          {viewMode === 'grid' && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {filteredComplaints.length === 0 ? (
+                <div className="col-span-3 py-12 text-center text-stone-500 font-bold bg-stone-50 rounded-2xl border border-stone-200">
+                  No complaint token IDs match your current filter parameters. Try resetting your search or ward filter.
+                </div>
+              ) : (
+                filteredComplaints.map((c) => {
+                  const isResolved = c.current_status === 'RESOLVED';
+                  const isApproved = c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS';
+                  const isRejected = c.current_status === 'REJECTED';
+                  const displayPhoto = c.photo_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80';
+                  const coFilers = c.co_filers_count || Math.floor(Math.random() * 45) + 3;
 
-                    return (
-                      <tr key={c.id} className="hover:bg-orange-50/40 transition-all">
+                  return (
+                    <div
+                      key={c.id}
+                      className={`bg-white border rounded-3xl p-5 space-y-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
+                        c.urgency === 'Critical' ? 'border-rose-300/80 bg-gradient-to-b from-rose-50/20 to-white' : 'border-stone-200'
+                      }`}
+                    >
+                      <div className="space-y-3">
                         
-                        {/* Token ID matching user registration token */}
-                        <td className="py-3.5 px-3 font-mono font-black text-orange-600 shrink-0">
-                          <span className="bg-orange-50 px-2 py-1 rounded-lg border border-orange-200 font-mono text-xs">
+                        {/* Box Top Header: Token ID & Status Badge */}
+                        <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+                          <span className="bg-orange-50 font-mono font-black text-xs text-orange-600 px-2.5 py-1 rounded-xl border border-orange-200">
                             {c.id}
                           </span>
-                        </td>
-                        
-                        {/* Geotagged Photo Evidence Column */}
-                        <td className="py-3.5 px-3">
-                          <button
-                            onClick={() => setInspectPhotoModal(c)}
-                            className="flex items-center space-x-1.5 group text-left cursor-pointer"
-                          >
-                            <div className="w-10 h-10 rounded-xl overflow-hidden border border-stone-300 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                              <img src={displayPhoto} alt="Geotagged Evidence" className="w-full h-full object-cover" />
-                            </div>
-                            <span className="text-[10px] font-bold text-orange-600 group-hover:underline">Inspect</span>
-                          </button>
-                        </td>
-
-                        {/* Citizen & Ward / Locality */}
-                        <td className="py-3.5 px-3">
-                          <p className="font-extrabold text-stone-900">{c.citizen_name || 'Indore Resident'}</p>
-                          <p className="text-[10px] text-stone-500 font-semibold">{c.locality}</p>
-                        </td>
-
-                        {/* Category & Co-Filers Count */}
-                        <td className="py-3.5 px-3">
-                          <p className="font-extrabold text-purple-700">{c.category}</p>
-                          <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 mt-0.5">
-                            <Users className="w-3 h-3 text-stone-500" /> {coFilers} Co-Filers Endorsed
-                          </span>
-                        </td>
-
-                        {/* Urgency */}
-                        <td className="py-3.5 px-3">
-                          <span className={`font-black px-2 py-0.5 rounded text-[10px] ${
-                            c.urgency === 'Critical' || c.urgency === 'CRITICAL' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-700 border border-amber-200'
+                          
+                          <span className={`font-black px-2.5 py-0.5 rounded-full text-[10px] ${
+                            c.urgency === 'Critical' || c.urgency === 'CRITICAL' ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
                           }`}>
                             {c.urgency}
                           </span>
-                        </td>
+                        </div>
 
-                        {/* Department */}
-                        <td className="py-3.5 px-3 text-stone-900 font-semibold">{c.responsible_department || 'IMC Drainage Dept'}</td>
-                        
-                        {/* Review Status */}
-                        <td className="py-3.5 px-3">
+                        {/* Photo Evidence Image Box */}
+                        <div
+                          onClick={() => setInspectPhotoModal(c)}
+                          className="w-full h-36 rounded-2xl overflow-hidden border border-stone-200 relative group cursor-pointer shadow-inner"
+                        >
+                          <img src={displayPhoto} alt="Evidence" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                          <div className="absolute inset-0 bg-stone-900/20 group-hover:bg-stone-900/10 transition-colors" />
+                          <span className="absolute bottom-2 right-2 bg-stone-900/80 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1">
+                            <Camera className="w-3 h-3" /> Inspect Photo
+                          </span>
+                        </div>
+
+                        {/* Citizen Name & Ward Landmark */}
+                        <div className="space-y-1 text-xs">
+                          <p className="font-extrabold text-stone-900">{c.citizen_name || 'Indore Resident'}</p>
+                          <p className="text-[11px] text-stone-500 font-semibold flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5 text-stone-400 shrink-0" /> {c.locality}
+                          </p>
+                        </div>
+
+                        {/* Category & Co-Filers Endorsements */}
+                        <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 space-y-1.5 text-xs">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-purple-700">{c.category}</span>
+                            <span className="text-[10px] font-extrabold text-stone-600 bg-stone-200/70 px-2 py-0.5 rounded-full">
+                              👥 {coFilers} Co-Filers
+                            </span>
+                          </div>
+                          <p className="text-stone-600 italic text-[11px] line-clamp-2">"{c.transcript}"</p>
+                        </div>
+
+                        {/* Review Status Badge */}
+                        <div className="pt-1">
                           {isResolved ? (
-                            <span className="bg-blue-100 text-blue-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-blue-200">
-                              WORK RESOLVED
+                            <span className="w-full justify-center bg-blue-100 text-blue-800 font-extrabold text-[11px] px-3 py-1 rounded-xl border border-blue-200 flex items-center gap-1">
+                              <CheckCheck className="w-3.5 h-3.5 text-blue-600" /> WORK RESOLVED
                             </span>
                           ) : isApproved ? (
-                            <span className="bg-emerald-100 text-emerald-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-200">
-                              APPROVED & DISPATCHED
+                            <span className="w-full justify-center bg-emerald-100 text-emerald-800 font-extrabold text-[11px] px-3 py-1 rounded-xl border border-emerald-200 flex items-center gap-1">
+                              <Check className="w-3.5 h-3.5 text-emerald-600" /> APPROVED & DISPATCHED
                             </span>
                           ) : isRejected ? (
-                            <span className="bg-rose-100 text-rose-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-rose-200">
-                              REJECTED
+                            <span className="w-full justify-center bg-rose-100 text-rose-800 font-extrabold text-[11px] px-3 py-1 rounded-xl border border-rose-200 flex items-center gap-1">
+                              <XCircle className="w-3.5 h-3.5 text-rose-600" /> REJECTED
                             </span>
                           ) : (
-                            <span className="bg-amber-100 text-amber-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-amber-200">
-                              PENDING REVIEW
+                            <span className="w-full justify-center bg-amber-100 text-amber-800 font-extrabold text-[11px] px-3 py-1 rounded-xl border border-amber-200 flex items-center gap-1">
+                              <Clock className="w-3.5 h-3.5 text-amber-600" /> PENDING SUPER ADMIN REVIEW
                             </span>
                           )}
-                        </td>
+                        </div>
 
-                        {/* SUPER ADMIN ACTIONS COLUMN */}
-                        <td className="py-3.5 px-3 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {!isApproved && !isResolved && (
-                              <button
-                                onClick={() => handleApproveComplaint(c.id)}
-                                disabled={processingId === c.id}
-                                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-sm"
-                                title="Approve complaint and dispatch to nodal officer"
-                              >
-                                {processingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
-                                <span>Approve</span>
-                              </button>
-                            )}
+                      </div>
 
-                            {!isResolved && (
-                              <button
-                                onClick={() => handleResolveComplaint(c.id)}
-                                disabled={processingId === c.id}
-                                className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-sm"
-                                title="Mark work completed / solved"
-                              >
-                                {processingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCheck className="w-3 h-3" />}
-                                <span>Mark Solved</span>
-                              </button>
-                            )}
+                      {/* Box Action Buttons */}
+                      <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2">
+                        {!isApproved && !isResolved && (
+                          <button
+                            onClick={() => handleApproveComplaint(c.id)}
+                            disabled={processingId === c.id}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer shadow-sm"
+                          >
+                            {processingId === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                            <span>Approve</span>
+                          </button>
+                        )}
 
-                            {!isResolved && !isRejected && (
-                              <button
-                                onClick={() => handleRejectComplaint(c.id)}
-                                className="text-stone-400 hover:text-rose-600 p-1.5 rounded-xl hover:bg-rose-50 transition-all cursor-pointer"
-                                title="Reject invalid complaint"
-                              >
-                                <XCircle className="w-4 h-4" />
-                              </button>
+                        {!isResolved && (
+                          <button
+                            onClick={() => handleResolveComplaint(c.id)}
+                            disabled={processingId === c.id}
+                            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-xs py-2 rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer shadow-sm"
+                          >
+                            {processingId === c.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCheck className="w-3.5 h-3.5" />}
+                            <span>Mark Solved</span>
+                          </button>
+                        )}
+
+                        {!isResolved && !isRejected && (
+                          <button
+                            onClick={() => handleRejectComplaint(c.id)}
+                            className="p-2 text-stone-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-all cursor-pointer border border-stone-200"
+                            title="Reject"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          )}
+
+          {/* VIEW MODE 2: ROW LIST TABLE VIEW */}
+          {viewMode === 'table' && (
+            <div className="overflow-x-auto rounded-2xl border border-stone-200">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-stone-50 border-b border-stone-200 text-stone-500 uppercase tracking-wider font-extrabold">
+                    <th className="py-3 px-3">Token Complaint ID</th>
+                    <th className="py-3 px-3">Photo Evidence</th>
+                    <th className="py-3 px-3">Citizen & Sector/Ward</th>
+                    <th className="py-3 px-3">Category & Co-Filers</th>
+                    <th className="py-3 px-3">Urgency</th>
+                    <th className="py-3 px-3">Assigned Department</th>
+                    <th className="py-3 px-3">Review Status</th>
+                    <th className="py-3 px-3 text-right">Super Admin Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100 font-medium text-stone-800 bg-white">
+                  {filteredComplaints.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-stone-500 font-bold">
+                        No complaint token IDs match your current filter parameters. Try resetting your search or ward filter.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredComplaints.map((c) => {
+                      const isResolved = c.current_status === 'RESOLVED';
+                      const isApproved = c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS';
+                      const isRejected = c.current_status === 'REJECTED';
+                      const displayPhoto = c.photo_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80';
+                      const coFilers = c.co_filers_count || Math.floor(Math.random() * 45) + 3;
+
+                      return (
+                        <tr key={c.id} className="hover:bg-orange-50/40 transition-all">
+                          
+                          {/* Token ID matching user registration token */}
+                          <td className="py-3.5 px-3 font-mono font-black text-orange-600 shrink-0">
+                            <span className="bg-orange-50 px-2 py-1 rounded-lg border border-orange-200 font-mono text-xs">
+                              {c.id}
+                            </span>
+                          </td>
+                          
+                          {/* Geotagged Photo Evidence Column */}
+                          <td className="py-3.5 px-3">
+                            <button
+                              onClick={() => setInspectPhotoModal(c)}
+                              className="flex items-center space-x-1.5 group text-left cursor-pointer"
+                            >
+                              <div className="w-10 h-10 rounded-xl overflow-hidden border border-stone-300 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                                <img src={displayPhoto} alt="Geotagged Evidence" className="w-full h-full object-cover" />
+                              </div>
+                              <span className="text-[10px] font-bold text-orange-600 group-hover:underline">Inspect</span>
+                            </button>
+                          </td>
+
+                          {/* Citizen & Ward / Locality */}
+                          <td className="py-3.5 px-3">
+                            <p className="font-extrabold text-stone-900">{c.citizen_name || 'Indore Resident'}</p>
+                            <p className="text-[10px] text-stone-500 font-semibold">{c.locality}</p>
+                          </td>
+
+                          {/* Category & Co-Filers Count */}
+                          <td className="py-3.5 px-3">
+                            <p className="font-extrabold text-purple-700">{c.category}</p>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-stone-600 bg-stone-100 px-2 py-0.5 rounded-full border border-stone-200 mt-0.5">
+                              <Users className="w-3 h-3 text-stone-500" /> {coFilers} Co-Filers Endorsed
+                            </span>
+                          </td>
+
+                          {/* Urgency */}
+                          <td className="py-3.5 px-3">
+                            <span className={`font-black px-2 py-0.5 rounded text-[10px] ${
+                              c.urgency === 'Critical' || c.urgency === 'CRITICAL' ? 'bg-rose-100 text-rose-700 border border-rose-200' : 'bg-amber-100 text-amber-700 border border-amber-200'
+                            }`}>
+                              {c.urgency}
+                            </span>
+                          </td>
+
+                          {/* Department */}
+                          <td className="py-3.5 px-3 text-stone-900 font-semibold">{c.responsible_department || 'IMC Drainage Dept'}</td>
+                          
+                          {/* Review Status */}
+                          <td className="py-3.5 px-3">
+                            {isResolved ? (
+                              <span className="bg-blue-100 text-blue-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-blue-200">
+                                WORK RESOLVED
+                              </span>
+                            ) : isApproved ? (
+                              <span className="bg-emerald-100 text-emerald-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                APPROVED & DISPATCHED
+                              </span>
+                            ) : isRejected ? (
+                              <span className="bg-rose-100 text-rose-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-rose-200">
+                                REJECTED
+                              </span>
+                            ) : (
+                              <span className="bg-amber-100 text-amber-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-amber-200">
+                                PENDING REVIEW
+                              </span>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
+                          </td>
+
+                          {/* SUPER ADMIN ACTIONS COLUMN */}
+                          <td className="py-3.5 px-3 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {!isApproved && !isResolved && (
+                                <button
+                                  onClick={() => handleApproveComplaint(c.id)}
+                                  disabled={processingId === c.id}
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                                  title="Approve complaint and dispatch to nodal officer"
+                                >
+                                  {processingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                                  <span>Approve</span>
+                                </button>
+                              )}
+
+                              {!isResolved && (
+                                <button
+                                  onClick={() => handleResolveComplaint(c.id)}
+                                  disabled={processingId === c.id}
+                                  className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-sm"
+                                  title="Mark work completed / solved"
+                                >
+                                  {processingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCheck className="w-3 h-3" />}
+                                  <span>Mark Solved</span>
+                                </button>
+                              )}
+
+                              {!isResolved && !isRejected && (
+                                <button
+                                  onClick={() => handleRejectComplaint(c.id)}
+                                  className="text-stone-400 hover:text-rose-600 p-1.5 rounded-xl hover:bg-rose-50 transition-all cursor-pointer"
+                                  title="Reject invalid complaint"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
 
         </div>
       )}
