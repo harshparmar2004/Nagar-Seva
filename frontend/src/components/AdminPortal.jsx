@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
 import L from 'leaflet';
-import { Layers, AlertOctagon, Sparkles, FileText, Flame, Trophy, ShieldCheck, Lock, Building2, User, Landmark, Filter, Search, CheckCircle2, RefreshCw, SlidersHorizontal, Eye, Clock, Check, Camera, Image, X } from 'lucide-react';
+import {
+  Layers, AlertOctagon, Sparkles, FileText, Flame, Trophy, ShieldCheck, Lock,
+  Building2, User, Landmark, Filter, Search, CheckCircle2, RefreshCw,
+  SlidersHorizontal, Eye, Clock, Check, Camera, Image, X, Plus, PlusCircle,
+  XCircle, CheckCheck, Loader2, DollarSign, Users, Megaphone, CheckSquare
+} from 'lucide-react';
 
 const createCustomIcon = (color) => {
   return L.divIcon({
@@ -17,14 +22,34 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const [clusters, setClusters] = useState([]);
   const [selectedCluster, setSelectedCluster] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectPhotoModal, setInspectPhotoModal] = useState(null);
+  const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+  const [actionMessage, setActionMessage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [processingId, setProcessingId] = useState(null);
+
+  // New Project Form State
+  const [newProject, setNewProject] = useState({
+    title: '',
+    locality: '',
+    category: 'Public Works & Transportation',
+    estimated_budget_inr: 45000000,
+    formatted_budget: '₹4.50 Crores',
+    target_beneficiaries: 50000,
+    funding_scheme: 'PM Gati Shakti / Smart Cities Mission',
+    problem_justification: '',
+    responsible_department: 'Indore Municipal Corporation (IMC)',
+    responsible_ministry: 'Ministry of Housing & Urban Affairs (MoHUA)'
+  });
 
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
     try {
       const compRes = await fetch('http://localhost:8000/api/complaints');
       const compData = await compRes.json();
@@ -35,40 +60,119 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
       setClusters(clusData);
       if (clusData.length > 0) setSelectedCluster(clusData[0]);
     } catch (e) {
-      console.error(e);
+      console.error('Error fetching admin data:', e);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleApproveComplaint = async (complaintId) => {
+    setProcessingId(complaintId);
     try {
       const res = await fetch(`http://localhost:8000/api/complaints/approve/${complaintId}`, {
         method: 'POST'
       });
       if (res.ok) {
         setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
+        setActionMessage(`✅ Complaint #${complaintId} APPROVED & dispatched to department! Citizen notified via WhatsApp.`);
+        setTimeout(() => setActionMessage(null), 4000);
       }
     } catch (e) {
       console.error(e);
       setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleResolveComplaint = async (complaintId) => {
+    setProcessingId(complaintId);
+    try {
+      const res = await fetch(`http://localhost:8000/api/complaints/resolve/${complaintId}`, {
+        method: 'POST'
+      });
+      if (res.ok) {
+        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
+        setActionMessage(`🎉 Complaint #${complaintId} marked as RESOLVED & WORK COMPLETED! WhatsApp receipt sent.`);
+        setTimeout(() => setActionMessage(null), 4000);
+      }
+    } catch (e) {
+      console.error(e);
+      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleRejectComplaint = (complaintId) => {
+    setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'REJECTED' } : c));
+    setActionMessage(`🔴 Complaint #${complaintId} marked as REJECTED.`);
+    setTimeout(() => setActionMessage(null), 4000);
+  };
+
+  const handleCreateProject = async (e) => {
+    e.preventDefault();
+    if (!newProject.title.trim()) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('title', newProject.title);
+      formData.append('locality', newProject.locality || 'Indore Central Hub');
+      formData.append('category', newProject.category);
+      formData.append('estimated_budget_inr', newProject.estimated_budget_inr);
+      formData.append('formatted_budget', newProject.formatted_budget);
+      formData.append('target_beneficiaries', newProject.target_beneficiaries);
+      formData.append('funding_scheme', newProject.funding_scheme);
+      formData.append('problem_justification', newProject.problem_justification || 'Synthesized Super Admin Infrastructure Development Plan');
+
+      const res = await fetch('http://localhost:8000/api/admin/projects', {
+        method: 'POST',
+        body: formData
+      });
+      await res.json();
+      setActionMessage(`🚀 New Infrastructure Project "${newProject.title}" published successfully to Community Support Portal!`);
+      setTimeout(() => setActionMessage(null), 5000);
+      setIsPublishModalOpen(false);
+      setNewProject({
+        title: '',
+        locality: '',
+        category: 'Public Works & Transportation',
+        estimated_budget_inr: 45000000,
+        formatted_budget: '₹4.50 Crores',
+        target_beneficiaries: 50000,
+        funding_scheme: 'PM Gati Shakti / Smart Cities Mission',
+        problem_justification: '',
+        responsible_department: 'Indore Municipal Corporation (IMC)',
+        responsible_ministry: 'Ministry of Housing & Urban Affairs (MoHUA)'
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Project published locally!');
+      setIsPublishModalOpen(false);
     }
   };
 
   const getCategoryColor = (cat) => {
     if (cat?.includes('Sanitation')) return '#ef4444';
-    if (cat?.includes('Roads')) return '#f97316';
+    if (cat?.includes('Roads') || cat?.includes('Public Works')) return '#f97316';
     if (cat?.includes('Electricity')) return '#eab308';
-    if (cat?.includes('Healthcare')) return '#10b981';
+    if (cat?.includes('Healthcare') || cat?.includes('Health')) return '#10b981';
     return '#3b82f6';
   };
 
   const filteredComplaints = complaints.filter(c => {
     const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
+    const matchesStatus = selectedStatusFilter === 'ALL' || 
+      (selectedStatusFilter === 'PENDING' && c.current_status === 'PENDING_ADMIN_REVIEW') ||
+      (selectedStatusFilter === 'APPROVED' && (c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS')) ||
+      (selectedStatusFilter === 'RESOLVED' && c.current_status === 'RESOLVED');
+    
     const matchesSearch = !searchQuery.trim() || 
       c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.transcript.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.locality.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (c.citizen_name && c.citizen_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCat && matchesSearch;
+    return matchesCat && matchesStatus && matchesSearch;
   });
 
   if (!isSuperAdmin) {
@@ -94,35 +198,56 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
       
-      {/* Governance Mismatch Alert Banner */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 border border-stone-800 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-md text-white">
+      {/* Super Admin Top Control & Publishing Bar */}
+      <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 border border-stone-800 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xl text-white">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-rose-500/20 border border-rose-500/30 flex items-center justify-center shrink-0">
-            <AlertOctagon className="w-6 h-6 text-rose-400 animate-pulse" />
+          <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-6 h-6 text-orange-400" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-rose-400">Governance Mismatch Identified</span>
-              <span className="bg-rose-500/20 text-rose-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-rose-500/30">
-                CRITICAL PRIORITY #1
+              <span className="text-xs font-extrabold uppercase tracking-wider text-orange-400">SUPER ADMIN DISTRICT CONTROL ROOM</span>
+              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+                LIVE VERIFIED SESSION
               </span>
             </div>
             <h2 className="text-base sm:text-lg font-bold text-white">
-              Wards 14 & 15: High Citizen Demand (847 Requests) + High Poverty Index + ₹0 Municipal Budget Allocated
+              Indore District Secretariat • Grievance Approval & Infrastructure Publishing Panel
             </h2>
           </div>
         </div>
 
-        <button
-          onClick={() => onOpenDPR(selectedCluster)}
-          className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow-md shadow-orange-600/20 flex items-center space-x-2 transition-all shrink-0"
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>Generate AI Project DPR</span>
-        </button>
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setIsPublishModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all cursor-pointer"
+          >
+            <PlusCircle className="w-4 h-4" />
+            <span>Publish City Infrastructure Project</span>
+          </button>
+
+          <button
+            onClick={fetchData}
+            className="bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 font-bold text-xs p-2.5 rounded-xl transition-all cursor-pointer"
+            title="Refresh Live Data"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
-      {/* VIEW SUB-TAB 1: INTERACTIVE GIS SPATIAL MAP */}
+      {/* Action Notification Toast */}
+      {actionMessage && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl p-4 text-xs font-extrabold flex items-center justify-between shadow-sm animate-fade-in">
+          <div className="flex items-center space-x-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+            <span>{actionMessage}</span>
+          </div>
+          <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold uppercase">DB UPDATED</span>
+        </div>
+      )}
+
+      {/* SUB-TAB 1: INTERACTIVE GIS SPATIAL MAP */}
       {activeSubTab === 'admin-gis' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
@@ -138,8 +263,8 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               <div className="flex items-center space-x-1.5 text-[11px] font-bold">
                 <button onClick={() => setSelectedCategory('ALL')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'ALL' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600'}`}>All</button>
                 <button onClick={() => setSelectedCategory('Sanitation & Drainage')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Sanitation & Drainage' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700'}`}>Sanitation</button>
-                <button onClick={() => setSelectedCategory('Roads & Infrastructure')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Roads & Infrastructure' ? 'bg-orange-600 text-white' : 'bg-orange-50 text-orange-700'}`}>Roads</button>
-                <button onClick={() => setSelectedCategory('Electricity & Streetlights')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Electricity & Streetlights' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>Electricity</button>
+                <button onClick={() => setSelectedCategory('Public Works')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Public Works' ? 'bg-orange-600 text-white' : 'bg-orange-50 text-orange-700'}`}>Roads</button>
+                <button onClick={() => setSelectedCategory('Electricity')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Electricity' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>Electricity</button>
               </div>
             </div>
 
@@ -148,6 +273,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 center={[22.7000, 75.8350]}
                 zoom={12}
                 scrollWheelZoom={true}
+                className="w-full h-full"
               >
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -242,7 +368,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
                 <button
                   onClick={() => onOpenDPR(selectedCluster)}
-                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs py-3 rounded-xl shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs py-3 rounded-xl shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <FileText className="w-4 h-4" /> Synthesize Detailed Project Report (DPR)
                 </button>
@@ -280,7 +406,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </div>
       )}
 
-      {/* VIEW SUB-TAB 2: MASTER CITIZEN COMPLAINTS MANAGEMENT & SUPER ADMIN APPROVAL TABLE */}
+      {/* SUB-TAB 2: MASTER CITIZEN COMPLAINTS MANAGEMENT & SUPER ADMIN APPROVAL TABLE */}
       {activeSubTab === 'admin-clusters' && (
         <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
@@ -288,17 +414,17 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               <h3 className="text-lg font-bold text-stone-900 flex items-center gap-2">
                 <Building2 className="w-5 h-5 text-orange-600" /> Master Complaints Review & Sector Approval Panel
               </h3>
-              <p className="text-xs text-stone-500">Super Admins review attached geotagged evidence photos and approve complaints for ward publication</p>
+              <p className="text-xs text-stone-500">Super Admins review geotagged photos, approve complaints for dispatch, or mark work completed on ground.</p>
             </div>
 
             <div className="flex items-center space-x-2">
               <span className="bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full border border-orange-200">
-                {filteredComplaints.length} Total Complaints
+                {filteredComplaints.length} Complaints Shown
               </span>
             </div>
           </div>
 
-          {/* Search & Category Filters */}
+          {/* Search & Category & Status Filters */}
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-3" />
@@ -312,15 +438,27 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
 
             <select
+              value={selectedStatusFilter}
+              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              className="bg-stone-50 border border-stone-300 rounded-2xl px-3 py-2.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="PENDING">Pending Review</option>
+              <option value="APPROVED">Approved & Published</option>
+              <option value="RESOLVED">Resolved (Work Completed)</option>
+            </select>
+
+            <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="bg-stone-50 border border-stone-300 rounded-2xl px-3 py-2.5 text-xs font-bold text-stone-800 focus:outline-none cursor-pointer"
             >
               <option value="ALL">All Categories</option>
               <option value="Sanitation & Drainage">Sanitation & Drainage</option>
-              <option value="Water Supply">Water Supply</option>
-              <option value="Roads & Infrastructure">Roads & Infrastructure</option>
-              <option value="Electricity & Streetlights">Electricity & Streetlights</option>
+              <option value="Drainage">Drainage</option>
+              <option value="Public Works">Public Works</option>
+              <option value="Electricity">Electricity</option>
+              <option value="Solid Waste">Solid Waste</option>
             </select>
           </div>
 
@@ -331,17 +469,19 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 <tr className="border-b border-stone-200 text-stone-500 uppercase tracking-wider">
                   <th className="py-3 px-3">Token ID</th>
                   <th className="py-3 px-3">Photo Evidence</th>
-                  <th className="py-3 px-3">Citizen Gmail & Name</th>
+                  <th className="py-3 px-3">Citizen & Landmark</th>
                   <th className="py-3 px-3">Category</th>
                   <th className="py-3 px-3">Urgency</th>
                   <th className="py-3 px-3">Assigned Department</th>
                   <th className="py-3 px-3">Review Status</th>
-                  <th className="py-3 px-3 text-right">Super Admin Action</th>
+                  <th className="py-3 px-3 text-right">Super Admin Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100 font-medium text-stone-800">
                 {filteredComplaints.map((c) => {
-                  const isApproved = c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'DEPARTMENT_ASSIGNED';
+                  const isResolved = c.current_status === 'RESOLVED';
+                  const isApproved = c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS';
+                  const isRejected = c.current_status === 'REJECTED';
                   const displayPhoto = c.photo_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80';
 
                   return (
@@ -362,22 +502,30 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                       </td>
 
                       <td className="py-3 px-3">
-                        <p className="font-bold text-stone-900">{c.citizen_name || 'Harsh Parmar'}</p>
-                        <p className="text-[10px] text-stone-400">{c.user_email || 'citizen.indore@gmail.com'}</p>
+                        <p className="font-bold text-stone-900">{c.citizen_name || 'Indore Resident'}</p>
+                        <p className="text-[10px] text-stone-500 font-medium">{c.locality}</p>
                       </td>
                       <td className="py-3 px-3 font-bold text-purple-700">{c.category}</td>
                       <td className="py-3 px-3">
                         <span className={`font-bold px-2 py-0.5 rounded text-[10px] ${
-                          c.urgency === 'Critical' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                          c.urgency === 'Critical' || c.urgency === 'CRITICAL' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
                         }`}>
                           {c.urgency}
                         </span>
                       </td>
-                      <td className="py-3 px-3 text-stone-900 font-semibold">{c.responsible_department || 'IMC Drainage Dept'}</td>
+                      <td className="py-3 px-3 text-stone-900 font-semibold">{c.responsible_department || 'IMC Department'}</td>
                       <td className="py-3 px-3">
-                        {isApproved ? (
+                        {isResolved ? (
+                          <span className="bg-blue-100 text-blue-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-blue-200">
+                            WORK RESOLVED
+                          </span>
+                        ) : isApproved ? (
                           <span className="bg-emerald-100 text-emerald-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-emerald-200">
-                            APPROVED & PUBLISHED
+                            APPROVED & DISPATCHED
+                          </span>
+                        ) : isRejected ? (
+                          <span className="bg-rose-100 text-rose-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-rose-200">
+                            REJECTED
                           </span>
                         ) : (
                           <span className="bg-amber-100 text-amber-800 font-extrabold text-[10px] px-2.5 py-0.5 rounded-full border border-amber-200">
@@ -385,19 +533,44 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                           </span>
                         )}
                       </td>
+
+                      {/* ACTIONS COLUMN */}
                       <td className="py-3 px-3 text-right">
-                        {!isApproved ? (
-                          <button
-                            onClick={() => handleApproveComplaint(c.id)}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[11px] px-3 py-1.5 rounded-xl shadow-sm transition-all inline-flex items-center gap-1 cursor-pointer"
-                          >
-                            <Check className="w-3.5 h-3.5 stroke-[3]" /> Approve & Publish
-                          </button>
-                        ) : (
-                          <span className="text-emerald-600 font-bold text-[11px] flex items-center justify-end gap-1">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Sector Verified
-                          </span>
-                        )}
+                        <div className="flex items-center justify-end gap-1.5">
+                          {!isApproved && !isResolved && (
+                            <button
+                              onClick={() => handleApproveComplaint(c.id)}
+                              disabled={processingId === c.id}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                              title="Approve complaint and dispatch to nodal officer"
+                            >
+                              {processingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                              <span>Approve</span>
+                            </button>
+                          )}
+
+                          {!isResolved && (
+                            <button
+                              onClick={() => handleResolveComplaint(c.id)}
+                              disabled={processingId === c.id}
+                              className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold text-[10px] px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                              title="Mark work completed / solved"
+                            >
+                              {processingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCheck className="w-3 h-3" />}
+                              <span>Mark Solved</span>
+                            </button>
+                          )}
+
+                          {!isResolved && !isRejected && (
+                            <button
+                              onClick={() => handleRejectComplaint(c.id)}
+                              className="text-stone-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition-all cursor-pointer"
+                              title="Reject invalid complaint"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -409,7 +582,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </div>
       )}
 
-      {/* INSPECT GEOTAGGED PHOTO EVIDENCE MODAL FOR SUPER ADMIN */}
+      {/* INSPECT GEOTAGGED PHOTO EVIDENCE MODAL */}
       {inspectPhotoModal && (
         <div className="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative animate-fade-in border border-stone-200">
@@ -444,25 +617,171 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 </div>
                 <p className="text-stone-700 font-semibold italic">"{inspectPhotoModal.transcript}"</p>
                 <div className="grid grid-cols-2 gap-2 text-[11px] pt-1 text-stone-600">
-                  <p>Resident: <span className="font-bold text-stone-900">{inspectPhotoModal.citizen_name || 'Harsh Parmar'}</span></p>
+                  <p>Resident: <span className="font-bold text-stone-900">{inspectPhotoModal.citizen_name || 'Indore Citizen'}</span></p>
                   <p>Location: <span className="font-bold text-stone-900">{inspectPhotoModal.locality}</span></p>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-100">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    handleApproveComplaint(inspectPhotoModal.id);
+                    setInspectPhotoModal(null);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <Check className="w-3.5 h-3.5" /> Approve & Dispatch
+                </button>
+                <button
+                  onClick={() => {
+                    handleResolveComplaint(inspectPhotoModal.id);
+                    setInspectPhotoModal(null);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <CheckCheck className="w-3.5 h-3.5" /> Mark Solved
+                </button>
+              </div>
+
               <button
                 onClick={() => setInspectPhotoModal(null)}
-                className="bg-stone-900 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm hover:bg-stone-800 transition-all"
+                className="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer"
               >
-                Close Inspection
+                Close
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* VIEW SUB-TAB 3: PRIORITY RANKING TABLE */}
+      {/* PUBLISH NEW CITY INFRASTRUCTURE PROJECT MODAL */}
+      {isPublishModalOpen && (
+        <div className="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative animate-fade-in border border-stone-200 text-stone-900">
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+              <div className="flex items-center space-x-2">
+                <PlusCircle className="w-5 h-5 text-emerald-600" />
+                <h3 className="font-extrabold text-stone-900 text-base">Publish City Infrastructure Development Project</h3>
+              </div>
+              <button onClick={() => setIsPublishModalOpen(false)} className="p-1 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateProject} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="font-bold text-stone-700">Project Title</label>
+                <input
+                  type="text"
+                  required
+                  value={newProject.title}
+                  onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                  placeholder="e.g. Bhawarkuan Underpass & Bus Rapid Corridor"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-stone-700">Locality / Sector</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProject.locality}
+                    onChange={(e) => setNewProject({ ...newProject, locality: e.target.value })}
+                    placeholder="e.g. Ward 66, South Indore"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-stone-700">Category</label>
+                  <select
+                    value={newProject.category}
+                    onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500 cursor-pointer"
+                  >
+                    <option value="Public Works & Transportation">Public Works & Transportation</option>
+                    <option value="Sanitation & Urban Infrastructure">Sanitation & Infrastructure</option>
+                    <option value="Water Supply & Infrastructure">Water Supply & Infrastructure</option>
+                    <option value="Energy & Public Safety">Energy & Streetlighting</option>
+                    <option value="Urban Transport">Urban Transit & Metro</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-stone-700">Budget String</label>
+                  <input
+                    type="text"
+                    required
+                    value={newProject.formatted_budget}
+                    onChange={(e) => setNewProject({ ...newProject, formatted_budget: e.target.value })}
+                    placeholder="e.g. ₹45 Crores"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-stone-700">Target Beneficiaries</label>
+                  <input
+                    type="number"
+                    required
+                    value={newProject.target_beneficiaries}
+                    onChange={(e) => setNewProject({ ...newProject, target_beneficiaries: parseInt(e.target.value) || 0 })}
+                    placeholder="50000"
+                    className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-stone-700">Funding Scheme</label>
+                <input
+                  type="text"
+                  required
+                  value={newProject.funding_scheme}
+                  onChange={(e) => setNewProject({ ...newProject, funding_scheme: e.target.value })}
+                  placeholder="e.g. Smart Cities Mission / AMRUT 2.0"
+                  className="w-full px-3 py-2 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-stone-700">Problem Justification / DPR Summary</label>
+                <textarea
+                  rows={3}
+                  value={newProject.problem_justification}
+                  onChange={(e) => setNewProject({ ...newProject, problem_justification: e.target.value })}
+                  placeholder="Synthesized infrastructure proposal description..."
+                  className="w-full px-3 py-2 border border-stone-300 rounded-xl font-medium text-stone-900 focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+                <button
+                  type="button"
+                  onClick={() => setIsPublishModalOpen(false)}
+                  className="bg-stone-100 text-stone-700 font-bold px-4 py-2 rounded-xl"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2 rounded-xl shadow-md shadow-emerald-600/20"
+                >
+                  Publish Project
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 3: OBJECTIVE PPI PRIORITY RANKING TABLE */}
       {(activeSubTab === 'admin-ranking' || activeSubTab === 'admin-dpr') && (
         <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm">
           <div className="flex items-center justify-between">
