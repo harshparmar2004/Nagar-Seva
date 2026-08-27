@@ -216,7 +216,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </p>
         <button
           onClick={onOpenAuth}
-          className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md shadow-orange-600/20 transition-all inline-flex items-center gap-2"
+          className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm px-6 py-3 rounded-xl shadow-md shadow-orange-600/20 transition-all inline-flex items-center gap-2 cursor-pointer"
         >
           <Sparkles className="w-4 h-4" /> Sign In with Approved Gmail
         </button>
@@ -227,20 +227,20 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-16">
       
-      {/* Super Admin Top Control & Publishing Bar */}
-      <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 border border-stone-800 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xl text-white">
+      {/* Warm Theme Super Admin Top Control Bar */}
+      <div className="bg-white border border-stone-200 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-sm text-stone-900">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center shrink-0">
-            <ShieldCheck className="w-6 h-6 text-orange-400" />
+          <div className="w-10 h-10 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 border border-orange-200/80">
+            <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-extrabold uppercase tracking-wider text-orange-400">SUPER ADMIN DISTRICT CONTROL ROOM</span>
-              <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-500/30">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-orange-600">SUPER ADMIN DISTRICT CONTROL ROOM</span>
+              <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
                 LIVE VERIFIED SESSION
               </span>
             </div>
-            <h2 className="text-base sm:text-lg font-bold text-white">
+            <h2 className="text-base sm:text-lg font-extrabold text-stone-900">
               Indore District Secretariat • Grievance Approval & Infrastructure Publishing Panel
             </h2>
           </div>
@@ -249,7 +249,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setIsPublishModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-emerald-600/20 flex items-center space-x-1.5 transition-all cursor-pointer"
+            className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-md shadow-orange-600/20 flex items-center space-x-1.5 transition-all cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Publish City Infrastructure Project</span>
@@ -257,7 +257,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
           <button
             onClick={fetchData}
-            className="bg-stone-800 hover:bg-stone-700 text-stone-200 border border-stone-700 font-bold text-xs p-2.5 rounded-xl transition-all cursor-pointer"
+            className="bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 font-bold text-xs p-2.5 rounded-xl transition-all cursor-pointer"
             title="Refresh Live Data"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -280,121 +280,6 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
       {activeSubTab === 'admin-gis' && (
         <div className="space-y-6">
           
-          {/* LIVE PIN COLOR BREAKDOWN & TODAY'S REQUEST COUNTER STRIP */}
-          <div className="bg-stone-900 text-white rounded-3xl p-5 shadow-lg space-y-3 border border-stone-800">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-800">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-orange-400" />
-                <h3 className="text-sm font-extrabold">Live GIS Map Pins Telemetry & Category Breakdown</h3>
-              </div>
-
-              <div className="flex items-center space-x-3 text-xs">
-                <span className="bg-orange-500/20 text-orange-300 border border-orange-500/30 px-3 py-1 rounded-full font-bold">
-                  📅 {todayCount} Requests Filed Today
-                </span>
-                
-                {/* Toggle to show/hide resolved pins */}
-                <label className="flex items-center gap-1.5 cursor-pointer text-stone-300 text-[11px] font-semibold hover:text-white">
-                  <input
-                    type="checkbox"
-                    checked={showResolvedOnMap}
-                    onChange={(e) => setShowResolvedOnMap(e.target.checked)}
-                    className="rounded text-orange-600 focus:ring-0 cursor-pointer"
-                  />
-                  <span>Show Solved Pins ({greenCount})</span>
-                </label>
-              </div>
-            </div>
-
-            {/* 5 Color Dot Indicator Pills */}
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
-              
-              {/* Red Dots */}
-              <button
-                onClick={() => setSelectedCategory('Sanitation & Drainage')}
-                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Sanitation & Drainage' ? 'bg-rose-950/80 border-rose-500 ring-2 ring-rose-500/30' : 'bg-stone-800/80 border-stone-700 hover:bg-stone-800'
-                }`}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-rose-500 shadow-md shadow-rose-500/50 shrink-0" />
-                  <div>
-                    <p className="font-extrabold text-stone-100 text-xs">Sanitation & Sewer</p>
-                    <p className="text-[10px] text-rose-300 font-medium">🔴 Red Critical Pins</p>
-                  </div>
-                </div>
-                <span className="text-lg font-black text-rose-400">{redCount}</span>
-              </button>
-
-              {/* Orange Dots */}
-              <button
-                onClick={() => setSelectedCategory('Public Works')}
-                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Public Works' ? 'bg-orange-950/80 border-orange-500 ring-2 ring-orange-500/30' : 'bg-stone-800/80 border-stone-700 hover:bg-stone-800'
-                }`}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-orange-500 shadow-md shadow-orange-500/50 shrink-0" />
-                  <div>
-                    <p className="font-extrabold text-stone-100 text-xs">Roads & Potholes</p>
-                    <p className="text-[10px] text-orange-300 font-medium">🟧 Orange Pins</p>
-                  </div>
-                </div>
-                <span className="text-lg font-black text-orange-400">{orangeCount}</span>
-              </button>
-
-              {/* Yellow Dots */}
-              <button
-                onClick={() => setSelectedCategory('Electricity')}
-                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Electricity' ? 'bg-yellow-950/80 border-yellow-500 ring-2 ring-yellow-500/30' : 'bg-stone-800/80 border-stone-700 hover:bg-stone-800'
-                }`}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-yellow-400 shadow-md shadow-yellow-400/50 shrink-0" />
-                  <div>
-                    <p className="font-extrabold text-stone-100 text-xs">Electricity & Light</p>
-                    <p className="text-[10px] text-yellow-300 font-medium">🟨 Yellow Pins</p>
-                  </div>
-                </div>
-                <span className="text-lg font-black text-yellow-400">{yellowCount}</span>
-              </button>
-
-              {/* Blue Dots */}
-              <button
-                onClick={() => setSelectedCategory('Water Supply')}
-                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Water Supply' ? 'bg-blue-950/80 border-blue-500 ring-2 ring-blue-500/30' : 'bg-stone-800/80 border-stone-700 hover:bg-stone-800'
-                }`}
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-md shadow-blue-500/50 shrink-0" />
-                  <div>
-                    <p className="font-extrabold text-stone-100 text-xs">Water Supply</p>
-                    <p className="text-[10px] text-blue-300 font-medium">🟦 Blue Pins</p>
-                  </div>
-                </div>
-                <span className="text-lg font-black text-blue-400">{blueCount}</span>
-              </button>
-
-              {/* Green Dots */}
-              <button
-                onClick={() => setSelectedCategory('ALL')}
-                className="p-3 rounded-2xl border bg-stone-800/80 border-stone-700 hover:bg-stone-800 transition-all text-left flex items-center justify-between cursor-pointer"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/50 shrink-0" />
-                  <div>
-                    <p className="font-extrabold text-stone-100 text-xs">Solved / Healthy</p>
-                    <p className="text-[10px] text-emerald-300 font-medium">🟩 Green Solved</p>
-                  </div>
-                </div>
-                <span className="text-lg font-black text-emerald-400">{greenCount}</span>
-              </button>
-
-            </div>
-          </div>
-
           {/* SECTION 1: FULL-WIDTH GIS SPATIAL MAP */}
           <div className="bg-white border border-stone-200 rounded-3xl p-5 space-y-4 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-stone-100">
@@ -483,7 +368,122 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
           </div>
 
-          {/* SECTION 2: FULL-WIDTH SELECTED DEMAND CLUSTER SCORECARD */}
+          {/* SECTION 2: WARM THEME TELEMETRY & CATEGORY BREAKDOWN STRIP (LOCATED BELOW THE MAP) */}
+          <div className="bg-orange-50/60 border border-orange-200/80 rounded-3xl p-5 shadow-sm space-y-3 text-stone-900">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-orange-200/60">
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4.5 h-4.5 text-orange-600" />
+                <h3 className="text-sm font-extrabold text-stone-900">Live GIS Map Pins Telemetry & Category Breakdown</h3>
+              </div>
+
+              <div className="flex items-center space-x-3 text-xs">
+                <span className="bg-orange-100 text-orange-800 border border-orange-200 px-3 py-1 rounded-full font-bold">
+                  📅 {todayCount} Requests Filed Today
+                </span>
+                
+                {/* Toggle to show/hide resolved pins */}
+                <label className="flex items-center gap-1.5 cursor-pointer text-stone-700 text-[11px] font-bold hover:text-stone-900">
+                  <input
+                    type="checkbox"
+                    checked={showResolvedOnMap}
+                    onChange={(e) => setShowResolvedOnMap(e.target.checked)}
+                    className="rounded text-orange-600 focus:ring-0 cursor-pointer"
+                  />
+                  <span>Show Solved Pins ({greenCount})</span>
+                </label>
+              </div>
+            </div>
+
+            {/* 5 Warm Theme Color Dot Indicator Pills */}
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs">
+              
+              {/* Red Dots */}
+              <button
+                onClick={() => setSelectedCategory('Sanitation & Drainage')}
+                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
+                  selectedCategory === 'Sanitation & Drainage' ? 'bg-rose-100 border-rose-400 ring-2 ring-rose-400/20' : 'bg-white border-stone-200 hover:border-rose-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-rose-500 shadow-md shadow-rose-500/30 shrink-0" />
+                  <div>
+                    <p className="font-extrabold text-stone-900 text-xs">Sanitation & Sewer</p>
+                    <p className="text-[10px] text-rose-700 font-semibold">🔴 Red Critical Pins</p>
+                  </div>
+                </div>
+                <span className="text-lg font-black text-rose-600">{redCount}</span>
+              </button>
+
+              {/* Orange Dots */}
+              <button
+                onClick={() => setSelectedCategory('Public Works')}
+                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
+                  selectedCategory === 'Public Works' ? 'bg-orange-100 border-orange-400 ring-2 ring-orange-400/20' : 'bg-white border-stone-200 hover:border-orange-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-orange-500 shadow-md shadow-orange-500/30 shrink-0" />
+                  <div>
+                    <p className="font-extrabold text-stone-900 text-xs">Roads & Potholes</p>
+                    <p className="text-[10px] text-orange-700 font-semibold">🟧 Orange Pins</p>
+                  </div>
+                </div>
+                <span className="text-lg font-black text-orange-600">{orangeCount}</span>
+              </button>
+
+              {/* Yellow Dots */}
+              <button
+                onClick={() => setSelectedCategory('Electricity')}
+                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
+                  selectedCategory === 'Electricity' ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-400/20' : 'bg-white border-stone-200 hover:border-amber-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-amber-400 shadow-md shadow-amber-400/30 shrink-0" />
+                  <div>
+                    <p className="font-extrabold text-stone-900 text-xs">Electricity & Light</p>
+                    <p className="text-[10px] text-amber-700 font-semibold">🟨 Yellow Pins</p>
+                  </div>
+                </div>
+                <span className="text-lg font-black text-amber-600">{yellowCount}</span>
+              </button>
+
+              {/* Blue Dots */}
+              <button
+                onClick={() => setSelectedCategory('Water Supply')}
+                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
+                  selectedCategory === 'Water Supply' ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400/20' : 'bg-white border-stone-200 hover:border-blue-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-md shadow-blue-500/30 shrink-0" />
+                  <div>
+                    <p className="font-extrabold text-stone-900 text-xs">Water Supply</p>
+                    <p className="text-[10px] text-blue-700 font-semibold">🟦 Blue Pins</p>
+                  </div>
+                </div>
+                <span className="text-lg font-black text-blue-600">{blueCount}</span>
+              </button>
+
+              {/* Green Dots */}
+              <button
+                onClick={() => setSelectedCategory('ALL')}
+                className="p-3 rounded-2xl border bg-white border-stone-200 hover:border-emerald-300 transition-all text-left flex items-center justify-between cursor-pointer"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/30 shrink-0" />
+                  <div>
+                    <p className="font-extrabold text-stone-900 text-xs">Solved / Healthy</p>
+                    <p className="text-[10px] text-emerald-700 font-semibold">🟩 Green Solved</p>
+                  </div>
+                </div>
+                <span className="text-lg font-black text-emerald-600">{greenCount}</span>
+              </button>
+
+            </div>
+          </div>
+
+          {/* SECTION 3: FULL-WIDTH SELECTED DEMAND CLUSTER SCORECARD */}
           {selectedCluster && (
             <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-5 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
@@ -545,7 +545,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
           )}
 
-          {/* SECTION 3: FULL-WIDTH AI DEMAND HOTSPOT CLUSTERS GRID */}
+          {/* SECTION 4: FULL-WIDTH AI DEMAND HOTSPOT CLUSTERS GRID */}
           <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100">
               <h3 className="text-base font-extrabold text-stone-900 flex items-center gap-2">
