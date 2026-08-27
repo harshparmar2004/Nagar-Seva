@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Circle } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import {
   Layers, AlertOctagon, Sparkles, FileText, Flame, Trophy, ShieldCheck, Lock,
@@ -16,6 +16,17 @@ const createCustomIcon = (color) => {
     iconAnchor: [7, 7]
   });
 };
+
+function MapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+}
 
 export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, isSuperAdmin, onOpenAuth }) {
   const [complaints, setComplaints] = useState([]);
@@ -278,9 +289,10 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 scrollWheelZoom={true}
                 className="w-full h-full"
               >
+                <MapResizer />
                 <TileLayer
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
                 <Circle
