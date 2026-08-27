@@ -117,7 +117,7 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-16">
 
       {/* HEADER BANNER WITH DYNAMIC WARD SELECTOR */}
-      <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-7 shadow-sm relative overflow-hidden space-y-5 text-stone-900">
+      <div className="bg-[#FAF6F0] border border-[#E8DFC8] rounded-3xl p-6 sm:p-7 shadow-sm relative overflow-hidden space-y-5 text-stone-900">
         
         {/* Top bar: Badge & Ward Selector + GPS */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -172,17 +172,17 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
         </div>
 
         {/* Structured Metadata Stat Pills */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-stone-100">
-          <div className="bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 flex items-center justify-between">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-[#E8DFC8]">
+          <div className="bg-white/80 border border-[#E4DAC6] rounded-2xl px-4 py-3 flex items-center justify-between shadow-xs">
             <span className="text-stone-500 text-xs font-bold">Administrative Zone</span>
             <span className="text-stone-900 text-xs font-extrabold">{analytics?.zone || 'Zone 14'}</span>
           </div>
-          <div className="bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 flex items-center justify-between">
+          <div className="bg-white/80 border border-[#E4DAC6] rounded-2xl px-4 py-3 flex items-center justify-between shadow-xs">
             <span className="text-stone-500 text-xs font-bold">Ward Population</span>
             <span className="text-stone-900 text-xs font-extrabold">{analytics?.population?.toLocaleString() || '46,200'}</span>
           </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 flex items-center justify-between">
-            <span className="text-emerald-700 text-xs font-bold">Resolution Efficiency</span>
+          <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl px-4 py-3 flex items-center justify-between shadow-xs">
+            <span className="text-emerald-800 text-xs font-bold">Resolution Efficiency</span>
             <span className="text-emerald-700 text-xs font-black">{analytics?.resolution_rate_pct || 94.5}% Solved</span>
           </div>
         </div>
