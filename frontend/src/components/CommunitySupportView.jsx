@@ -119,14 +119,14 @@ export default function CommunitySupportView({ onOpenDPR }) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-2">
             <div className="inline-flex items-center space-x-2 bg-orange-100 text-orange-800 px-3.5 py-1 rounded-full border border-orange-200 text-xs font-extrabold">
-              <Landmark className="w-3.5 h-3.5 text-orange-600" />
-              <span>CITIZEN COMMUNITY PROJECT SUPPORT & VOTING PORTAL</span>
+              <Sparkles className="w-3.5 h-3.5 text-orange-600" />
+              <span>AI DPR & PUBLIC PRIORITY RANKING PORTAL</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 tracking-tight">
-              Indore Infrastructure Development Projects
+              AI DPR Infrastructure Projects & Priority Rankings
             </h2>
             <p className="text-xs sm:text-sm text-stone-600 max-w-3xl leading-relaxed font-medium">
-              Citizens can review major city infrastructure developments, inspect Gemini AI Detailed Project Reports (DPR), and submit 5-star ratings to determine civic priorities for Super Admin execution.
+              Citizens can review major city infrastructure projects created by Super Admin, inspect Gemini AI Detailed Project Reports (DPR), and submit 5-star ratings to determine public priorities.
             </p>
           </div>
 
