@@ -52,7 +52,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectPhotoModal, setInspectPhotoModal] = useState(null);
-  const [inspectProjectModal, setInspectProjectModal] = useState(null);
+  const [expandedProjectId, setExpandedProjectId] = useState(null); // IN-LINE expansion (NO DARK OVERLAY!)
   const [showPublishPortal, setShowPublishPortal] = useState(false);
   const [actionMessage, setActionMessage] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -1185,99 +1185,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </div>
       )}
 
-      {/* INSPECT PROJECT PUBLIC RESULTS & VOTING ANALYTICS MODAL */}
-      {inspectProjectModal && (
-        <div className="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl relative animate-fade-in border border-stone-200 text-stone-900">
-            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5 text-amber-500" />
-                <h3 className="font-extrabold text-stone-900 text-base">Public Voting Results & Rating Analytics</h3>
-              </div>
-              <button onClick={() => setInspectProjectModal(null)} className="p-1 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-4 text-xs">
-              <div className="bg-purple-50 p-4 rounded-2xl border border-purple-200 space-y-1">
-                <span className="font-mono text-[10px] font-black text-purple-700 uppercase">{inspectProjectModal.id} • {inspectProjectModal.category}</span>
-                <h4 className="text-base font-extrabold text-stone-900">{inspectProjectModal.title}</h4>
-                <p className="text-stone-600 font-semibold">{inspectProjectModal.locality}</p>
-              </div>
-
-              {/* Rating Stats Summary */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-1">
-                  <div className="flex items-center justify-center gap-1 text-amber-500">
-                    <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
-                    <span className="text-2xl font-black text-stone-900">4.8 / 5.0</span>
-                  </div>
-                  <p className="text-[10px] text-stone-500 font-bold uppercase">Average Citizen Approval</p>
-                </div>
-
-                <div className="bg-blue-50 p-4 rounded-2xl border border-blue-200 text-center space-y-1">
-                  <ThumbsUp className="w-5 h-5 text-blue-600 mx-auto" />
-                  <p className="text-2xl font-black text-blue-700">{(inspectProjectModal.community_upvotes || 2340).toLocaleString()}</p>
-                  <p className="text-[10px] text-stone-500 font-bold uppercase">Total Verified Reviews</p>
-                </div>
-              </div>
-
-              {/* Star Rating Breakdown Bar List */}
-              <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
-                <p className="font-extrabold text-stone-900 text-xs">Citizen Star Rating Breakdown:</p>
-                
-                <div className="space-y-1.5 text-[11px] font-bold text-stone-700">
-                  <div className="flex items-center gap-2">
-                    <span className="w-12 text-stone-500">5 Stars ⭐</span>
-                    <div className="flex-1 bg-stone-200 h-2 rounded-full overflow-hidden">
-                      <div className="bg-amber-400 h-full w-[78%]" />
-                    </div>
-                    <span className="w-10 text-right text-stone-900">78%</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="w-12 text-stone-500">4 Stars ⭐</span>
-                    <div className="flex-1 bg-stone-200 h-2 rounded-full overflow-hidden">
-                      <div className="bg-amber-400 h-full w-[14%]" />
-                    </div>
-                    <span className="w-10 text-right text-stone-900">14%</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="w-12 text-stone-500">3 Stars ⭐</span>
-                    <div className="flex-1 bg-stone-200 h-2 rounded-full overflow-hidden">
-                      <div className="bg-amber-400 h-full w-[5%]" />
-                    </div>
-                    <span className="w-10 text-right text-stone-900">5%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-stone-100">
-                <button
-                  onClick={() => {
-                    setInspectProjectModal(null);
-                    onOpenDPR(inspectProjectModal);
-                  }}
-                  className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-orange-600/20 flex items-center gap-1.5 cursor-pointer"
-                >
-                  <FileText className="w-4 h-4" /> Synthesize Full AI DPR Report
-                </button>
-
-                <button
-                  onClick={() => setInspectProjectModal(null)}
-                  className="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all cursor-pointer"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SUB-TAB 3: DEDICATED BIGGER IN-PAGE PUBLISH PORTAL & COMPACT PROJECT RANKING DASHBOARD */}
+      {/* SUB-TAB 3: DEDICATED BIGGER IN-PAGE PUBLISH PORTAL & IN-LINE EXPANDABLE PROJECT RANKING DASHBOARD (NO DARK BACKDROP OVERLAY!) */}
       {(activeSubTab === 'admin-ranking' || activeSubTab === 'admin-dpr') && (
         <div className="space-y-6">
           
@@ -1444,22 +1352,24 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
           )}
 
-          {/* List of Compact AI DPR Project Cards (Clickable for Results Inspection) */}
+          {/* List of Compact AI DPR Project Cards WITH IN-LINE EXPANDABLE PUBLIC VOTING RESULTS (NO DARK OVERLAY!) */}
           <div className="space-y-4">
             {projects.map((p, idx) => {
               const starsAvg = (4.4 + ((idx * 0.1) % 0.6)).toFixed(1);
               const totalVotes = p.community_upvotes || (1200 + idx * 850);
+              const isExpanded = expandedProjectId === p.id;
 
               return (
                 <div
                   key={p.id}
-                  onClick={() => setInspectProjectModal(p)}
-                  className="bg-white border border-stone-200 hover:border-purple-300 rounded-2xl p-5 space-y-4 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  className={`bg-white border rounded-3xl p-6 space-y-4 shadow-sm transition-all text-stone-900 ${
+                    isExpanded ? 'border-purple-400 ring-2 ring-purple-400/20' : 'border-stone-200 hover:border-purple-300'
+                  }`}
                 >
-                  {/* Top Row: Icon + Title + Budget */}
+                  {/* Top Row: Icon + Title + Budget + Expand Toggle */}
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
                     <div className="flex items-start space-x-3">
-                      <div className="w-10 h-10 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                      <div className="w-11 h-11 rounded-2xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-sm">
                         <Bus className="w-5 h-5" />
                       </div>
                       
@@ -1468,42 +1378,145 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                           <span className="font-mono text-[10px] font-black text-stone-500 bg-stone-100 px-2 py-0.5 rounded">
                             {p.id}
                           </span>
-                          <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                          <span className="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border border-amber-200">
                             {p.status || 'Under Review'}
                           </span>
                         </div>
-                        <h4 className="text-base font-extrabold text-stone-900 group-hover:text-purple-700 transition-colors">{p.title}</h4>
-                        <p className="text-[11px] text-stone-500 font-semibold flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-orange-600 shrink-0" /> {p.locality}
+                        <h4 className="text-base sm:text-lg font-extrabold text-stone-900">{p.title}</h4>
+                        <p className="text-xs text-stone-500 font-semibold flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-orange-600 shrink-0" /> {p.locality}
                         </p>
                       </div>
                     </div>
 
-                    <div className="bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl text-center shrink-0">
-                      <span className="text-[9px] text-emerald-700 font-bold uppercase">BUDGET</span>
-                      <p className="text-lg font-black text-emerald-600 leading-none mt-0.5">{p.formatted_budget || `₹${p.estimated_budget_inr / 10000000} Cr`}</p>
+                    <div className="flex items-center space-x-3 shrink-0">
+                      <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl text-center">
+                        <span className="text-[9px] text-emerald-700 font-extrabold uppercase tracking-wider">BUDGET</span>
+                        <p className="text-xl font-black text-emerald-600 leading-none mt-0.5">{p.formatted_budget || `₹${p.estimated_budget_inr / 10000000} Cr`}</p>
+                      </div>
+
+                      <button
+                        onClick={() => setExpandedProjectId(isExpanded ? null : p.id)}
+                        className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-1 text-xs font-extrabold ${
+                          isExpanded ? 'bg-purple-600 text-white border-purple-600' : 'bg-stone-100 hover:bg-stone-200 text-stone-700 border-stone-300'
+                        }`}
+                        title="Toggle Public Voting Results"
+                      >
+                        <span>{isExpanded ? 'Hide Results' : 'View Public Results'}</span>
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
                     </div>
                   </div>
 
-                  {/* Summary */}
-                  <p className="text-xs text-stone-600 font-medium italic line-clamp-2">"{p.problem_justification}"</p>
+                  {/* DPR Summary */}
+                  <p className="text-xs sm:text-sm text-stone-700 font-medium leading-relaxed">"{p.problem_justification}"</p>
 
-                  {/* Key Stats Bar & Click to Inspect Indicator */}
+                  {/* Key Quick Stats Bar */}
                   <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-xs font-bold">
-                    <div className="flex items-center space-x-4 text-stone-600 text-[11px]">
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5 text-blue-600" /> {p.target_beneficiaries?.toLocaleString() || '50,000'} Reach
+                    <div className="flex items-center space-x-5 text-stone-600">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="w-4 h-4 text-blue-600" /> {p.target_beneficiaries?.toLocaleString() || '50,000'} Reach
                       </span>
-                      <span className="flex items-center gap-1">
-                        <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" /> {starsAvg} / 5.0 ({totalVotes.toLocaleString()} Votes)
+                      <span className="flex items-center gap-1.5">
+                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" /> {starsAvg} / 5.0 ({totalVotes.toLocaleString()} Verified Votes)
                       </span>
                     </div>
 
-                    <span className="text-xs font-extrabold text-purple-600 group-hover:underline flex items-center gap-1">
-                      <span>Click to See Public Results & DPR</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </span>
+                    <button
+                      onClick={() => setExpandedProjectId(isExpanded ? null : p.id)}
+                      className="text-xs font-extrabold text-purple-700 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>{isExpanded ? 'Collapse Rating Analytics' : 'Expand Public 5-Star Breakdown'}</span>
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
                   </div>
+
+                  {/* IN-LINE EXPANDED PUBLIC VOTING & 5-STAR ANALYTICS PANEL (NO DARK BACKGROUND OVERLAY!) */}
+                  {isExpanded && (
+                    <div className="pt-4 border-t-2 border-purple-100 space-y-4 animate-fade-in bg-purple-50/40 p-5 rounded-2xl border border-purple-200">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <Trophy className="w-5 h-5 text-amber-500" />
+                          <h5 className="font-extrabold text-stone-900 text-sm">Public Citizen Voting Results & Rating Analytics</h5>
+                        </div>
+                        <span className="text-[10px] font-mono font-extrabold bg-purple-100 text-purple-800 px-2.5 py-0.5 rounded-full">
+                          LIVE VOTING DATA
+                        </span>
+                      </div>
+
+                      {/* 2 Big Stat Cards */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-white p-4 rounded-2xl border border-amber-200 shadow-xs flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                            <Star className="w-7 h-7 fill-amber-400 text-amber-400" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-black text-stone-900">{starsAvg} / 5.0</p>
+                            <p className="text-[10px] text-stone-500 font-extrabold uppercase">Average Citizen Rating</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-2xl border border-blue-200 shadow-xs flex items-center space-x-4">
+                          <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+                            <ThumbsUp className="w-6 h-6" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-black text-blue-700">{totalVotes.toLocaleString()}</p>
+                            <p className="text-[10px] text-stone-500 font-extrabold uppercase">Total Verified Reviews</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 5-Star Breakdown Bars */}
+                      <div className="bg-white p-4 rounded-2xl border border-stone-200 space-y-2.5 text-xs font-bold text-stone-800">
+                        <p className="font-extrabold text-stone-900 text-xs">Public Star Rating Distribution:</p>
+                        
+                        <div className="space-y-2 text-xs">
+                          <div className="flex items-center gap-3">
+                            <span className="w-16 text-stone-600">5 Stars ⭐</span>
+                            <div className="flex-1 bg-stone-100 h-2.5 rounded-full overflow-hidden border border-stone-200">
+                              <div className="bg-amber-400 h-full rounded-full w-[78%]" />
+                            </div>
+                            <span className="w-12 text-right text-stone-900 font-black">78%</span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="w-16 text-stone-600">4 Stars ⭐</span>
+                            <div className="flex-1 bg-stone-100 h-2.5 rounded-full overflow-hidden border border-stone-200">
+                              <div className="bg-amber-400 h-full rounded-full w-[14%]" />
+                            </div>
+                            <span className="w-12 text-right text-stone-900 font-black">14%</span>
+                          </div>
+
+                          <div className="flex items-center gap-3">
+                            <span className="w-16 text-stone-600">3 Stars ⭐</span>
+                            <div className="flex-1 bg-stone-100 h-2.5 rounded-full overflow-hidden border border-stone-200">
+                              <div className="bg-amber-400 h-full rounded-full w-[5%]" />
+                            </div>
+                            <span className="w-12 text-right text-stone-900 font-black">5%</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Button: Open Gemini Synthesized DPR */}
+                      <div className="pt-1 flex items-center justify-between gap-3">
+                        <button
+                          onClick={() => onOpenDPR(p)}
+                          className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs px-5 py-3 rounded-xl shadow-md shadow-orange-600/20 flex items-center gap-2 cursor-pointer transition-all"
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span>Synthesize Full AI DPR Report</span>
+                        </button>
+
+                        <button
+                          onClick={() => setExpandedProjectId(null)}
+                          className="bg-white hover:bg-stone-100 text-stone-700 border border-stone-300 font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer"
+                        >
+                          Close Results Drawer
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                 </div>
               );
