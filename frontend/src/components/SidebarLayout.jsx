@@ -60,11 +60,10 @@ export default function SidebarLayout({
   ];
 
   const adminNavItems = [
-    { id: 'admin-gis', label: 'Interactive GIS Spatial Map', icon: MapPin, badge: 'GIS' },
-    { id: 'admin-clusters', label: 'AI Demand Hotspot Clusters', icon: Flame, badge: 'Hotspots' },
-    { id: 'admin-analytics', label: 'Data Fusion Analytics', icon: TrendingUp, badge: 'Fusion' },
-    { id: 'admin-dpr', label: 'AI Project DPR Synthesizer', icon: Sparkles, badge: 'Gemini DPR' },
-    { id: 'admin-ranking', label: 'Public Priority Ranking', icon: BarChart3, badge: 'Rankings' },
+    { id: 'admin-gis', label: 'City GIS Map & Demand Overview', icon: MapPin, badge: 'GIS' },
+    { id: 'admin-clusters', label: 'Master Complaints Approval', icon: Flame, badge: 'Approve' },
+    { id: 'admin-analytics', label: 'Data Fusion Analytics', icon: TrendingUp, badge: 'Analytics' },
+    { id: 'admin-dpr', label: 'AI DPR & Priority Rankings', icon: Sparkles, badge: 'AI DPR' },
     { id: 'admin-roles', label: 'Super Admin Gmail Roles', icon: Shield, badge: 'RBAC' },
     { id: 'admin-emergency', label: 'District 181 Control Room', icon: ShieldAlert, badge: '181 Hotline', isEmergency: true },
   ];
