@@ -5,7 +5,7 @@ import {
   Layers, AlertOctagon, Sparkles, FileText, Flame, Trophy, ShieldCheck, Lock,
   Building2, User, Landmark, Filter, Search, CheckCircle2, RefreshCw,
   SlidersHorizontal, Eye, Clock, Check, Camera, Image, X, Plus, PlusCircle,
-  XCircle, CheckCheck, Loader2, DollarSign, Users, Megaphone, CheckSquare
+  XCircle, CheckCheck, Loader2, DollarSign, Users, Megaphone, CheckSquare, MapPin
 } from 'lucide-react';
 
 const createCustomIcon = (color) => {
@@ -196,7 +196,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-12">
+    <div className="max-w-7xl mx-auto space-y-6 animate-fade-in pb-16">
       
       {/* Super Admin Top Control & Publishing Bar */}
       <div className="bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 border border-stone-800 rounded-3xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-xl text-white">
@@ -247,28 +247,31 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </div>
       )}
 
-      {/* SUB-TAB 1: INTERACTIVE GIS SPATIAL MAP */}
+      {/* SUB-TAB 1: INTERACTIVE GIS SPATIAL MAP (FULL-WIDTH VERTICAL STACKED LAYOUT) */}
       {activeSubTab === 'admin-gis' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="space-y-6">
           
-          {/* GIS Map Column (7 Cols) */}
-          <div className="lg:col-span-7 bg-white border border-stone-200 rounded-3xl p-4 space-y-3 shadow-sm flex flex-col h-[640px]">
-            
-            <div className="flex flex-wrap items-center justify-between gap-2 px-2">
+          {/* SECTION 1: FULL-WIDTH GIS SPATIAL MAP */}
+          <div className="bg-white border border-stone-200 rounded-3xl p-5 space-y-4 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-stone-100">
               <div className="flex items-center space-x-2">
                 <Layers className="w-5 h-5 text-orange-600" />
-                <h3 className="text-sm font-bold text-stone-900">GIS Spatial Demand Map — Indore IMC</h3>
+                <h3 className="text-base font-extrabold text-stone-900">GIS Spatial Demand Map — Indore IMC</h3>
+                <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-orange-200">
+                  {filteredComplaints.length} Spatial Geotags
+                </span>
               </div>
               
-              <div className="flex items-center space-x-1.5 text-[11px] font-bold">
-                <button onClick={() => setSelectedCategory('ALL')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'ALL' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600'}`}>All</button>
-                <button onClick={() => setSelectedCategory('Sanitation & Drainage')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Sanitation & Drainage' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700'}`}>Sanitation</button>
-                <button onClick={() => setSelectedCategory('Public Works')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Public Works' ? 'bg-orange-600 text-white' : 'bg-orange-50 text-orange-700'}`}>Roads</button>
-                <button onClick={() => setSelectedCategory('Electricity')} className={`px-2.5 py-1 rounded-lg ${selectedCategory === 'Electricity' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700'}`}>Electricity</button>
+              <div className="flex items-center space-x-2 text-xs font-bold">
+                <span className="text-stone-400">Category Filter:</span>
+                <button onClick={() => setSelectedCategory('ALL')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'ALL' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>All</button>
+                <button onClick={() => setSelectedCategory('Sanitation & Drainage')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'Sanitation & Drainage' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}>Sanitation</button>
+                <button onClick={() => setSelectedCategory('Public Works')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'Public Works' ? 'bg-orange-600 text-white' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>Roads</button>
+                <button onClick={() => setSelectedCategory('Electricity')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'Electricity' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}>Electricity</button>
               </div>
             </div>
 
-            <div className="flex-1 w-full rounded-2xl overflow-hidden border border-stone-200 relative">
+            <div className="w-full h-[520px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
               <MapContainer
                 center={[22.7000, 75.8350]}
                 zoom={12}
@@ -323,84 +326,110 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
           </div>
 
-          {/* Sidebar Data Fusion Column */}
-          <div className="lg:col-span-5 space-y-6">
-            
-            {/* Composite Scorecard */}
-            {selectedCluster && (
-              <div className="bg-white border border-stone-200 rounded-3xl p-5 space-y-4 shadow-sm">
-                <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-                  <div>
-                    <span className="text-xs font-bold text-orange-600 uppercase tracking-wider">Demand Cluster #{selectedCluster.id}</span>
-                    <h3 className="text-base font-bold text-stone-900">{selectedCluster.label}</h3>
+          {/* SECTION 2: FULL-WIDTH SELECTED DEMAND CLUSTER SCORECARD */}
+          {selectedCluster && (
+            <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs font-extrabold text-orange-600 uppercase tracking-wider">Demand Cluster #{selectedCluster.id}</span>
+                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                      CRITICAL GROUND HOTSPOT
+                    </span>
                   </div>
-                  <div className="text-right">
-                    <span className="text-xs text-stone-500 font-medium">PPI Score</span>
-                    <p className="text-2xl font-extrabold text-orange-600">{selectedCluster.ppi_score} <span className="text-xs font-normal text-stone-400">/ 100</span></p>
-                  </div>
+                  <h3 className="text-xl font-extrabold text-stone-900 mt-0.5">{selectedCluster.label}</h3>
+                  <p className="text-xs text-stone-500 font-semibold">{selectedCluster.locality} • {selectedCluster.complaint_count} Verified Voice Requests</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 space-y-1">
-                    <span className="text-[11px] text-stone-500 font-semibold">Citizen Demand</span>
-                    <p className="text-sm font-extrabold text-blue-600">{selectedCluster.demand_score} / 100</p>
-                    <p className="text-[10px] text-stone-400">{selectedCluster.complaint_count} Requests</p>
-                  </div>
+                <div className="bg-orange-50 border border-orange-200 px-5 py-3 rounded-2xl text-center shrink-0">
+                  <span className="text-xs text-stone-500 font-bold uppercase">PPI Priority Score</span>
+                  <p className="text-3xl font-extrabold text-orange-600 leading-none mt-1">
+                    {selectedCluster.ppi_score} <span className="text-sm font-normal text-stone-400">/ 100</span>
+                  </p>
+                </div>
+              </div>
 
-                  <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 space-y-1">
-                    <span className="text-[11px] text-stone-500 font-semibold">Census Poverty</span>
-                    <p className="text-sm font-extrabold text-purple-600">{selectedCluster.poverty_score} / 100</p>
-                    <p className="text-[10px] text-stone-400">MPI Poverty: 0.52</p>
-                  </div>
-
-                  <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 space-y-1">
-                    <span className="text-[11px] text-stone-500 font-semibold">Infra Deficit</span>
-                    <p className="text-sm font-extrabold text-amber-600">{selectedCluster.infra_gap_score} / 100</p>
-                    <p className="text-[10px] text-stone-400">0 Drains in 3km</p>
-                  </div>
-
-                  <div className="bg-stone-50 p-3 rounded-2xl border border-stone-200 space-y-1">
-                    <span className="text-[11px] text-stone-500 font-semibold">Budget Deficit</span>
-                    <p className="text-sm font-extrabold text-rose-600">{selectedCluster.budget_gap_score} / 100</p>
-                    <p className="text-[10px] text-stone-400">₹0 Budget Allocated</p>
-                  </div>
+              {/* 4 Stat Cards Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-1">
+                  <span className="text-[11px] text-stone-500 font-bold uppercase">Citizen Demand</span>
+                  <p className="text-xl font-extrabold text-blue-600">{selectedCluster.demand_score} / 100</p>
+                  <p className="text-[10px] text-stone-400 font-semibold">{selectedCluster.complaint_count} Verified Voice Requests</p>
                 </div>
 
+                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-1">
+                  <span className="text-[11px] text-stone-500 font-bold uppercase">Census Poverty</span>
+                  <p className="text-xl font-extrabold text-purple-600">{selectedCluster.poverty_score} / 100</p>
+                  <p className="text-[10px] text-stone-400 font-semibold">MPI Poverty Rate: 0.52</p>
+                </div>
+
+                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-1">
+                  <span className="text-[11px] text-stone-500 font-bold uppercase">Infra Deficit</span>
+                  <p className="text-xl font-extrabold text-amber-600">{selectedCluster.infra_gap_score} / 100</p>
+                  <p className="text-[10px] text-stone-400 font-semibold">0 Stormwater Drains in 3.2km Radius</p>
+                </div>
+
+                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-1">
+                  <span className="text-[11px] text-stone-500 font-bold uppercase">Budget Deficit</span>
+                  <p className="text-xl font-extrabold text-rose-600">{selectedCluster.budget_gap_score} / 100</p>
+                  <p className="text-[10px] text-stone-400 font-semibold">₹0 Municipal Budget Allocated</p>
+                </div>
+              </div>
+
+              <div className="pt-2">
                 <button
                   onClick={() => onOpenDPR(selectedCluster)}
-                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs py-3 rounded-xl shadow-md shadow-orange-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <FileText className="w-4 h-4" /> Synthesize Detailed Project Report (DPR)
+                  <FileText className="w-4.5 h-4.5" />
+                  <span>Synthesize Detailed Project Report (DPR)</span>
                 </button>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Clusters List */}
-            <div className="bg-white border border-stone-200 rounded-3xl p-5 space-y-3 shadow-sm">
-              <h3 className="text-sm font-bold text-stone-900 flex items-center gap-2">
-                <Flame className="w-4 h-4 text-orange-600" /> AI Demand Clusters (Grouped Hotspots)
+          {/* SECTION 3: FULL-WIDTH AI DEMAND HOTSPOT CLUSTERS GRID */}
+          <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
+              <h3 className="text-base font-extrabold text-stone-900 flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-600" /> AI Demand Hotspot Clusters (Grouped Spatial Clusters)
               </h3>
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
-                {clusters.map((c) => (
+              <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-3 py-1 rounded-full border border-orange-200">
+                {clusters.length} Active Hotspots
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {clusters.map((c) => {
+                const isSelected = selectedCluster?.id === c.id;
+                return (
                   <div
                     key={c.id}
                     onClick={() => setSelectedCluster(c)}
-                    className={`p-3 rounded-2xl border transition-all cursor-pointer ${
-                      selectedCluster?.id === c.id
-                        ? 'bg-orange-50 border-orange-300 shadow-sm'
-                        : 'bg-stone-50 border-stone-200 hover:border-stone-300'
+                    className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-3 ${
+                      isSelected
+                        ? 'bg-orange-50/80 border-orange-400 ring-2 ring-orange-500/20 shadow-md'
+                        : 'bg-stone-50 border-stone-200 hover:border-orange-300 hover:bg-stone-100/80'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-stone-900">{c.label}</span>
-                      <span className="text-xs font-extrabold text-orange-600">{c.ppi_score} PPI</span>
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="text-[10px] font-extrabold text-orange-600 uppercase tracking-wider">#{c.id}</span>
+                        <h4 className="text-sm font-extrabold text-stone-900 leading-snug">{c.label}</h4>
+                      </div>
+                      <span className="bg-orange-600 text-white text-xs font-black px-2.5 py-1 rounded-xl shrink-0 shadow-sm">
+                        {c.ppi_score} PPI
+                      </span>
                     </div>
-                    <p className="text-[11px] text-stone-500 mt-1">{c.locality} • {c.complaint_count} Requests</p>
-                  </div>
-                ))}
-              </div>
-            </div>
 
+                    <div className="flex items-center justify-between text-xs text-stone-500 font-semibold pt-1 border-t border-stone-200/60">
+                      <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-stone-400" /> {c.locality}</span>
+                      <span className="font-extrabold text-stone-800">{c.complaint_count} Requests</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
         </div>
