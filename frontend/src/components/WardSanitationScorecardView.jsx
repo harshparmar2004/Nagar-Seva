@@ -117,19 +117,17 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-16">
 
       {/* HEADER BANNER WITH DYNAMIC WARD SELECTOR */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-7 text-white shadow-xl relative overflow-hidden space-y-5">
-        {/* Glow backdrop accent */}
-        <div className="absolute -top-24 -right-24 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
+      <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-7 shadow-sm relative overflow-hidden space-y-5 text-stone-900">
+        
         {/* Top bar: Badge & Ward Selector + GPS */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           <div className="space-y-2 max-w-2xl">
-            <div className="inline-flex items-center space-x-2 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-full text-[11px] font-extrabold tracking-wider">
-              <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <div className="inline-flex items-center space-x-2 bg-orange-100 text-orange-800 border border-orange-200 px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide">
+              <Trophy className="w-3.5 h-3.5 text-orange-600" />
               <span>SWACHH SURVEKSHAN #1 INDORE PUBLIC TRACKER</span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white leading-tight tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900 leading-tight tracking-tight">
               {analytics?.ward_name || 'Indore Municipal Ward Tracker'}
             </h2>
           </div>
@@ -141,31 +139,31 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
                 setSelectedWardId(liveGpsWardId);
                 detectLiveGpsLocation();
               }}
-              className="bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+              className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-xs font-bold px-3.5 py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-xs"
               title="Locate My Ward via GPS"
             >
-              <Compass className="w-4 h-4 text-emerald-400 animate-spin" style={{ animationDuration: '8s' }} />
+              <Compass className="w-4 h-4 text-emerald-600 animate-spin" style={{ animationDuration: '8s' }} />
               <span>{liveGpsLabel}</span>
             </button>
 
             <select
               value={selectedWardId}
               onChange={(e) => setSelectedWardId(e.target.value)}
-              className="bg-slate-800 hover:bg-slate-750 text-white text-xs font-extrabold px-3.5 py-2 rounded-xl border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer shadow-sm"
+              className="bg-stone-50 hover:bg-stone-100 text-stone-900 text-xs font-extrabold px-3.5 py-2 rounded-xl border border-stone-200 focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer shadow-xs"
             >
               {wardsList.length > 0 ? (
                 wardsList.map((w) => (
-                  <option key={w.id} value={w.id} className="bg-slate-800 text-white">
+                  <option key={w.id} value={w.id} className="bg-white text-stone-900">
                     {w.name}
                   </option>
                 ))
               ) : (
                 <>
-                  <option value="ward_52" className="bg-slate-800 text-white">Ward 52 — Musakhedi, Mayur Nagar & Ring Road</option>
-                  <option value="ward_14" className="bg-slate-800 text-white">Ward 14 — Rajendra Nagar & Cat Road Corridor</option>
-                  <option value="ward_40" className="bg-slate-800 text-white">Ward 40 — Khajrana Main Sector</option>
-                  <option value="ward_27" className="bg-slate-800 text-white">Ward 27 — Vijay Nagar Sector A-C</option>
-                  <option value="ward_1" className="bg-slate-800 text-white">Ward 1 — Sirpur & Kalani Nagar</option>
+                  <option value="ward_52" className="bg-white text-stone-900">Ward 52 — Musakhedi, Mayur Nagar & Ring Road</option>
+                  <option value="ward_14" className="bg-white text-stone-900">Ward 14 — Rajendra Nagar & Cat Road Corridor</option>
+                  <option value="ward_40" className="bg-white text-stone-900">Ward 40 — Khajrana Main Sector</option>
+                  <option value="ward_27" className="bg-white text-stone-900">Ward 27 — Vijay Nagar Sector A-C</option>
+                  <option value="ward_1" className="bg-white text-stone-900">Ward 1 — Sirpur & Kalani Nagar</option>
                 </>
               )}
             </select>
@@ -174,21 +172,20 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
         </div>
 
         {/* Structured Metadata Stat Pills */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-slate-800/80 relative z-10">
-          <div className="bg-slate-800/50 border border-slate-800 rounded-2xl px-4 py-2.5 flex items-center justify-between">
-            <span className="text-stone-400 text-xs font-semibold">Administrative Zone</span>
-            <span className="text-white text-xs font-extrabold">{analytics?.zone || 'Zone 14'}</span>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-stone-100">
+          <div className="bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 flex items-center justify-between">
+            <span className="text-stone-500 text-xs font-bold">Administrative Zone</span>
+            <span className="text-stone-900 text-xs font-extrabold">{analytics?.zone || 'Zone 14'}</span>
           </div>
-          <div className="bg-slate-800/50 border border-slate-800 rounded-2xl px-4 py-2.5 flex items-center justify-between">
-            <span className="text-stone-400 text-xs font-semibold">Ward Population</span>
-            <span className="text-white text-xs font-extrabold">{analytics?.population?.toLocaleString() || '46,200'}</span>
+          <div className="bg-stone-50 border border-stone-200 rounded-2xl px-4 py-3 flex items-center justify-between">
+            <span className="text-stone-500 text-xs font-bold">Ward Population</span>
+            <span className="text-stone-900 text-xs font-extrabold">{analytics?.population?.toLocaleString() || '46,200'}</span>
           </div>
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-4 py-2.5 flex items-center justify-between">
-            <span className="text-emerald-300 text-xs font-semibold">Resolution Efficiency</span>
-            <span className="text-emerald-400 text-xs font-black">{analytics?.resolution_rate_pct || 94.5}% Solved</span>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 flex items-center justify-between">
+            <span className="text-emerald-700 text-xs font-bold">Resolution Efficiency</span>
+            <span className="text-emerald-700 text-xs font-black">{analytics?.resolution_rate_pct || 94.5}% Solved</span>
           </div>
         </div>
-
       </div>
 
       {/* ADMIN NOTIFICATION TOAST */}
