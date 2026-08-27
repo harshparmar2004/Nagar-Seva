@@ -7,6 +7,7 @@ import CommunitySupportView from './components/CommunitySupportView';
 import WardSanitationScorecardView from './components/WardSanitationScorecardView';
 import EmergencyHotlineView from './components/EmergencyHotlineView';
 import AdminPortal from './components/AdminPortal';
+import CityHeatmapView from './components/CityHeatmapView';
 import AnalyticsView from './components/AnalyticsView';
 import DPRModal from './components/DPRModal';
 import AuthModal from './components/AuthModal';
@@ -91,6 +92,13 @@ export default function App() {
             isSuperAdmin={isSuperAdmin}
             onOpenAuth={() => setIsAuthOpen(true)}
             onOpenDPR={(cluster) => setSelectedClusterForDPR(cluster || { id: 'DC-IND-001' })}
+          />
+        )}
+
+        {activeTab === 'admin-heatmap' && (
+          <CityHeatmapView
+            isSuperAdmin={isSuperAdmin}
+            onOpenAuth={() => setIsAuthOpen(true)}
           />
         )}
 

@@ -61,7 +61,8 @@ export default function SidebarLayout({
 
   const adminNavItems = [
     { id: 'admin-gis', label: 'City GIS Map & Demand Overview', icon: MapPin, badge: 'GIS' },
-    { id: 'admin-clusters', label: 'Master Complaints Approval', icon: Flame, badge: 'Approve' },
+    { id: 'admin-heatmap', label: 'City Heatmap Analytics', icon: Flame, badge: 'Heatmap' },
+    { id: 'admin-clusters', label: 'Master Complaints Approval', icon: Layers, badge: 'Approve' },
     { id: 'admin-analytics', label: 'Data Fusion Analytics', icon: TrendingUp, badge: 'Analytics' },
     { id: 'admin-dpr', label: 'AI DPR & Priority Rankings', icon: Sparkles, badge: 'AI DPR' },
     { id: 'admin-roles', label: 'Super Admin Gmail Roles', icon: Shield, badge: 'RBAC' },
