@@ -32,6 +32,7 @@ function MapResizer() {
 export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, isSuperAdmin, onOpenAuth }) {
   const [complaints, setComplaints] = useState([]);
   const [clusters, setClusters] = useState([]);
+  const [wardsList, setWardsList] = useState([]);
   const [selectedCluster, setSelectedCluster] = useState(null);
   
   // Advanced Filter Controls for Super Admin GIS & Master Complaints Table
@@ -78,6 +79,10 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
       const clusData = await clusRes.json();
       setClusters(clusData);
       if (clusData.length > 0) setSelectedCluster(clusData[0]);
+
+      const wardsRes = await fetch('http://localhost:8000/api/wards');
+      const wardsData = await wardsRes.json();
+      setWardsList(wardsData);
     } catch (e) {
       console.error('Error fetching admin data:', e);
     } finally {
@@ -640,20 +645,18 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 />
               </div>
 
-              {/* 2. Ward Filter Dropdown */}
+              {/* 2. DYNAMIC Ward Filter Dropdown (Renders ALL 85 Wards!) */}
               <select
                 value={selectedWardFilter}
                 onChange={(e) => setSelectedWardFilter(e.target.value)}
                 className="bg-white border border-stone-300 rounded-xl px-2.5 py-2 text-stone-900 focus:outline-none cursor-pointer shadow-sm"
               >
                 <option value="ALL">📍 All Wards (1–85)</option>
-                <option value="ward_52">Ward 52 (Musakhedi & Mayur Nagar)</option>
-                <option value="ward_14">Ward 14 (Rajendra Nagar)</option>
-                <option value="ward_15">Ward 15 (Silicon City)</option>
-                <option value="ward_8">Ward 8 (Banganga Industrial)</option>
-                <option value="ward_7">Ward 7 (Chandan Nagar)</option>
-                <option value="ward_2">Ward 2 (Vijay Nagar Hub)</option>
-                <option value="ward_3">Ward 3 (Palasia Sector)</option>
+                {wardsList.map((w) => (
+                  <option key={w.id} value={w.id}>
+                    {w.name}
+                  </option>
+                ))}
               </select>
 
               {/* 3. Zone Scheme Filter Dropdown */}
