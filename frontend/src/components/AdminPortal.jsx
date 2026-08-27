@@ -6,7 +6,7 @@ import {
   Building2, User, Landmark, Filter, Search, CheckCircle2, RefreshCw,
   SlidersHorizontal, Eye, Clock, Check, Camera, Image, X, Plus, PlusCircle,
   XCircle, CheckCheck, Loader2, DollarSign, Users, Megaphone, CheckSquare, MapPin,
-  Calendar, CheckSquare2, Info
+  Calendar, CheckSquare2, Info, Compass, AlertTriangle, ArrowRight, Activity
 } from 'lucide-react';
 
 const createCustomIcon = (color) => {
@@ -33,9 +33,14 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const [complaints, setComplaints] = useState([]);
   const [clusters, setClusters] = useState([]);
   const [selectedCluster, setSelectedCluster] = useState(null);
+  
+  // Advanced Filter Controls for Super Admin GIS
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedZoneFilter, setSelectedZoneFilter] = useState('ALL');
+  const [selectedUrgencyFilter, setSelectedUrgencyFilter] = useState('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
   const [showResolvedOnMap, setShowResolvedOnMap] = useState(false);
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [inspectPhotoModal, setInspectPhotoModal] = useState(null);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -178,7 +183,8 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const activeMapComplaints = complaints.filter(c => {
     if (!showResolvedOnMap && c.current_status === 'RESOLVED') return false;
     const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
-    return matchesCat;
+    const matchesUrgency = selectedUrgencyFilter === 'ALL' || c.urgency === selectedUrgencyFilter;
+    return matchesCat && matchesUrgency;
   });
 
   // Calculate live pin color counts
@@ -276,31 +282,54 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         </div>
       )}
 
-      {/* SUB-TAB 1: INTERACTIVE GIS SPATIAL MAP (FULL-WIDTH VERTICAL STACKED LAYOUT) */}
+      {/* SUB-TAB 1: INTERACTIVE GIS SPATIAL MAP (INDORE CITY MASTER COMMAND DASHBOARD) */}
       {activeSubTab === 'admin-gis' && (
         <div className="space-y-6">
           
-          {/* SECTION 1: FULL-WIDTH GIS SPATIAL MAP */}
+          {/* SECTION 1: FULL-WIDTH GIS SPATIAL MAP WITH ADVANCED SUPER ADMIN CONTROLS */}
           <div className="bg-white border border-stone-200 rounded-3xl p-5 space-y-4 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-stone-100">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-stone-100">
               <div className="flex items-center space-x-2">
                 <Layers className="w-5 h-5 text-orange-600" />
-                <h3 className="text-base font-extrabold text-stone-900">GIS Spatial Demand Map — Indore IMC</h3>
+                <h3 className="text-base font-extrabold text-stone-900">GIS Spatial Demand Map — Indore City Overview</h3>
                 <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-orange-200">
-                  {activeMapComplaints.length} Active Pins Displayed
+                  {activeMapComplaints.length} Unresolved Pins Active
                 </span>
               </div>
               
-              <div className="flex items-center space-x-2 text-xs font-bold">
-                <span className="text-stone-400">Filter:</span>
-                <button onClick={() => setSelectedCategory('ALL')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'ALL' ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-600 hover:bg-stone-200'}`}>All Pins</button>
-                <button onClick={() => setSelectedCategory('Sanitation & Drainage')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'Sanitation & Drainage' ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'}`}>Sanitation (Red)</button>
-                <button onClick={() => setSelectedCategory('Public Works')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'Public Works' ? 'bg-orange-600 text-white' : 'bg-orange-50 text-orange-700 hover:bg-orange-100'}`}>Roads (Orange)</button>
-                <button onClick={() => setSelectedCategory('Electricity')} className={`px-3 py-1 rounded-xl transition-all cursor-pointer ${selectedCategory === 'Electricity' ? 'bg-amber-600 text-white' : 'bg-amber-50 text-amber-700 hover:bg-amber-100'}`}>Electricity (Yellow)</button>
+              {/* Advanced Filter Toolbar */}
+              <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+                <span className="text-stone-400">Map Filters:</span>
+                
+                {/* Category Dropdown */}
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="bg-stone-50 border border-stone-300 text-stone-800 px-3 py-1.5 rounded-xl font-bold focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Categories</option>
+                  <option value="Sanitation & Drainage">Sanitation & Drainage (Red)</option>
+                  <option value="Public Works">Roads & Potholes (Orange)</option>
+                  <option value="Electricity">Electricity & Lights (Yellow)</option>
+                  <option value="Water Supply">Water Supply (Blue)</option>
+                </select>
+
+                {/* Urgency Filter */}
+                <select
+                  value={selectedUrgencyFilter}
+                  onChange={(e) => setSelectedUrgencyFilter(e.target.value)}
+                  className="bg-stone-50 border border-stone-300 text-stone-800 px-3 py-1.5 rounded-xl font-bold focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Urgencies</option>
+                  <option value="Critical">Critical Red Alerts Only</option>
+                  <option value="High">High Urgency</option>
+                  <option value="Standard">Standard Urgency</option>
+                </select>
               </div>
             </div>
 
-            <div className="w-full h-[520px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
+            {/* Map Container */}
+            <div className="w-full h-[540px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
               <MapContainer
                 center={[22.7000, 75.8350]}
                 zoom={12}
@@ -483,19 +512,17 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
           </div>
 
-          {/* SECTION 3: FULL-WIDTH SELECTED DEMAND CLUSTER SCORECARD */}
+          {/* SECTION 3: TOP CITY PRIORITY CRISIS & AI DPR SYNTHESIS PANEL */}
           {selectedCluster && (
             <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-5 shadow-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
                 <div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs font-extrabold text-orange-600 uppercase tracking-wider">Demand Cluster #{selectedCluster.id}</span>
-                    <span className="bg-emerald-100 text-emerald-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                      CRITICAL GROUND HOTSPOT
-                    </span>
+                    <AlertTriangle className="w-4 h-4 text-rose-500" />
+                    <span className="text-xs font-extrabold text-rose-600 uppercase tracking-wider">#1 CITY GROUND HOTSPOT — SENSITIVE SECTOR</span>
                   </div>
                   <h3 className="text-xl font-extrabold text-stone-900 mt-0.5">{selectedCluster.label}</h3>
-                  <p className="text-xs text-stone-500 font-semibold">{selectedCluster.locality} • {selectedCluster.complaint_count} Verified Voice Requests</p>
+                  <p className="text-xs text-stone-500 font-semibold">{selectedCluster.locality} • {selectedCluster.complaint_count} Verified Voice Grievances</p>
                 </div>
 
                 <div className="bg-orange-50 border border-orange-200 px-5 py-3 rounded-2xl text-center shrink-0">
@@ -538,56 +565,12 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   onClick={() => onOpenDPR(selectedCluster)}
                   className="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-lg shadow-orange-600/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  <FileText className="w-4.5 h-4.5" />
+                  <Sparkles className="w-4.5 h-4.5" />
                   <span>Synthesize Detailed Project Report (DPR)</span>
                 </button>
               </div>
             </div>
           )}
-
-          {/* SECTION 4: FULL-WIDTH AI DEMAND HOTSPOT CLUSTERS GRID */}
-          <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-              <h3 className="text-base font-extrabold text-stone-900 flex items-center gap-2">
-                <Flame className="w-5 h-5 text-orange-600" /> AI Demand Hotspot Clusters (Grouped Spatial Clusters)
-              </h3>
-              <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-3 py-1 rounded-full border border-orange-200">
-                {clusters.length} Active Hotspots
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {clusters.map((c) => {
-                const isSelected = selectedCluster?.id === c.id;
-                return (
-                  <div
-                    key={c.id}
-                    onClick={() => setSelectedCluster(c)}
-                    className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-3 ${
-                      isSelected
-                        ? 'bg-orange-50/80 border-orange-400 ring-2 ring-orange-500/20 shadow-md'
-                        : 'bg-stone-50 border-stone-200 hover:border-orange-300 hover:bg-stone-100/80'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <span className="text-[10px] font-extrabold text-orange-600 uppercase tracking-wider">#{c.id}</span>
-                        <h4 className="text-sm font-extrabold text-stone-900 leading-snug">{c.label}</h4>
-                      </div>
-                      <span className="bg-orange-600 text-white text-xs font-black px-2.5 py-1 rounded-xl shrink-0 shadow-sm">
-                        {c.ppi_score} PPI
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-xs text-stone-500 font-semibold pt-1 border-t border-stone-200/60">
-                      <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5 text-stone-400" /> {c.locality}</span>
-                      <span className="font-extrabold text-stone-800">{c.complaint_count} Requests</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
         </div>
       )}
