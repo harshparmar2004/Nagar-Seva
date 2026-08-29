@@ -54,7 +54,7 @@ export default function SidebarLayout({
     { id: 'citizen-voice', label: 'Submit Citizen Request Wizard', icon: Mic },
     { id: 'citizen-my-complaints', label: 'My Registered Complaints', icon: ListChecks },
     { id: 'citizen-track', label: 'Track Any Token Status', icon: Search },
-    { id: 'citizen-upvote', label: 'AI DPR & Priority Rankings', icon: Sparkles, badge: 'AI DPR' },
+    { id: 'citizen-upvote', label: 'Community Project Support', icon: ThumbsUp },
     { id: 'citizen-scorecard', label: 'Ward Swachhata & Garbage Tracker', icon: Trophy },
     { id: 'citizen-emergency', label: '24/7 Red Alert Hotline', icon: AlertOctagon, isEmergency: true },
   ];

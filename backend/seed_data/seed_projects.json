@@ -23,146 +23,60 @@
       "economic_savings": "₹1.4 Crores saved annually in individual healthcare and property repair costs"
     },
     "community_upvotes": 2340,
+    "total_ratings": 520,
+    "rating_sum": 2340.0,
     "status": "APPROVED_FOR_DPR"
   },
   {
     "id": "DPR-2026-002",
     "cluster_id": "DC-IND-002",
-    "title": "Super Corridor Expressway Expansion & BRTS Integration",
-    "locality": "Super Corridor, Indore",
+    "title": "Sanwer Road Industrial Freight Corridor Asphalt Reconstruction",
+    "locality": "Ward 8, Banganga Industrial Belt, Indore",
     "category": "Public Works & Transportation",
-    "responsible_department": "PWD / IMC",
-    "responsible_ministry": "MoRTH",
-    "estimated_budget_inr": 850000000,
-    "formatted_budget": "₹85 Crores",
-    "target_beneficiaries": 150000,
+    "estimated_budget_inr": 85000000,
+    "formatted_budget": "₹8.50 Crores",
+    "target_beneficiaries": 68000,
     "roi_score": 88,
-    "funding_scheme": "PM Gati Shakti / Smart Cities Mission",
-    "problem_justification": "Traffic volume on the existing Super Corridor has exceeded capacity by 45%, leading to acute bottlenecks during peak hours. High accident rates and delayed transit times negatively impact IT hub productivity and airport connectivity.",
+    "funding_scheme": "PM Gati Shakti National Master Plan",
+    "problem_justification": "Heavy freight movement and severe waterlogging caused massive structural failure on 4.2 km of industrial road. Over 312 citizen and transporter complaints logged.",
     "scope_of_work": [
-      "Widening of 6.2 km arterial road from 4 to 6 lanes",
-      "Construction of 2 grade-separated flyovers",
-      "Dedicated BRT lane integration and pedestrian pathways",
-      "Installation of smart traffic management and AI surveillance systems"
+      "4.2 km 6-lane heavy duty concrete road construction",
+      "Stormwater side drain channels with silt traps",
+      "Industrial logistics truck parking bay creation"
     ],
     "impact_metrics": {
-      "travel_time_reduction": "40% reduction in average commute times",
-      "accident_prevention": "Expected 60% decrease in traffic-related incidents",
-      "economic_growth": "Enhances connectivity for 5 major IT parks"
+      "travel_time": "40% reduction in industrial transit delays",
+      "accident_prevention": "75% reduction in monsoon vehicle breakdowns"
     },
-    "community_upvotes": 1850,
-    "status": "UNDER_REVIEW"
+    "community_upvotes": 1420,
+    "total_ratings": 310,
+    "rating_sum": 1333.0,
+    "status": "APPROVED_FOR_DPR"
   },
   {
     "id": "DPR-2026-003",
-    "cluster_id": "DC-IND-004",
-    "title": "Narmada Water Supply Phase-IV Capacity Augmentation",
-    "locality": "City-wide, Indore",
-    "category": "Water Supply & Infrastructure",
-    "responsible_department": "PHED / IMC Water Department",
-    "responsible_ministry": "Ministry of Jal Shakti",
-    "estimated_budget_inr": 1200000000,
-    "formatted_budget": "₹120 Crores",
-    "target_beneficiaries": 850000,
-    "roi_score": 92,
-    "funding_scheme": "AMRUT 2.0",
-    "problem_justification": "Rapid urban expansion has led to a 120 MLD deficit in potable water supply, forcing reliance on over-extracted groundwater in peripheral wards. Pipeline leakages currently account for 25% non-revenue water.",
-    "scope_of_work": [
-      "Laying of 45 km of primary and secondary transmission mains",
-      "Upgrading 3 key pumping stations with energy-efficient motors",
-      "Construction of 5 new overhead reservoirs (OHTs)",
-      "Implementation of SCADA for leak detection and flow monitoring"
-    ],
-    "impact_metrics": {
-      "water_availability": "Ensures 24x7 pressurized water supply to 1.2 lakh households",
-      "nrw_reduction": "Reduces Non-Revenue Water (NRW) from 25% to 10%",
-      "groundwater_recovery": "Reduces dependency on 400+ municipal borewells"
-    },
-    "community_upvotes": 3200,
-    "status": "APPROVED_FOR_DPR"
-  },
-  {
-    "id": "DPR-2026-004",
     "cluster_id": "DC-IND-003",
-    "title": "City-Wide Solar Grid & Smart Streetlighting Upgrade",
-    "locality": "All 85 Wards, Indore",
+    "title": "Solar High-Mast Grid & Smart LED Public Safety Lighting Network",
+    "locality": "Wards 7 & 10 Peripheral Outer Ring Corridor, Indore",
     "category": "Energy & Public Safety",
-    "responsible_department": "Smart City Development Ltd.",
-    "responsible_ministry": "Ministry of New and Renewable Energy",
-    "estimated_budget_inr": 280000000,
-    "formatted_budget": "₹28 Crores",
-    "target_beneficiaries": 2000000,
-    "roi_score": 85,
-    "funding_scheme": "Smart Cities Mission / National Solar Mission",
-    "problem_justification": "High energy bills for street lighting place a severe strain on the municipal budget, while 18% of streetlights are currently dysfunctional. Poor lighting in several wards correlates with increased petty crime rates at night.",
+    "estimated_budget_inr": 28000000,
+    "formatted_budget": "₹2.80 Crores",
+    "target_beneficiaries": 52000,
+    "roi_score": 82,
+    "funding_scheme": "Smart Cities Mission / National Solar Grid Scheme",
+    "problem_justification": "Frequent power outages and unlit stretches across peripheral bypass junctions led to safety concerns and high evening traffic collisions. 185 complaints registered.",
     "scope_of_work": [
-      "Retrofitting 45,000 existing streetlights with smart LED fixtures",
-      "Installation of 2 MW rooftop solar panels on 25 municipal buildings",
-      "Integration with a Centralized Control and Monitoring System (CCMS)",
-      "Deployment of 500 solar-powered independent lighting poles in off-grid parks"
+      "Installation of 140 solar-powered high-mast LED poles",
+      "Centralized IoT grid monitoring controller installation",
+      "Automated dusk-to-dawn dimming sensors"
     ],
     "impact_metrics": {
-      "energy_savings": "₹5.2 Crores annual reduction in electricity bills",
-      "carbon_footprint": "Offsets 15,000 metric tons of CO2 annually",
-      "public_safety": "Enhances nighttime visibility and reduces petty crimes by 20%"
+      "energy_savings": "60% lower municipal electricity expenditure",
+      "public_safety": "85% decrease in unlit nocturnal safety incidents"
     },
     "community_upvotes": 980,
-    "status": "TENDER_ISSUED"
-  },
-  {
-    "id": "DPR-2026-005",
-    "cluster_id": "DC-IND-005",
-    "title": "Integrated Solid Waste Management & Bio-CNG Plant",
-    "locality": "Devguradia Trenching Ground, Indore",
-    "category": "Sanitation & Environment",
-    "responsible_department": "Solid Waste Management, IMC",
-    "responsible_ministry": "MoHUA",
-    "estimated_budget_inr": 950000000,
-    "formatted_budget": "₹95 Crores",
-    "target_beneficiaries": 3000000,
-    "roi_score": 96,
-    "funding_scheme": "Swachh Bharat Mission 2.0",
-    "problem_justification": "With daily waste generation reaching 1,200 metric tons, existing processing facilities are operating at 110% capacity. An advanced Bio-CNG plant is required to sustain Indore's #1 cleanest city ranking and manage future organic waste efficiently.",
-    "scope_of_work": [
-      "Construction of a 500 TPD Bio-CNG processing unit",
-      "Upgrading material recovery facilities (MRF) with AI-sorting robotic arms",
-      "Procurement of 120 CNG-powered secondary waste collection vehicles",
-      "Establishment of a localized green hydrogen pilot extractor"
-    ],
-    "impact_metrics": {
-      "waste_processing": "Increases daily processing capacity by 500 tons",
-      "fuel_generation": "Produces 17,000 kg of Bio-CNG daily for city buses",
-      "landfill_diversion": "Achieves 100% zero-landfill status for organic waste"
-    },
-    "community_upvotes": 1560,
+    "total_ratings": 220,
+    "rating_sum": 946.0,
     "status": "APPROVED_FOR_DPR"
-  },
-  {
-    "id": "DPR-2026-006",
-    "cluster_id": "DC-IND-006",
-    "title": "Indore Metro Rail Phase 1B Extension",
-    "locality": "Bhawrasla to Radisson Square, Indore",
-    "category": "Urban Transport",
-    "responsible_department": "MPMRCL",
-    "responsible_ministry": "MoHUA / MoRTH",
-    "estimated_budget_inr": 4500000000,
-    "formatted_budget": "₹450 Crores",
-    "target_beneficiaries": 500000,
-    "roi_score": 91,
-    "funding_scheme": "National Urban Transport Policy",
-    "problem_justification": "The Eastern corridor of Indore faces massive congestion, with travel speeds dropping to 12 km/h during peak hours. Current public transit covers less than 30% of this high-density residential and commercial zone.",
-    "scope_of_work": [
-      "Construction of 8.5 km elevated metro viaduct",
-      "Development of 7 new elevated metro stations with multi-modal integration",
-      "Procurement of 3 new rolling stock trains (3-car configuration)",
-      "Land acquisition and utility shifting along the corridor"
-    ],
-    "impact_metrics": {
-      "ridership": "Expected daily ridership of 1.2 lakh passengers",
-      "congestion_relief": "Removes approximately 40,000 private vehicles from the road daily",
-      "travel_time": "Reduces end-to-end travel time from 45 mins to 16 mins"
-    },
-    "community_upvotes": 4100,
-    "status": "UNDER_REVIEW"
   }
 ]

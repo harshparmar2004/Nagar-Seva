@@ -38,10 +38,17 @@ samples_hnd = [
     ("Khajrana bypass side drain jam hone se raaste me paani bhara hai.", "Sanitation & Drainage", "High", False, "ward_10", 22.7310, 75.9110),
 ]
 
+statuses = ["PENDING_ADMIN_REVIEW", "APPROVED_BY_ADMIN", "RESOLVED"]
+
 for i in range(1, 850):
     sample = samples_hnd[i % len(samples_hnd)]
     lat_offset = (random.random() - 0.5) * 0.015
     lng_offset = (random.random() - 0.5) * 0.015
+    
+    is_demo_user = (i % 25 == 0) or (i <= 3)
+    user_email = "citizen.indore@gmail.com" if is_demo_user else f"citizen_{i}@indore.gov.in"
+    citizen_name = "Harsh Parmar" if is_demo_user else f"Citizen #{i}"
+    status = statuses[i % len(statuses)]
     
     complaint = {
         "id": f"NM-IND-2026-{i:05d}",
@@ -55,7 +62,17 @@ for i in range(1, 850):
         "lat": round(sample[5] + lat_offset, 5),
         "lng": round(sample[6] + lng_offset, 5),
         "photo_url": "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=500" if i % 3 == 0 else None,
-        "created_at": f"2026-08-{random.randint(1,25):02d}T{random.randint(8,20):02d}:30:00Z"
+        "created_at": f"2026-08-{random.randint(1,25):02d}T{random.randint(8,20):02d}:30:00Z",
+        "user_email": user_email,
+        "citizen_name": citizen_name,
+        "citizen_phone": "+91 9826012345" if is_demo_user else f"+91 98260{i:05d}",
+        "citizen_id_hash": f"VOTER-IND-{4800+i}",
+        "landmark": "Cat Road Square" if sample[4] == "ward_14" else "Indore Sector Landmark",
+        "verification_status": "VERIFIED_CITIZEN",
+        "responsible_department": f"Indore Municipal Corporation (IMC) — {sample[1]} Department",
+        "responsible_ministry": "Ministry of Housing & Urban Affairs (MoHUA)",
+        "nodal_officer": "Er. Rajesh Sharma (Chief Engineer)",
+        "current_status": status
     }
     complaints.append(complaint)
 
@@ -154,6 +171,60 @@ projects = [
             "economic_savings": "₹1.4 Crores saved annually in individual healthcare and property repair costs"
         },
         "community_upvotes": 2340,
+        "total_ratings": 520,
+        "rating_sum": 2340.0,
+        "status": "APPROVED_FOR_DPR"
+    },
+    {
+        "id": "DPR-2026-002",
+        "cluster_id": "DC-IND-002",
+        "title": "Sanwer Road Industrial Freight Corridor Asphalt Reconstruction",
+        "locality": "Ward 8, Banganga Industrial Belt, Indore",
+        "category": "Public Works & Transportation",
+        "estimated_budget_inr": 85000000,
+        "formatted_budget": "₹8.50 Crores",
+        "target_beneficiaries": 68000,
+        "roi_score": 88,
+        "funding_scheme": "PM Gati Shakti National Master Plan",
+        "problem_justification": "Heavy freight movement and severe waterlogging caused massive structural failure on 4.2 km of industrial road. Over 312 citizen and transporter complaints logged.",
+        "scope_of_work": [
+            "4.2 km 6-lane heavy duty concrete road construction",
+            "Stormwater side drain channels with silt traps",
+            "Industrial logistics truck parking bay creation"
+        ],
+        "impact_metrics": {
+            "travel_time": "40% reduction in industrial transit delays",
+            "accident_prevention": "75% reduction in monsoon vehicle breakdowns"
+        },
+        "community_upvotes": 1420,
+        "total_ratings": 310,
+        "rating_sum": 1333.0,
+        "status": "APPROVED_FOR_DPR"
+    },
+    {
+        "id": "DPR-2026-003",
+        "cluster_id": "DC-IND-003",
+        "title": "Solar High-Mast Grid & Smart LED Public Safety Lighting Network",
+        "locality": "Wards 7 & 10 Peripheral Outer Ring Corridor, Indore",
+        "category": "Energy & Public Safety",
+        "estimated_budget_inr": 28000000,
+        "formatted_budget": "₹2.80 Crores",
+        "target_beneficiaries": 52000,
+        "roi_score": 82,
+        "funding_scheme": "Smart Cities Mission / National Solar Grid Scheme",
+        "problem_justification": "Frequent power outages and unlit stretches across peripheral bypass junctions led to safety concerns and high evening traffic collisions. 185 complaints registered.",
+        "scope_of_work": [
+            "Installation of 140 solar-powered high-mast LED poles",
+            "Centralized IoT grid monitoring controller installation",
+            "Automated dusk-to-dawn dimming sensors"
+        ],
+        "impact_metrics": {
+            "energy_savings": "60% lower municipal electricity expenditure",
+            "public_safety": "85% decrease in unlit nocturnal safety incidents"
+        },
+        "community_upvotes": 980,
+        "total_ratings": 220,
+        "rating_sum": 946.0,
         "status": "APPROVED_FOR_DPR"
     }
 ]

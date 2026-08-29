@@ -161,32 +161,32 @@ def resolve_indore_spatial_ward(lat: float, lon: float) -> Dict[str, Any]:
 
 def analyze_complaint_text_with_ai(text: str) -> Dict[str, Any]:
     text_lower = text.lower()
-    if any(k in text_lower for k in ["drain", "sewer", "water", "nala", "overflow", "leak"]):
-        domain = "Drainage"
+    if any(k in text_lower for k in ["drain", "sewer", "nala", "overflow", "leak"]):
+        domain = "Sanitation & Drainage"
         severity = 4 if any(k in text_lower for k in ["overflow", "dirty", "health", "school", "emergency"]) else 3
-    elif any(k in text_lower for k in ["light", "wire", "pole", "current", "spark", "discom", "power"]):
-        domain = "Electricity"
+    elif any(k in text_lower for k in ["water", "peene", "pipeline", "tap", "supply"]):
+        domain = "Water Supply"
+        severity = 4
+    elif any(k in text_lower for k in ["light", "wire", "pole", "current", "spark", "discom", "power", "electricity"]):
+        domain = "Electricity & Streetlights"
         severity = 5 if any(k in text_lower for k in ["snapped", "live", "current", "spark", "fallen"]) else 3
     elif any(k in text_lower for k in ["garbage", "trash", "kachra", "waste", "cleaning", "dump"]):
-        domain = "Solid Waste"
+        domain = "Sanitation & Environment"
         severity = 2 if "smell" in text_lower else 3
     elif any(k in text_lower for k in ["road", "pothole", "asphalt", "gadda", "tar", "bridge", "footpath"]):
-        domain = "Public Works"
+        domain = "Roads & Infrastructure"
         severity = 4 if "accident" in text_lower or "deep" in text_lower else 2
-    elif any(k in text_lower for k in ["jam", "traffic", "signal", "parking", "vehicle"]):
-        domain = "Traffic"
-        severity = 2
     elif any(k in text_lower for k in ["fogging", "dengue", "mosquito", "spray", "hospital", "illness"]):
-        domain = "Health"
+        domain = "Healthcare"
         severity = 4
     else:
-        domain = "Public Works"
+        domain = "Sanitation & Drainage"
         severity = 3
 
     return {
         "domain": domain,
         "severity_rating": severity,
-        "urgency_badge": "CRITICAL" if severity >= 4 else "STANDARD"
+        "urgency_badge": "Critical" if severity >= 4 else "Standard"
     }
 
 # ------------------------------------------------------------------------------
@@ -296,6 +296,25 @@ def resolve_complaint(complaint_id: str):
             "message": f"Complaint {complaint_id} marked as RESOLVED by Super Admin!",
             "complaint": complaint,
             "whatsapp_notification": wa_result
+        }
+
+@app.post("/api/complaints/reject/{complaint_id}")
+def reject_complaint(complaint_id: str, reason: Optional[str] = Query("Administrative rejection")):
+    with Session(engine) as session:
+        complaint = session.exec(select(Complaint).where(Complaint.id == complaint_id)).first()
+        if not complaint:
+            raise HTTPException(status_code=404, detail="Complaint not found")
+            
+        complaint.current_status = "REJECTED"
+        complaint.rejected_reason = reason
+        session.add(complaint)
+        session.commit()
+        session.refresh(complaint)
+
+        return {
+            "status": "success",
+            "message": f"Complaint {complaint_id} marked as REJECTED.",
+            "complaint": complaint
         }
 
 @app.post("/api/complaints/endorse/{complaint_id}")
@@ -554,19 +573,20 @@ async def create_complaint(
     
     comp_id = f"IMC-IND-2026-W{spatial_info['ward_number']}-{random.randint(1000, 9999)}"
     
+    now_iso = datetime.now(timezone.utc).isoformat()
     new_complaint = Complaint(
         id=comp_id,
         transcript=ai_result.get("transcript", text or "Voice request recorded"),
         original_language=ai_result.get("original_language", language),
-        category=ai_triage.get("domain", "Drainage"),
-        urgency=ai_triage.get("urgency_badge", "High"),
+        category=ai_triage.get("domain", "Sanitation & Drainage"),
+        urgency=ai_triage.get("urgency_badge", "Critical"),
         health_impact=True,
         locality=f"{landmark}, {spatial_info['ward_name']}, Indore",
         ward_id=spatial_info["ward_id"],
         lat=target_lat,
         lng=target_lng,
         photo_url=photo_url,
-        created_at="2026-08-26T13:00:00Z",
+        created_at=now_iso,
         user_email=user_email or "citizen.indore@gmail.com",
         citizen_name=citizen_name or "Indore Citizen",
         citizen_phone=citizen_phone or "+91 9826012345",
@@ -594,7 +614,7 @@ async def create_complaint(
     return {
         "status": "SUCCESS",
         "receipt_token": comp_id,
-        "registration_timestamp": "2026-08-26T13:00:00Z",
+        "registration_timestamp": now_iso,
         "administrative_routing": {
             "jurisdiction": "Indore Municipal Corporation (IMC)",
             "ward_id": spatial_info["ward_id"],
@@ -632,7 +652,15 @@ def get_clusters():
 @app.get("/api/projects")
 def get_projects():
     with Session(engine) as session:
-        return session.exec(select(Project)).all()
+        projects = session.exec(select(Project)).all()
+        result = []
+        for p in projects:
+            p_dict = p.dict()
+            avg = round(p.rating_sum / p.total_ratings, 1) if p.total_ratings > 0 else 4.5
+            p_dict["average_rating"] = avg
+            p_dict["total_ratings"] = p.total_ratings if p.total_ratings > 0 else p.community_upvotes
+            result.append(p_dict)
+        return result
 
 @app.get("/api/projects/{project_id}")
 def get_project_detail(project_id: str):
@@ -642,11 +670,15 @@ def get_project_detail(project_id: str):
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
         cluster = session.exec(select(Cluster).where(Cluster.id == project.cluster_id)).first()
+        avg_rating = round(project.rating_sum / project.total_ratings, 1) if project.total_ratings > 0 else 4.5
+        p_dict = project.dict()
+        p_dict["average_rating"] = avg_rating
+        p_dict["total_ratings"] = project.total_ratings if project.total_ratings > 0 else project.community_upvotes
         return {
-            "project": project,
+            "project": p_dict,
             "cluster": cluster,
-            "average_rating": 4.2,  # placeholder
-            "total_ratings": project.community_upvotes
+            "average_rating": avg_rating,
+            "total_ratings": project.total_ratings
         }
 
 @app.post("/api/projects/{project_id}/rate")
@@ -656,14 +688,19 @@ def rate_project(project_id: str, stars: int = Query(..., ge=1, le=5)):
         project = session.exec(select(Project).where(Project.id == project_id)).first()
         if not project:
             raise HTTPException(status_code=404, detail="Project not found")
-        project.community_upvotes = project.community_upvotes + 1
+        project.community_upvotes += 1
+        project.total_ratings += 1
+        project.rating_sum += float(stars)
         session.add(project)
         session.commit()
         session.refresh(project)
+        avg = round(project.rating_sum / project.total_ratings, 1) if project.total_ratings > 0 else stars
         return {
             "status": "success",
             "message": f"Rated project {project_id} with {stars} stars",
-            "new_upvote_count": project.community_upvotes
+            "new_upvote_count": project.community_upvotes,
+            "total_ratings": project.total_ratings,
+            "average_rating": avg
         }
 
 @app.post("/api/admin/projects")

@@ -44,6 +44,7 @@ class Complaint(SQLModel, table=True):
     responsible_ministry: Optional[str] = Field(default="Ministry of Housing & Urban Affairs (MoHUA)")
     nodal_officer: Optional[str] = Field(default="Er. Rajesh Sharma (Chief Engineer)")
     current_status: Optional[str] = Field(default="PENDING_ADMIN_REVIEW")
+    rejected_reason: Optional[str] = Field(default=None)
 
 class Cluster(SQLModel, table=True):
     id: str = Field(primary_key=True)
@@ -79,4 +80,6 @@ class Project(SQLModel, table=True):
     scope_of_work: List[str] = Field(default=[], sa_column=Column(JSON))
     impact_metrics: Dict[str, Any] = Field(default={}, sa_column=Column(JSON))
     community_upvotes: int = Field(default=0)
+    total_ratings: int = Field(default=0)
+    rating_sum: float = Field(default=0.0)
     status: str = Field(default="APPROVED_FOR_DPR")
