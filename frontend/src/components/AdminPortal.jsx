@@ -236,6 +236,12 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const greenCount = complaints.filter(c => c.current_status === 'RESOLVED' || getCategoryColor(c.category) === '#10b981').length;
   const todayCount = complaints.filter(c => c.created_at && c.created_at.includes('2026-08-26')).length || 18;
 
+  const uniqueZones = Array.from(new Set(wardsList.map(w => w.zone))).filter(Boolean).sort((a, b) => {
+    const numA = parseInt(a.replace(/\D/g, '')) || 0;
+    const numB = parseInt(b.replace(/\D/g, '')) || 0;
+    return numA - numB;
+  });
+
   // Master Complaints Table & Grid Filter Logic with AI Priority Sorting
   let filteredComplaints = complaints.filter(c => {
     const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
@@ -245,7 +251,9 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
       (selectedStatusFilter === 'RESOLVED' && c.current_status === 'RESOLVED');
     
     const matchesWard = selectedWardFilter === 'ALL' || (c.ward_id && c.ward_id === selectedWardFilter);
-    const matchesZone = selectedZoneFilter === 'ALL' || (c.zone_id && c.zone_id === selectedZoneFilter);
+    const wardObj = wardsList.find(w => w.id === c.ward_id);
+    const cZone = wardObj ? wardObj.zone : c.zone_id;
+    const matchesZone = selectedZoneFilter === 'ALL' || cZone === selectedZoneFilter;
     const matchesUrgency = selectedUrgencyFilter === 'ALL' || c.urgency === selectedUrgencyFilter;
     
     const matchesSearch = !searchQuery.trim() || 
@@ -747,11 +755,12 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 onChange={(e) => setSelectedZoneFilter(e.target.value)}
                 className="bg-white border border-stone-300 rounded-xl px-2.5 py-2 text-stone-900 focus:outline-none cursor-pointer shadow-sm"
               >
-                <option value="ALL">🏢 All Municipal Zones</option>
-                <option value="zone_12">Zone 12 (South Indore Sector)</option>
-                <option value="zone_5">Zone 5 (East Indore Sector)</option>
-                <option value="zone_18">Zone 18 (North Industrial Zone)</option>
-                <option value="zone_2">Zone 2 (Central Heritage Zone)</option>
+                <option value="ALL">🏢 All Municipal Zones (1–22)</option>
+                {uniqueZones.map((z) => (
+                  <option key={z} value={z}>
+                    {z}
+                  </option>
+                ))}
               </select>
 
               {/* 4. Category Scheme Dropdown */}

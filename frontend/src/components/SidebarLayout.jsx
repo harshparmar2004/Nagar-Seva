@@ -226,19 +226,19 @@ export default function SidebarLayout({
                             ? 'bg-red-600 text-white shadow-md'
                             : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
                           : isActive
-                            ? 'bg-stone-900 text-white shadow-md'
+                            ? 'bg-orange-50 text-orange-800 border border-orange-300 shadow-sm'
                             : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
                         }
                       `}
                     >
                       <div className="flex items-center space-x-3">
-                        <Icon className={`w-4 h-4 ${item.isEmergency ? 'text-red-600' : (isActive ? 'text-orange-400' : 'text-stone-400')}`} />
+                        <Icon className={`w-4 h-4 ${item.isEmergency ? 'text-red-600' : (isActive ? 'text-orange-600' : 'text-stone-400')}`} />
                         <span>{item.label}</span>
                       </div>
                       <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
                         item.isEmergency
                           ? 'bg-red-600 text-white'
-                          : (isActive ? 'bg-orange-600 text-white' : 'bg-stone-100 text-stone-500')
+                          : (isActive ? 'bg-orange-200 text-orange-800' : 'bg-stone-100 text-stone-500')
                       }`}>
                         {item.badge}
                       </span>

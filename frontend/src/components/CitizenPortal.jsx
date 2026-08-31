@@ -14,23 +14,24 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const [otpVerified, setOtpVerified] = useState(false);
   const [idHash, setIdHash] = useState('VOTER-IND-4821');
 
-  // Comprehensive List of Indore Municipal Wards (Accurate Zone & Ward Mapping)
-  const indoreWardsList = [
+  const [indoreWardsList, setIndoreWardsList] = useState([
     { id: 'ward_52', name: 'Ward 52 — Musakhedi, Mayur Nagar & Ring Road Sector (Zone 14)', lat: 22.7120, lng: 75.9080 },
     { id: 'ward_40', name: 'Ward 40 — Khajrana Main & Shaheed Bhagat Singh Sector (Zone 9)', lat: 22.7250, lng: 75.8850 },
     { id: 'ward_27', name: 'Ward 27 — Vijay Nagar Sector A-C (Zone 7)', lat: 22.7533, lng: 75.8937 },
     { id: 'ward_1', name: 'Ward 1 — Sirpur & Kalani Nagar (Zone 1)', lat: 22.7196, lng: 75.8577 },
-    { id: 'ward_14', name: 'Ward 14 — Rajendra Nagar & Cat Road Corridor (Zone 15)', lat: 22.6800, lng: 75.8250 },
-    { id: 'ward_3', name: 'Ward 3 — Palasia & Greater Kailash (Zone 13)', lat: 22.7244, lng: 75.8839 },
-    { id: 'ward_4', name: 'Ward 4 — Bhawarkua & DAVV Campus (Zone 16)', lat: 22.6916, lng: 75.8674 },
-    { id: 'ward_5', name: 'Ward 5 — Rau & Transport Nagar (Zone 18)', lat: 22.6322, lng: 75.8055 },
-    { id: 'ward_6', name: 'Ward 6 — Sudama Nagar & Annapurna (Zone 16)', lat: 22.6974, lng: 75.8340 },
-    { id: 'ward_7', name: 'Ward 7 — Chandan Nagar & Dhar Road (Zone 1)', lat: 22.7088, lng: 75.8211 },
-    { id: 'ward_8', name: 'Ward 8 — Banganga Industrial Belt (Zone 6)', lat: 22.7712, lng: 75.8455 },
-    { id: 'ward_9', name: 'Ward 9 — Pardesipura & Kulkarni Nagar (Zone 11)', lat: 22.7410, lng: 75.8640 },
-    { id: 'ward_30', name: 'Ward 30 — Sukhlia Main & Sant Ravidas (Zone 8)', lat: 22.7680, lng: 75.8720 },
-    { id: 'ward_85', name: 'Ward 85 — Super Corridor West & Airport Zone (Zone 22)', lat: 22.7350, lng: 75.8020 }
-  ];
+    { id: 'ward_14', name: 'Ward 14 — Rajendra Nagar & Cat Road Corridor (Zone 15)', lat: 22.6800, lng: 75.8250 }
+  ]);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/wards')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setIndoreWardsList(data);
+        }
+      })
+      .catch(err => console.error(err));
+  }, []);
 
   // Step 2 State: Location & Geotagging
   const [selectedWard, setSelectedWard] = useState('ward_52');

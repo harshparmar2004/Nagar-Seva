@@ -1,21 +1,53 @@
 import json
 import random
 
-# 1. Wards Data (Real Indore IMC Wards & Landmarks)
-indore_wards = [
-    {"id": "ward_1", "name": "Rajwada & Central Market", "zone": "Zone 1 - Central", "lat": 22.7196, "lng": 75.8577, "population": 32100, "poverty_rate": 0.35, "literacy_rate": 0.82, "infra_score": 70, "budget_allocated": 15000000},
-    {"id": "ward_2", "name": "Vijay Nagar Sector A-C", "zone": "Zone 2 - East", "lat": 22.7533, "lng": 75.8937, "population": 41200, "poverty_rate": 0.18, "literacy_rate": 0.94, "infra_score": 85, "budget_allocated": 22000000},
-    {"id": "ward_3", "name": "Palasia & Greater Kailash", "zone": "Zone 2 - East", "lat": 22.7244, "lng": 75.8839, "population": 28900, "poverty_rate": 0.22, "literacy_rate": 0.91, "infra_score": 80, "budget_allocated": 18000000},
-    {"id": "ward_4", "name": "Bhawarkua & University Campus", "zone": "Zone 3 - South", "lat": 22.6916, "lng": 75.8674, "population": 38500, "poverty_rate": 0.32, "literacy_rate": 0.88, "infra_score": 65, "budget_allocated": 14000000},
-    {"id": "ward_5", "name": "Rau & Transport Nagar", "zone": "Zone 3 - South", "lat": 22.6322, "lng": 75.8055, "population": 45000, "poverty_rate": 0.48, "literacy_rate": 0.72, "infra_score": 45, "budget_allocated": 8000000},
-    {"id": "ward_6", "name": "Sudama Nagar & Annapurna", "zone": "Zone 4 - West", "lat": 22.6974, "lng": 75.8340, "population": 36700, "poverty_rate": 0.41, "literacy_rate": 0.76, "infra_score": 52, "budget_allocated": 9500000},
-    {"id": "ward_7", "name": "Chandan Nagar & Dhar Road", "zone": "Zone 4 - West", "lat": 22.7088, "lng": 75.8211, "population": 48200, "poverty_rate": 0.54, "literacy_rate": 0.69, "infra_score": 38, "budget_allocated": 6000000},
-    {"id": "ward_8", "name": "Banganga & Sanwer Road", "zone": "Zone 5 - North", "lat": 22.7712, "lng": 75.8455, "population": 52100, "poverty_rate": 0.58, "literacy_rate": 0.65, "infra_score": 32, "budget_allocated": 5000000},
-    {"id": "ward_9", "name": "Pardesipura & Kulkarni Nagar", "zone": "Zone 5 - North", "lat": 22.7410, "lng": 75.8640, "population": 39400, "poverty_rate": 0.46, "literacy_rate": 0.74, "infra_score": 48, "budget_allocated": 8500000},
-    {"id": "ward_10", "name": "Khajrana & Bypass Corridor", "zone": "Zone 2 - East", "lat": 22.7300, "lng": 75.9100, "population": 44800, "poverty_rate": 0.50, "literacy_rate": 0.71, "infra_score": 40, "budget_allocated": 7000000},
-    {"id": "ward_14", "name": "Rajendra Nagar & Cat Road", "zone": "Zone 3 - South", "lat": 22.6800, "lng": 75.8250, "population": 43500, "poverty_rate": 0.52, "literacy_rate": 0.68, "infra_score": 30, "budget_allocated": 0},
-    {"id": "ward_15", "name": "Silicon City Peripheral Area", "zone": "Zone 3 - South", "lat": 22.6650, "lng": 75.8150, "population": 39800, "poverty_rate": 0.49, "literacy_rate": 0.70, "infra_score": 35, "budget_allocated": 0}
+# 1. Wards Data (ALL 85 Wards & 22 Municipal Zones of Indore)
+sector_names = [
+    "Rajwada & Central Market", "Vijay Nagar Sector A-C", "Palasia & Greater Kailash", "Bhawarkua & DAVV Campus",
+    "Rau & Transport Nagar", "Sudama Nagar & Annapurna", "Chandan Nagar & Dhar Road", "Banganga & Sanwer Road",
+    "Pardesipura & Kulkarni Nagar", "Khajrana & Bypass Corridor", "Sukhlia & Sant Ravidas Sector", "LIG Colony & Press Complex",
+    "Nanda Nagar & ITI Sector", "Rajendra Nagar & Cat Road", "Silicon City Peripheral Area", "Musakhedi & Mayur Nagar",
+    "Khandwa Road & Tejaji Nagar", "Bypass South & Ralamandal", "Malwa Mill & Patnipura", "Airport Road & Kalani Nagar",
+    "Super Corridor West", "Bada Ganpati & MOG Lines", "Snehlata Ganj & Vallabh Nagar", "Manorama Ganj & Geeta Bhawan"
 ]
+
+indore_wards = []
+for w_num in range(1, 86):
+    w_id = f"ward_{w_num}"
+    zone_num = ((w_num - 1) % 22) + 1
+    zone_name = f"Zone {zone_num}"
+    
+    if w_num == 1:
+        w_name = "Rajwada & Central Market"
+    elif w_num == 14:
+        w_name = "Rajendra Nagar & Cat Road"
+    elif w_num == 15:
+        w_name = "Silicon City Peripheral Area"
+    elif w_num == 27:
+        w_name = "Vijay Nagar Sector A-C"
+    elif w_num == 40:
+        w_name = "Khajrana Main & Shaheed Bhagat Singh Sector"
+    elif w_num == 52:
+        w_name = "Musakhedi, Mayur Nagar & Ring Road Sector"
+    else:
+        name_idx = (w_num - 1) % len(sector_names)
+        w_name = f"{sector_names[name_idx]}"
+
+    lat_val = round(22.6400 + ((w_num * 17) % 140) * 0.001, 4)
+    lng_val = round(75.8000 + ((w_num * 23) % 140) * 0.001, 4)
+    
+    indore_wards.append({
+        "id": w_id,
+        "name": f"Ward {w_num} — {w_name}",
+        "zone": zone_name,
+        "lat": lat_val,
+        "lng": lng_val,
+        "population": 25000 + (w_num * 350) % 25000,
+        "poverty_rate": round(0.15 + (w_num % 40) * 0.01, 2),
+        "literacy_rate": round(0.65 + (w_num % 30) * 0.01, 2),
+        "infra_score": 30 + (w_num * 7) % 65,
+        "budget_allocated": (w_num * 1200000) % 25000000
+    })
 
 # Write wards.json
 with open(r"c:\Users\harsh parmar\Desktop\nagarmitra-dpi\backend\seed_data\indore_wards.json", "w", encoding="utf-8") as f:
@@ -26,16 +58,16 @@ complaints = []
 categories = ["Sanitation & Drainage", "Water Supply", "Roads & Infrastructure", "Electricity & Streetlights", "Healthcare", "Education"]
 
 samples_hnd = [
-    ("Bhaiyaji, humare ward 14 me paani ka nala beh raha hai, bacche bimar ho rahe hain, sadak poori toot gayi hai!", "Sanitation & Drainage", "Critical", True, "ward_14", 22.6812, 75.8261),
-    ("Gutter ka ganda paani gharon ke samne bhara hai 15 din se, koi sunwayi nahi ho rahi.", "Sanitation & Drainage", "Critical", True, "ward_14", 22.6825, 75.8245),
-    ("Monsoon me nala overflow ho gaya hai, dengue ka khatra badh raha hai.", "Sanitation & Drainage", "High", True, "ward_14", 22.6805, 75.8270),
-    ("Ward 14 main road par nale ki patti tut gayi hai, do bike wale gir gaye hain.", "Sanitation & Drainage", "Critical", False, "ward_14", 22.6798, 75.8239),
-    ("Peene ke paani ki pipeline aur sewer line mix ho chuki hai, ganda paani aa raha hai.", "Water Supply", "Critical", True, "ward_14", 22.6830, 75.8280),
-    ("Ward 15 Silicon city bypass ke pass lighting nahi hai, raat ko accident hote hain.", "Electricity & Streetlights", "High", False, "ward_15", 22.6660, 75.8165),
-    ("Primary Health Sub-centre me doctor nahi aate aur dawayi khatam hai.", "Healthcare", "High", True, "ward_15", 22.6645, 75.8140),
-    ("Banganga industrial area me sadak me bade bade gaddhe hain, truck phans rahe hain.", "Roads & Infrastructure", "High", False, "ward_8", 22.7720, 75.8460),
-    ("Chandan nagar square par streetlight picchle 1 mahine se kharab hai.", "Electricity & Streetlights", "Medium", False, "ward_7", 22.7090, 75.8220),
-    ("Khajrana bypass side drain jam hone se raaste me paani bhara hai.", "Sanitation & Drainage", "High", False, "ward_10", 22.7310, 75.9110),
+    ("Bhaiyaji, humare ward me paani ka nala beh raha hai, bacche bimar ho rahe hain, sadak poori toot gayi hai!", "Sanitation & Drainage", "Critical", True, 22.6812, 75.8261),
+    ("Gutter ka ganda paani gharon ke samne bhara hai 15 din se, koi sunwayi nahi ho rahi.", "Sanitation & Drainage", "Critical", True, 22.6825, 75.8245),
+    ("Monsoon me nala overflow ho gaya hai, dengue ka khatra badh raha hai.", "Sanitation & Drainage", "High", True, 22.6805, 75.8270),
+    ("Main road par nale ki patti tut gayi hai, do bike wale gir gaye hain.", "Sanitation & Drainage", "Critical", False, 22.6798, 75.8239),
+    ("Peene ke paani ki pipeline aur sewer line mix ho chuki hai, ganda paani aa raha hai.", "Water Supply", "Critical", True, 22.6830, 75.8280),
+    ("Bypass ke pass lighting nahi hai, raat ko accident hote hain.", "Electricity & Streetlights", "High", False, 22.6660, 75.8165),
+    ("Primary Health Sub-centre me doctor nahi aate aur dawayi khatam hai.", "Healthcare", "High", True, 22.6645, 75.8140),
+    ("Industrial area me sadak me bade bade gaddhe hain, truck phans rahe hain.", "Roads & Infrastructure", "High", False, 22.7720, 75.8460),
+    ("Square par streetlight picchle 1 mahine se kharab hai.", "Electricity & Streetlights", "Medium", False, 22.7090, 75.8220),
+    ("Bypass side drain jam hone se raaste me paani bhara hai.", "Sanitation & Drainage", "High", False, 22.7310, 75.9110),
 ]
 
 statuses = ["PENDING_ADMIN_REVIEW", "APPROVED_BY_ADMIN", "RESOLVED"]
@@ -45,6 +77,13 @@ for i in range(1, 850):
     lat_offset = (random.random() - 0.5) * 0.015
     lng_offset = (random.random() - 0.5) * 0.015
     
+    if i <= 300:
+        target_ward_id = "ward_14" if i % 2 == 0 else "ward_52"
+    else:
+        target_ward_id = f"ward_{(i % 85) + 1}"
+        
+    ward_obj = next((w for w in indore_wards if w["id"] == target_ward_id), indore_wards[0])
+
     is_demo_user = (i % 25 == 0) or (i <= 3)
     user_email = "citizen.indore@gmail.com" if is_demo_user else f"citizen_{i}@indore.gov.in"
     citizen_name = "Harsh Parmar" if is_demo_user else f"Citizen #{i}"
@@ -57,17 +96,17 @@ for i in range(1, 850):
         "category": sample[1],
         "urgency": sample[2],
         "health_impact": sample[3],
-        "ward_id": sample[4],
-        "locality": "Rajendra Nagar Sector 3" if sample[4] == "ward_14" else "Indore Locality Zone",
-        "lat": round(sample[5] + lat_offset, 5),
-        "lng": round(sample[6] + lng_offset, 5),
+        "ward_id": target_ward_id,
+        "locality": f"{ward_obj['name']}, Indore",
+        "lat": round(ward_obj["lat"] + lat_offset, 5),
+        "lng": round(ward_obj["lng"] + lng_offset, 5),
         "photo_url": "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?w=500" if i % 3 == 0 else None,
         "created_at": f"2026-08-{random.randint(1,25):02d}T{random.randint(8,20):02d}:30:00Z",
         "user_email": user_email,
         "citizen_name": citizen_name,
         "citizen_phone": "+91 9826012345" if is_demo_user else f"+91 98260{i:05d}",
         "citizen_id_hash": f"VOTER-IND-{4800+i}",
-        "landmark": "Cat Road Square" if sample[4] == "ward_14" else "Indore Sector Landmark",
+        "landmark": f"Sector Landmark near {ward_obj['name']}",
         "verification_status": "VERIFIED_CITIZEN",
         "responsible_department": f"Indore Municipal Corporation (IMC) — {sample[1]} Department",
         "responsible_ministry": "Ministry of Housing & Urban Affairs (MoHUA)",
