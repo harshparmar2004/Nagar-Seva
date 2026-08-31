@@ -411,26 +411,37 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {/* Dynamic Spatial Demand Cluster Hotspot Circles */}
+                {/* Dynamic Geographic Hotspot Circles — grouped by ward so they appear exactly over pins */}
                 {(() => {
-                  const categoryGroups = {};
+                  // Group complaints by ward_id (geographic location, not category)
+                  const wardGroups = {};
                   activeMapComplaints.forEach(c => {
-                    if (!categoryGroups[c.category]) categoryGroups[c.category] = [];
-                    categoryGroups[c.category].push(c);
+                    if (!wardGroups[c.ward_id]) wardGroups[c.ward_id] = [];
+                    wardGroups[c.ward_id].push(c);
                   });
 
-                  return Object.entries(categoryGroups).map(([cat, list]) => {
-                    if (list.length < 2) return null;
-                    const avgLat = list.reduce((acc, curr) => acc + curr.lat, 0) / list.length;
-                    const avgLng = list.reduce((acc, curr) => acc + curr.lng, 0) / list.length;
-                    const color = getCategoryColor(cat);
+                  return Object.entries(wardGroups).map(([wardId, list]) => {
+                    if (list.length < 3) return null;
+
+                    // Center = true average of actual pin coordinates in this ward
+                    const avgLat = list.reduce((acc, c) => acc + c.lat, 0) / list.length;
+                    const avgLng = list.reduce((acc, c) => acc + c.lng, 0) / list.length;
+
+                    // Color = dominant category in this ward
+                    const categoryCounts = {};
+                    list.forEach(c => { categoryCounts[c.category] = (categoryCounts[c.category] || 0) + 1; });
+                    const dominantCat = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0][0];
+                    const color = getCategoryColor(dominantCat);
+
+                    // Radius scales with number of complaints in the ward
+                    const radius = Math.min(1200, 300 + list.length * 8);
 
                     return (
                       <Circle
-                        key={cat}
+                        key={wardId}
                         center={[avgLat, avgLng]}
-                        radius={Math.min(2000, 700 + list.length * 20)}
-                        pathOptions={{ color: color, fillColor: color, fillOpacity: 0.22, weight: 2 }}
+                        radius={radius}
+                        pathOptions={{ color, fillColor: color, fillOpacity: 0.20, weight: 2 }}
                       />
                     );
                   });
