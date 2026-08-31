@@ -19,22 +19,33 @@ for w_num in range(1, 86):
     
     if w_num == 1:
         w_name = "Rajwada & Central Market"
+        lat_val, lng_val = 22.7196, 75.8577
     elif w_num == 14:
         w_name = "Rajendra Nagar & Cat Road"
+        lat_val, lng_val = 22.6800, 75.8250
     elif w_num == 15:
         w_name = "Silicon City Peripheral Area"
+        lat_val, lng_val = 22.6650, 75.8150
     elif w_num == 27:
         w_name = "Vijay Nagar Sector A-C"
+        lat_val, lng_val = 22.7533, 75.8937
     elif w_num == 40:
         w_name = "Khajrana Main & Shaheed Bhagat Singh Sector"
+        lat_val, lng_val = 22.7250, 75.8850
     elif w_num == 52:
         w_name = "Musakhedi, Mayur Nagar & Ring Road Sector"
+        lat_val, lng_val = 22.7120, 75.9080
+    elif w_num == 8:
+        w_name = "Banganga Industrial Belt"
+        lat_val, lng_val = 22.7712, 75.8455
+    elif w_num == 7:
+        w_name = "Chandan Nagar & Dhar Road"
+        lat_val, lng_val = 22.7088, 75.8211
     else:
         name_idx = (w_num - 1) % len(sector_names)
         w_name = f"{sector_names[name_idx]}"
-
-    lat_val = round(22.6400 + ((w_num * 17) % 140) * 0.001, 4)
-    lng_val = round(75.8000 + ((w_num * 23) % 140) * 0.001, 4)
+        lat_val = round(22.6600 + ((w_num * 17) % 120) * 0.001, 4)
+        lng_val = round(75.8100 + ((w_num * 23) % 120) * 0.001, 4)
     
     indore_wards.append({
         "id": w_id,

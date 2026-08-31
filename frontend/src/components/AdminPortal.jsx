@@ -411,11 +411,30 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                <Circle
-                  center={[22.6815, 75.8255]}
-                  radius={1200}
-                  pathOptions={{ color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.25, weight: 2 }}
-                />
+                {/* Dynamic Spatial Demand Cluster Hotspot Circles */}
+                {(() => {
+                  const categoryGroups = {};
+                  activeMapComplaints.forEach(c => {
+                    if (!categoryGroups[c.category]) categoryGroups[c.category] = [];
+                    categoryGroups[c.category].push(c);
+                  });
+
+                  return Object.entries(categoryGroups).map(([cat, list]) => {
+                    if (list.length < 2) return null;
+                    const avgLat = list.reduce((acc, curr) => acc + curr.lat, 0) / list.length;
+                    const avgLng = list.reduce((acc, curr) => acc + curr.lng, 0) / list.length;
+                    const color = getCategoryColor(cat);
+
+                    return (
+                      <Circle
+                        key={cat}
+                        center={[avgLat, avgLng]}
+                        radius={Math.min(2000, 700 + list.length * 20)}
+                        pathOptions={{ color: color, fillColor: color, fillOpacity: 0.22, weight: 2 }}
+                      />
+                    );
+                  });
+                })()}
 
                 {activeMapComplaints.map((c) => (
                   <Marker
