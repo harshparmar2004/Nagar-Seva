@@ -89,6 +89,7 @@ class CitizenUser(SQLModel, table=True):
     email: str = Field(index=True, unique=True)
     name: str
     aadhaar_number: str
+    phone_number: Optional[str] = Field(default=None)
     role: str = Field(default="CITIZEN")
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     last_login_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Mic, Shield, CheckCircle2, XCircle, RefreshCw, Navigation, User, Mail, CreditCard, Compass, ExternalLink, AlertTriangle } from 'lucide-react';
+import { MapPin, Mic, Shield, CheckCircle2, XCircle, RefreshCw, Navigation, User, Mail, CreditCard, Compass, ExternalLink, AlertTriangle, Phone } from 'lucide-react';
 import { FALLBACK_WARDS } from '../data/fallbackData';
 
 export default function CitizenSettings({ currentUser }) {
@@ -209,6 +209,14 @@ export default function CitizenSettings({ currentUser }) {
                 <CreditCard className="w-3.5 h-3.5 text-orange-600 shrink-0" />
                 <span className="font-mono font-bold text-stone-700">
                   Aadhaar: {currentUser.aadhaar.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3')}
+                </span>
+              </div>
+            )}
+            {currentUser?.phone && (
+              <div className="flex items-center gap-2 text-xs text-stone-500">
+                <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span className="font-mono font-bold text-stone-700">
+                  Mobile: +91 {currentUser.phone.replace(/(\d{5})(\d{5})/, '$1 $2')}
                 </span>
               </div>
             )}

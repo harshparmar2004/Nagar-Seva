@@ -31,6 +31,7 @@ export const syncUserToFirestore = async (userObj) => {
       name: userObj.displayName || '',
       email: cleanEmail,
       aadhaar: userObj.aadhaar || '',
+      phone: userObj.phone || '',
       role: userObj.role || 'CITIZEN',
       photoURL: userObj.photoURL || '',
       lastLoginAt: new Date().toISOString()

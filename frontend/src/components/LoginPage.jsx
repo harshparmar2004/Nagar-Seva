@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, User, ArrowRight, AlertCircle, Compass, CreditCard, Mail, CheckCircle2, Sparkles, ChevronRight, Lock, MapPin, Mic } from 'lucide-react';
+import { Shield, User, ArrowRight, AlertCircle, Compass, CreditCard, Mail, CheckCircle2, Sparkles, ChevronRight, Lock, MapPin, Mic, Phone, Smartphone } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, isSuperAdminEmail, syncUserToFirestore, getUserProfileFromFirestore } from '../lib/firebase';
 import { API_BASE_URL } from '../config';
@@ -21,12 +21,18 @@ export default function LoginPage({ onLoginSuccess }) {
   // Profile setup form state
   const [name, setName] = useState('');
   const [aadhaar, setAadhaar] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
   const handleAadhaarChange = (e) => {
     const raw = e.target.value.replace(/\D/g, '').slice(0, 12);
     const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
     setAadhaar(formatted);
+  };
+
+  const handlePhoneChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 10);
+    setPhone(raw);
   };
 
   // Request location permission
@@ -84,9 +90,17 @@ export default function LoginPage({ onLoginSuccess }) {
     }
   };
 
-  // Final login — called only after both permissions are granted
+  // Final login — called only after permissions step
   const finishLogin = (userObj) => {
-    try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
+    try {
+      localStorage.setItem('nagarmitra_user', JSON.stringify(userObj));
+      // Save to persistent profiles dictionary (keyed by email) so it survives logouts
+      if (userObj?.email) {
+        const saved = JSON.parse(localStorage.getItem('nagarmitra_saved_profiles') || '{}');
+        saved[userObj.email.toLowerCase().trim()] = userObj;
+        localStorage.setItem('nagarmitra_saved_profiles', JSON.stringify(saved));
+      }
+    } catch(e) {}
     onLoginSuccess(userObj);
     syncUserToBackend(userObj).catch(() => {});
   };
@@ -108,7 +122,7 @@ export default function LoginPage({ onLoginSuccess }) {
       console.warn("Firestore sync error:", err);
     }
 
-    // 2. Save to Backend Database
+    // 2. Save to Backend Database (SQLite CitizenUser table)
     try {
       await fetch(`${API_BASE_URL}/api/users/sync`, {
         method: 'POST',
@@ -117,7 +131,8 @@ export default function LoginPage({ onLoginSuccess }) {
           name: userObj.displayName,
           email: userObj.email,
           aadhaar_number: userObj.aadhaar || '',
-          role: userObj.role
+          phone_number: userObj.phone || '',
+          role: userObj.role || 'CITIZEN'
         })
       });
     } catch (err) {
@@ -158,47 +173,82 @@ export default function LoginPage({ onLoginSuccess }) {
         return;
       }
 
-      // FAST PATH: Check localStorage cache first (instant, no network)
+      // TIER 1: Check persistent local profiles cache (PER-DEVICE PERSISTENCE ACROSS LOGOUTS)
       try {
-        const cachedUser = JSON.parse(localStorage.getItem('nagarmitra_user') || 'null');
-        if (cachedUser && cachedUser.email === verifiedEmail && cachedUser.aadhaar && cachedUser.role === 'CITIZEN') {
-          // Update uid and photo from fresh Google auth
-          cachedUser.uid = user.uid;
-          cachedUser.photoURL = user.photoURL || cachedUser.photoURL;
-          proceedToPermissionsStep(cachedUser);
+        const savedProfiles = JSON.parse(localStorage.getItem('nagarmitra_saved_profiles') || '{}');
+        const cached = savedProfiles[verifiedEmail];
+        if (cached && cached.aadhaar && cached.role === 'CITIZEN') {
+          cached.uid = user.uid;
+          cached.photoURL = user.photoURL || cached.photoURL;
+          try { localStorage.setItem('nagarmitra_user', JSON.stringify(cached)); } catch(e) {}
+          proceedToPermissionsStep(cached);
           return;
         }
       } catch(e) {}
 
-      // SLOW PATH: Check Firestore (with 3s timeout so it never hangs)
-      let existingProfile = null;
+      // TIER 2: Check backend SQLite database (/api/users/{email})
       try {
-        existingProfile = await Promise.race([
-          getUserProfileFromFirestore(verifiedEmail),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        const backendRes = await Promise.race([
+          fetch(`${API_BASE_URL}/api/users/${encodeURIComponent(verifiedEmail)}`),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
         ]);
+        if (backendRes.ok) {
+          const backendData = await backendRes.json();
+          if (backendData && backendData.found && backendData.user?.aadhaar_number) {
+            const citizenUserObj = {
+              uid: user.uid,
+              email: verifiedEmail,
+              displayName: backendData.user.name || user.displayName || verifiedEmail.split('@')[0],
+              aadhaar: backendData.user.aadhaar_number,
+              phone: backendData.user.phone_number || '',
+              photoURL: user.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+              role: backendData.user.role || 'CITIZEN'
+            };
+            // Cache locally so subsequent logins on this device are instant
+            try {
+              const saved = JSON.parse(localStorage.getItem('nagarmitra_saved_profiles') || '{}');
+              saved[verifiedEmail] = citizenUserObj;
+              localStorage.setItem('nagarmitra_saved_profiles', JSON.stringify(saved));
+              localStorage.setItem('nagarmitra_user', JSON.stringify(citizenUserObj));
+            } catch(e) {}
+            proceedToPermissionsStep(citizenUserObj);
+            return;
+          }
+        }
       } catch(e) {
-        // Timeout or Firestore error — treat as new user
-        existingProfile = null;
+        console.warn("Backend user check note:", e.message);
       }
 
-      if (existingProfile && existingProfile.aadhaar) {
-        // Returning citizen with existing profile
-        const citizenUserObj = {
-          uid: user.uid,
-          email: verifiedEmail,
-          displayName: existingProfile.name || user.displayName || verifiedEmail.split('@')[0],
-          aadhaar: existingProfile.aadhaar,
-          photoURL: user.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-          role: 'CITIZEN'
-        };
-
-        try { localStorage.setItem('nagarmitra_user', JSON.stringify(citizenUserObj)); } catch(e) {}
-        proceedToPermissionsStep(citizenUserObj);
-        return;
+      // TIER 3: Check Firebase Firestore (/users/{email})
+      try {
+        const firestoreProfile = await Promise.race([
+          getUserProfileFromFirestore(verifiedEmail),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
+        ]);
+        if (firestoreProfile && firestoreProfile.aadhaar) {
+          const citizenUserObj = {
+            uid: user.uid,
+            email: verifiedEmail,
+            displayName: firestoreProfile.name || user.displayName || verifiedEmail.split('@')[0],
+            aadhaar: firestoreProfile.aadhaar,
+            phone: firestoreProfile.phone || '',
+            photoURL: user.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+            role: firestoreProfile.role || 'CITIZEN'
+          };
+          try {
+            const saved = JSON.parse(localStorage.getItem('nagarmitra_saved_profiles') || '{}');
+            saved[verifiedEmail] = citizenUserObj;
+            localStorage.setItem('nagarmitra_saved_profiles', JSON.stringify(saved));
+            localStorage.setItem('nagarmitra_user', JSON.stringify(citizenUserObj));
+          } catch(e) {}
+          proceedToPermissionsStep(citizenUserObj);
+          return;
+        }
+      } catch(e) {
+        console.warn("Firestore profile check note:", e.message);
       }
 
-      // New citizen -> proceed to profile setup step
+      // TIER 4: Brand-new citizen -> show profile setup with pre-filled Google account data
       setAuthenticatedGoogleUser(user);
       setName(user.displayName || '');
       setEmail(verifiedEmail);
@@ -214,11 +264,17 @@ export default function LoginPage({ onLoginSuccess }) {
 
   /**
    * Step 2: Complete Profile Setup for Citizen
-   * Saves Name, Aadhaar Card, and Email into Firebase & Backend
+   * Saves Name, Aadhaar Card, Mobile Phone Number, and Email into Firebase & Backend SQLite
    */
   const handleCompleteProfile = async (e) => {
     e?.preventDefault();
     const cleanAadhaar = aadhaar.replace(/\s/g, '');
+    const cleanPhone = phone.replace(/\D/g, '');
+
+    if (!name.trim()) {
+      setError("Please enter your Full Name as per government ID.");
+      return;
+    }
     if (!cleanAadhaar) {
       setError("Please enter your 12-digit Aadhaar Card number.");
       return;
@@ -227,8 +283,12 @@ export default function LoginPage({ onLoginSuccess }) {
       setError("Aadhaar Card number must be exactly 12 digits.");
       return;
     }
-    if (!name.trim()) {
-      setError("Please enter your Full Name as per Aadhaar Card.");
+    if (!cleanPhone) {
+      setError("Please enter your 10-digit mobile phone number.");
+      return;
+    }
+    if (cleanPhone.length !== 10) {
+      setError("Mobile phone number must be exactly 10 digits.");
       return;
     }
 
@@ -243,13 +303,24 @@ export default function LoginPage({ onLoginSuccess }) {
       email: verifiedEmail,
       displayName: name.trim(),
       aadhaar: cleanAadhaar,
+      phone: cleanPhone,
       photoURL: authenticatedGoogleUser?.photoURL || (isAdmin 
         ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
         : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'),
       role: isAdmin ? 'SUPER_ADMIN' : 'CITIZEN'
     };
 
-    try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
+    // Save session & permanent profile cache
+    try {
+      localStorage.setItem('nagarmitra_user', JSON.stringify(userObj));
+      const saved = JSON.parse(localStorage.getItem('nagarmitra_saved_profiles') || '{}');
+      saved[verifiedEmail] = userObj;
+      localStorage.setItem('nagarmitra_saved_profiles', JSON.stringify(saved));
+    } catch(e) {}
+
+    // Sync to backend SQLite & Firebase Firestore in background
+    syncUserToBackend(userObj).catch(() => {});
+
     setLoading(false);
     proceedToPermissionsStep(userObj);
   };
@@ -373,6 +444,27 @@ export default function LoginPage({ onLoginSuccess }) {
                   className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all tracking-wider font-mono font-semibold"
                 />
                 <p className="text-[10px] text-stone-400 mt-1">Encrypted and securely synced with Municipal Identity Records.</p>
+              </div>
+
+              {/* 10-Digit Mobile Phone */}
+              <div>
+                <label className="block text-xs font-bold text-stone-700 mb-1 flex items-center gap-1.5">
+                  <Smartphone className="w-3.5 h-3.5 text-orange-600" />
+                  <span>Mobile Phone Number (10 Digits)</span>
+                </label>
+                <div className="relative flex items-center">
+                  <span className="absolute left-3 text-xs font-bold text-stone-400 select-none">+91</span>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={handlePhoneChange}
+                    placeholder="98260 12345"
+                    maxLength={10}
+                    required
+                    className="w-full text-xs pl-11 pr-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all tracking-wider font-mono font-semibold"
+                  />
+                </div>
+                <p className="text-[10px] text-stone-400 mt-1">For official municipal grievance updates and WhatsApp alerts.</p>
               </div>
 
               {/* Email (Pre-filled & verified from Google) */}

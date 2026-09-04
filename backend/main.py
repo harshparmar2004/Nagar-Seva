@@ -869,3 +869,76 @@ def get_analytics():
             "average_ppi_score": 84.2,
             "languages_detected": ["Hindi", "Malvi Dialect", "Marathi", "English", "Gujarati"]
         }
+
+# ------------------------------------------------------------------------------
+# Citizen Identity & Persistent Profile Management (Aadhaar, Phone, Name, Email)
+# ------------------------------------------------------------------------------
+
+class UserSyncRequest(BaseModel):
+    name: str
+    email: str
+    aadhaar_number: str
+    phone_number: Optional[str] = None
+    role: Optional[str] = "CITIZEN"
+
+@app.post("/api/users/sync")
+def sync_user(req: UserSyncRequest):
+    """
+    Persists citizen profile (name, Aadhaar, phone, email) to the SQLite database.
+    Updates existing record if email already exists, otherwise creates a new record.
+    """
+    clean_email = req.email.strip().lower()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with Session(engine) as session:
+        user = session.exec(select(CitizenUser).where(CitizenUser.email == clean_email)).first()
+        if user:
+            user.name = req.name.strip()
+            user.aadhaar_number = req.aadhaar_number.strip()
+            if req.phone_number:
+                user.phone_number = req.phone_number.strip()
+            user.role = req.role or user.role
+            user.last_login_at = now_iso
+            session.add(user)
+            session.commit()
+            session.refresh(user)
+            return {"status": "SUCCESS", "action": "UPDATED", "user": user}
+        else:
+            new_user = CitizenUser(
+                id=f"usr-{uuid.uuid4().hex[:10]}",
+                email=clean_email,
+                name=req.name.strip(),
+                aadhaar_number=req.aadhaar_number.strip(),
+                phone_number=req.phone_number.strip() if req.phone_number else None,
+                role=req.role or "CITIZEN",
+                created_at=now_iso,
+                last_login_at=now_iso
+            )
+            session.add(new_user)
+            session.commit()
+            session.refresh(new_user)
+            return {"status": "SUCCESS", "action": "CREATED", "user": new_user}
+
+@app.get("/api/users/{email}")
+def get_user_by_email(email: str):
+    """
+    Fetches citizen profile by email so that across logins and logouts,
+    the citizen's name, Aadhaar number, and phone number are automatically retrieved.
+    """
+    clean_email = email.strip().lower()
+    with Session(engine) as session:
+        user = session.exec(select(CitizenUser).where(CitizenUser.email == clean_email)).first()
+        if not user:
+            return {"found": False, "email": clean_email}
+        return {
+            "found": True,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "aadhaar_number": user.aadhaar_number,
+                "phone_number": user.phone_number,
+                "role": user.role,
+                "last_login_at": user.last_login_at
+            }
+        }
+

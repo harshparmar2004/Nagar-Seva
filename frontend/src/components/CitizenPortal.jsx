@@ -46,7 +46,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
   // Step 1 State: Identity
   const [citizenName, setCitizenName] = useState(currentUser?.displayName || 'Indore Citizen');
-  const [phone, setPhone] = useState('9826012345');
+  const [phone, setPhone] = useState(currentUser?.phone || '9826012345');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(Boolean(currentUser?.aadhaar));
@@ -57,6 +57,9 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   useEffect(() => {
     if (currentUser?.displayName) {
       setCitizenName(currentUser.displayName);
+    }
+    if (currentUser?.phone) {
+      setPhone(currentUser.phone);
     }
     if (currentUser?.aadhaar) {
       setIdHash(`AADHAAR-${currentUser.aadhaar.replace(/\s/g, '')}`);
