@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { signOut } from 'firebase/auth';
 import { auth } from './lib/firebase';
 import LoginPage from './components/LoginPage';
@@ -27,17 +27,6 @@ export default function App() {
 
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
-  const [currentPortal, setCurrentPortal] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nagarmitra_user');
-      if (saved) {
-        const u = JSON.parse(saved);
-        if (u.role === 'SUPER_ADMIN') return 'SUPER_ADMIN';
-      }
-    } catch(e) {}
-    return 'CITIZEN';
-  });
-
   const [activeTab, setActiveTab] = useState(() => {
     try {
       const saved = localStorage.getItem('nagarmitra_user');
@@ -54,32 +43,23 @@ export default function App() {
   const [selectedClusterForDPR, setSelectedClusterForDPR] = useState(null);
   const [selectedTrackingId, setSelectedTrackingId] = useState('');
 
+  // Strict isolation: Ensure activeTab always matches user role
+  useEffect(() => {
+    if (currentUser) {
+      if (isSuperAdmin && !activeTab.startsWith('admin-')) {
+        setActiveTab('admin-gis');
+      } else if (!isSuperAdmin && !activeTab.startsWith('citizen-')) {
+        setActiveTab('citizen-voice');
+      }
+    }
+  }, [currentUser, isSuperAdmin, activeTab]);
+
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
     if (user.role === 'SUPER_ADMIN') {
-      setCurrentPortal('SUPER_ADMIN');
       setActiveTab('admin-gis');
     } else {
-      setCurrentPortal('CITIZEN');
       setActiveTab('citizen-voice');
-    }
-  };
-
-  const handleSwitchPortal = (targetPortal) => {
-    if (targetPortal === 'SUPER_ADMIN') {
-      if (!isSuperAdmin) {
-        setIsAuthOpen(true);
-        return;
-      }
-      setCurrentPortal('SUPER_ADMIN');
-      if (!activeTab.startsWith('admin-')) {
-        setActiveTab('admin-gis');
-      }
-    } else {
-      setCurrentPortal('CITIZEN');
-      if (!activeTab.startsWith('citizen-')) {
-        setActiveTab('citizen-voice');
-      }
     }
   };
 
@@ -89,7 +69,6 @@ export default function App() {
       await signOut(auth);
     } catch(e) {}
     setCurrentUser(null);
-    setCurrentPortal('CITIZEN');
     setActiveTab('citizen-voice');
   };
 
@@ -109,8 +88,6 @@ export default function App() {
         activeCountry={activeCountry}
         setActiveCountry={setActiveCountry}
         isSuperAdmin={isSuperAdmin}
-        currentPortal={currentPortal}
-        onSwitchPortal={handleSwitchPortal}
       >
         {/* Render View Based on Active Tab */}
         {activeTab === 'citizen-voice' && (

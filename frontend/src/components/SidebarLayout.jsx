@@ -16,9 +16,7 @@ export default function SidebarLayout({
   children,
   activeCountry,
   setActiveCountry,
-  isSuperAdmin,
-  currentPortal,
-  onSwitchPortal
+  isSuperAdmin
 }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [liveLocationStr, setLiveLocationStr] = useState('📍 Fetching Live GPS Geotag...');
@@ -114,8 +112,6 @@ export default function SidebarLayout({
     { id: 'admin-emergency', label: 'District 181 Control Room', icon: ShieldAlert, badge: '181 Hotline', isEmergency: true },
   ];
 
-  const isCitizenPortal = currentPortal === 'CITIZEN';
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-orange-50/20 to-stone-100 flex flex-col font-sans text-stone-900">
       
@@ -146,45 +142,18 @@ export default function SidebarLayout({
           </div>
         </div>
 
-        {/* Center: Portal Switcher (Visible ONLY for Super Admin) or Citizen Badge (for Citizens) */}
+        {/* Center: Dedicated Portal Badge (Strictly isolated by role, NO switch toggle) */}
         {isSuperAdmin ? (
-          <div className="flex items-center p-1 bg-stone-100/90 rounded-2xl border border-stone-200 shrink-0">
-            <button
-              onClick={() => onSwitchPortal('CITIZEN')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                isCitizenPortal
-                  ? 'bg-white text-orange-700 shadow-sm border border-stone-200/80 font-black'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <User className="w-3.5 h-3.5 text-orange-600" />
-              <span className="hidden sm:inline">Citizen Portal</span>
-              <span className="sm:hidden">Citizen</span>
-              {isCitizenPortal && (
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              )}
-            </button>
-
-            <button
-              onClick={() => onSwitchPortal('SUPER_ADMIN')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                !isCitizenPortal
-                  ? 'bg-stone-900 text-white shadow-sm font-black'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Shield className={`w-3.5 h-3.5 ${!isCitizenPortal ? 'text-orange-400' : 'text-stone-500'}`} />
-              <span className="hidden sm:inline">Super Admin Portal</span>
-              <span className="sm:hidden">Admin</span>
-              {!isCitizenPortal && (
-                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-              )}
-            </button>
+          <div className="flex items-center space-x-2 bg-stone-900 text-white border border-stone-800 rounded-2xl px-3.5 py-1.5 text-xs font-extrabold shadow-sm">
+            <Shield className="w-3.5 h-3.5 text-orange-500" />
+            <span className="tracking-wide">Super Admin Command Center</span>
+            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
           </div>
         ) : (
-          <div className="hidden sm:flex items-center space-x-2 bg-orange-50 text-orange-800 border border-orange-200/80 rounded-2xl px-3 py-1 text-xs font-bold shadow-xs">
+          <div className="flex items-center space-x-2 bg-orange-50 text-orange-900 border border-orange-200/80 rounded-2xl px-3.5 py-1.5 text-xs font-extrabold shadow-xs">
             <User className="w-3.5 h-3.5 text-orange-600" />
-            <span>Citizen Governance Portal</span>
+            <span className="tracking-wide">Citizen Governance Portal</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           </div>
         )}
 
@@ -244,35 +213,36 @@ export default function SidebarLayout({
           <div className="space-y-4">
             
             {/* PORTAL MODE BANNER */}
-            <div className={`p-3 rounded-2xl border text-xs flex items-center justify-between ${
-              isCitizenPortal
-                ? 'bg-orange-50/70 border-orange-200 text-orange-950'
-                : 'bg-stone-900 border-stone-800 text-white'
-            }`}>
-              <div className="flex items-center space-x-2">
-                {isCitizenPortal ? (
-                  <User className="w-4 h-4 text-orange-600" />
-                ) : (
+            {isSuperAdmin ? (
+              <div className="p-3 rounded-2xl border bg-stone-900 border-stone-800 text-white text-xs flex items-center justify-between shadow-xs">
+                <div className="flex items-center space-x-2.5">
                   <Shield className="w-4 h-4 text-orange-400" />
-                )}
-                <div>
-                  <p className="font-extrabold text-[11px] uppercase tracking-wider">
-                    {isCitizenPortal ? 'Citizen Services' : 'Super Admin Portal'}
-                  </p>
-                  <p className={`text-[10px] ${isCitizenPortal ? 'text-orange-700' : 'text-stone-400'}`}>
-                    {isCitizenPortal ? 'Grievances & Ward Services' : 'Executive Command Center'}
-                  </p>
+                  <div>
+                    <p className="font-extrabold text-[11px] uppercase tracking-wider">Super Admin Suite</p>
+                    <p className="text-[10px] text-stone-400">Executive Command Center</p>
+                  </div>
                 </div>
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-orange-600 text-white">
+                  ADMIN
+                </span>
               </div>
-              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded ${
-                isCitizenPortal ? 'bg-emerald-100 text-emerald-800' : 'bg-orange-600 text-white'
-              }`}>
-                ACTIVE
-              </span>
-            </div>
+            ) : (
+              <div className="p-3 rounded-2xl border bg-orange-50/70 border-orange-200 text-orange-950 text-xs flex items-center justify-between shadow-xs">
+                <div className="flex items-center space-x-2.5">
+                  <User className="w-4 h-4 text-orange-600" />
+                  <div>
+                    <p className="font-extrabold text-[11px] uppercase tracking-wider">Citizen Services</p>
+                    <p className="text-[10px] text-orange-700">Public Grievances & Ward Tracking</p>
+                  </div>
+                </div>
+                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                  CITIZEN
+                </span>
+              </div>
+            )}
 
-            {/* IF CITIZEN PORTAL: RENDER ONLY CITIZEN NAVIGATION */}
-            {isCitizenPortal && (
+            {/* IF CITIZEN: RENDER ONLY CITIZEN NAVIGATION */}
+            {!isSuperAdmin && (
               <div className="space-y-1.5">
                 <div className="px-2 text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
                   Citizen Services
@@ -321,8 +291,8 @@ export default function SidebarLayout({
               </div>
             )}
 
-            {/* IF SUPER ADMIN PORTAL: RENDER ONLY SUPER ADMIN NAVIGATION */}
-            {!isCitizenPortal && isSuperAdmin && (
+            {/* IF SUPER ADMIN: RENDER ONLY SUPER ADMIN NAVIGATION */}
+            {isSuperAdmin && (
               <div className="space-y-1.5">
                 <div className="px-2 flex items-center justify-between">
                   <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
@@ -380,46 +350,14 @@ export default function SidebarLayout({
 
           </div>
 
-          {/* SIDEBAR FOOTER */}
+          {/* SIDEBAR FOOTER: STRICTLY ISOLATED, ZERO SWITCH BUTTONS */}
           <div className="space-y-3 pt-3 border-t border-stone-100">
-            {isSuperAdmin && !isCitizenPortal && (
-              <div className="bg-orange-50/70 border border-orange-200/80 rounded-2xl p-3 text-center space-y-2">
-                <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-orange-900">
-                  <User className="w-3.5 h-3.5 text-orange-600" />
-                  <span>Citizen Grievance Mode</span>
-                </div>
-                <p className="text-[10px] text-stone-600">
-                  Inspect the public portal experience as a citizen.
-                </p>
-                <button
-                  onClick={() => onSwitchPortal('CITIZEN')}
-                  className="w-full py-1.5 px-3 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <span>Switch to Citizen Portal</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-
-            {isSuperAdmin && isCitizenPortal && (
-              <div className="bg-stone-900 border border-stone-800 rounded-2xl p-3 text-center space-y-2 text-white">
-                <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-orange-400">
-                  <Shield className="w-3.5 h-3.5" />
-                  <span>Super Admin Available</span>
-                </div>
-                <button
-                  onClick={() => onSwitchPortal('SUPER_ADMIN')}
-                  className="w-full py-1.5 px-3 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <span>Return to Super Admin Portal</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            )}
-
-            <div className="text-center">
-              <p className="text-[10px] text-stone-400 font-semibold">
-                NagarSeva DPI • Indore Municipal Corporation
+            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 text-center">
+              <p className="text-[11px] font-extrabold text-stone-800">
+                {isSuperAdmin ? 'NagarSeva Administrative Suite' : 'Swachh Survekshan #1 Indore'}
+              </p>
+              <p className="text-[10px] text-stone-500 font-medium mt-0.5">
+                Indore Municipal Corporation • Digital Public Infrastructure
               </p>
             </div>
           </div>
@@ -443,7 +381,7 @@ export default function SidebarLayout({
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 px-1 py-1 flex items-center justify-around shadow-lg">
-        {isCitizenPortal ? (
+        {!isSuperAdmin ? (
           <>
             <button
               onClick={() => { setActiveTab('citizen-voice'); setIsMobileOpen(false); }}
