@@ -15,6 +15,7 @@ import AnalyticsView from './components/AnalyticsView';
 import DPRModal from './components/DPRModal';
 import AuthModal from './components/AuthModal';
 import RoleManagement from './components/RoleManagement';
+import CitizenSettings from './components/CitizenSettings';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(() => {
@@ -126,6 +127,10 @@ export default function App() {
 
         {activeTab === 'citizen-scorecard' && (
           <WardSanitationScorecardView />
+        )}
+
+        {activeTab === 'citizen-settings' && (
+          <CitizenSettings currentUser={currentUser} />
         )}
 
         {(activeTab === 'citizen-emergency' || activeTab === 'admin-emergency') && (

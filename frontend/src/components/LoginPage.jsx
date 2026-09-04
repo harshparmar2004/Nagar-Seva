@@ -492,19 +492,30 @@ export default function LoginPage({ onLoginSuccess }) {
                   <span>All Permissions Granted — Enter Portal</span>
                 </button>
               ) : (
-                <button
-                  type="button"
-                  onClick={requestAllPermissions}
-                  disabled={permissionsLoading}
-                  className="w-full bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white font-bold text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50"
-                >
-                  <Shield className="w-5 h-5" />
-                  <span>{permissionsLoading ? 'Requesting Permissions...' : 'Grant Location & Mic Access'}</span>
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={requestAllPermissions}
+                    disabled={permissionsLoading}
+                    className="w-full bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white font-bold text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    <Shield className="w-5 h-5" />
+                    <span>{permissionsLoading ? 'Requesting Permissions...' : 'Grant Location & Mic Access'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => finishLogin(pendingUserObj)}
+                    className="w-full bg-stone-100 hover:bg-stone-200 active:scale-[0.99] text-stone-700 font-semibold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center space-x-1.5 transition-all cursor-pointer border border-stone-300"
+                  >
+                    <span>Continue to Portal (Toggle Location later in Settings)</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </>
               )}
 
               <p className="text-[10px] text-stone-400 text-center mt-1">
-                These permissions are mandatory for all NagarSeva services. Your data stays encrypted on-device.
+                Permissions can be toggled anytime inside the Citizen Portal → Settings.
               </p>
             </div>
           </div>

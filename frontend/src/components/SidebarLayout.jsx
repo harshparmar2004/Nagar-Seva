@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Shield, Mic, ListChecks, Search, ThumbsUp, Layers, MapPin, Flame,
   TrendingUp, Sparkles, BarChart3, Database, LogIn, LogOut, CheckCircle2,
-  Lock, Globe, AlertOctagon, HelpCircle, ArrowRight, UserCheck, ChevronRight, Menu, X, Trophy, AlertTriangle, ShieldAlert, Compass, User
+  Lock, Globe, AlertOctagon, HelpCircle, ArrowRight, UserCheck, ChevronRight, Menu, X, Trophy, AlertTriangle, ShieldAlert, Compass, User, Settings
 } from 'lucide-react';
 
 export default function SidebarLayout({
@@ -99,6 +99,7 @@ export default function SidebarLayout({
     { id: 'citizen-track', label: 'Track Any Token Status', icon: Search, badge: 'Track' },
     { id: 'citizen-upvote', label: 'Community Project Support', icon: ThumbsUp, badge: 'Support' },
     { id: 'citizen-scorecard', label: 'Ward Swachhata Scorecard', icon: Trophy, badge: 'Ward #1' },
+    { id: 'citizen-settings', label: 'Settings & Live Location', icon: Settings, badge: 'GPS/Mic' },
     { id: 'citizen-emergency', label: '24/7 Red Alert Hotline', icon: AlertOctagon, isEmergency: true, badge: '181' },
   ];
 
