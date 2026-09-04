@@ -4,12 +4,13 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/
 // Firebase configuration for project 'nagar-seva' (nagar-seva-fbae2)
 // Uses environment variable VITE_FIREBASE_API_KEY when provided, with fallback
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemoKeyForNagarMitraDPI2026",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCsstB1DR2l43ilT0x5JRvmS7cGwL3aWTA",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "nagar-seva-fbae2.firebaseapp.com",
-  projectId: "nagar-seva-fbae2",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "nagar-seva-fbae2",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "nagar-seva-fbae2.firebasestorage.app",
-  messagingSenderId: "635957390026",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:635957390026:web:nagar-seva-web"
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "635957390026",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:635957390026:web:e466f2cd798496e7082233",
+  measurementId: "G-QGX64EEMMX"
 };
 
 const app = initializeApp(firebaseConfig);
