@@ -20,6 +20,7 @@ export default function SidebarLayout({
 }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [liveLocationStr, setLiveLocationStr] = useState('📍 Fetching Live GPS Geotag...');
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -167,15 +168,15 @@ export default function SidebarLayout({
             <span className="truncate">{liveLocationStr}</span>
           </div>
 
-          {/* User Auth Login Status / Logout Button */}
+          {/* User Auth Profile Pill (Clean, without clutter) */}
           {currentUser ? (
-            <div className="flex items-center space-x-2 bg-stone-50 border border-stone-200 rounded-xl p-1 pr-2.5">
+            <div className="flex items-center space-x-2 bg-stone-50 border border-stone-200 rounded-xl p-1 pr-3 shadow-2xs">
               <img
                 src={currentUser.photoURL}
                 alt="User Avatar"
                 className="w-7 h-7 rounded-lg object-cover border border-stone-200"
               />
-              <div className="text-left hidden sm:block max-w-[130px] truncate">
+              <div className="text-left hidden sm:block max-w-[140px] truncate">
                 <p className="text-xs font-bold text-stone-900 leading-none truncate">{currentUser.displayName}</p>
                 <span className={`text-[9px] font-extrabold uppercase px-1 py-0.2 rounded mt-0.5 inline-block ${
                   isSuperAdmin ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
@@ -183,13 +184,6 @@ export default function SidebarLayout({
                   {isSuperAdmin ? 'SUPER ADMIN' : 'CITIZEN'}
                 </span>
               </div>
-              <button
-                onClick={onLogout}
-                className="text-stone-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors cursor-pointer ml-1"
-                title="Log Out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
             </div>
           ) : (
             <button
@@ -351,8 +345,20 @@ export default function SidebarLayout({
 
           </div>
 
-          {/* SIDEBAR FOOTER: STRICTLY ISOLATED, ZERO SWITCH BUTTONS */}
-          <div className="space-y-3 pt-3 border-t border-stone-100">
+          {/* SIDEBAR FOOTER: LOGOUT & CIVIC BRANDING */}
+          <div className="space-y-2.5 pt-3 border-t border-stone-100">
+            {currentUser && (
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(true)}
+                className="w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 transition-all cursor-pointer shadow-2xs group"
+                title="Log Out of Account"
+              >
+                <LogOut className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
+                <span>Log Out of NagarSeva</span>
+              </button>
+            )}
+
             <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 text-center">
               <p className="text-[11px] font-extrabold text-stone-800">
                 {isSuperAdmin ? 'NagarSeva Administrative Suite' : 'Swachh Survekshan #1 Indore'}
@@ -488,6 +494,46 @@ export default function SidebarLayout({
           </>
         )}
       </nav>
+
+      {/* LOGOUT CONFIRMATION MODAL */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-950/60 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-7 max-w-sm w-full space-y-5 shadow-2xl animate-scale-in text-center">
+            
+            <div className="w-14 h-14 bg-red-100 text-red-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+              <LogOut className="w-7 h-7" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-extrabold text-stone-900 tracking-tight">Confirm Logout</h3>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Are you sure you want to log out from NagarSeva DPI? Your verified civic profile and grievance records will remain securely saved.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowLogoutConfirm(false)}
+                className="w-full bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs py-3 px-4 rounded-xl transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogoutConfirm(false);
+                  onLogout();
+                }}
+                className="w-full bg-red-600 hover:bg-red-500 active:scale-[0.99] text-white font-bold text-xs py-3 px-4 rounded-xl transition-all cursor-pointer shadow-md shadow-red-600/30"
+              >
+                Yes, Log Out
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
