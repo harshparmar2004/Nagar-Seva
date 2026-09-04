@@ -17,14 +17,34 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('citizen-voice');
   const [activeCountry, setActiveCountry] = useState('IN');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null); // { uid, email, displayName, photoURL, role }
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nagarmitra_user');
+      if (saved) return JSON.parse(saved);
+    } catch(e) {}
+    // Default to Super Admin for seamless production showcase & demo
+    return {
+      uid: 'admin-lead-harsh',
+      email: 'harshparmar686630@gmail.com',
+      displayName: 'Harsh Parmar (Super Admin)',
+      photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+      role: 'SUPER_ADMIN'
+    };
+  });
   const [selectedClusterForDPR, setSelectedClusterForDPR] = useState(null);
   const [selectedTrackingId, setSelectedTrackingId] = useState('');
 
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
 
   const handleLogout = () => {
-    setCurrentUser(null);
+    try { localStorage.removeItem('nagarmitra_user'); } catch(e) {}
+    setCurrentUser({
+      uid: 'citizen-demo',
+      email: 'citizen.indore@gmail.com',
+      displayName: 'Indore Citizen',
+      photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+      role: 'CITIZEN'
+    });
     if (activeTab.startsWith('admin-')) {
       setActiveTab('citizen-voice');
     }

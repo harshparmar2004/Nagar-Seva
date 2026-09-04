@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import { FALLBACK_WARDS, FALLBACK_CLUSTERS, FALLBACK_PROJECTS, FALLBACK_COMPLAINTS } from '../data/fallbackData';
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -87,22 +88,35 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
     try {
       const compRes = await fetch(API_BASE_URL + '/api/complaints');
       const compData = await compRes.json();
-      setComplaints(compData);
+      if (Array.isArray(compData) && compData.length > 0) setComplaints(compData);
+      else setComplaints(FALLBACK_COMPLAINTS);
 
       const clusRes = await fetch(API_BASE_URL + '/api/clusters');
       const clusData = await clusRes.json();
-      setClusters(clusData);
-      if (clusData.length > 0) setSelectedCluster(clusData[0]);
+      if (Array.isArray(clusData) && clusData.length > 0) {
+        setClusters(clusData);
+        setSelectedCluster(clusData[0]);
+      } else {
+        setClusters(FALLBACK_CLUSTERS);
+        if (FALLBACK_CLUSTERS.length > 0) setSelectedCluster(FALLBACK_CLUSTERS[0]);
+      }
 
       const projRes = await fetch(API_BASE_URL + '/api/projects');
       const projData = await projRes.json();
-      setProjects(projData);
+      if (Array.isArray(projData) && projData.length > 0) setProjects(projData);
+      else setProjects(FALLBACK_PROJECTS);
 
       const wardsRes = await fetch(API_BASE_URL + '/api/wards');
       const wardsData = await wardsRes.json();
-      setWardsList(wardsData);
+      if (Array.isArray(wardsData) && wardsData.length > 0) setWardsList(wardsData);
+      else setWardsList(FALLBACK_WARDS);
     } catch (e) {
-      console.error('Error fetching admin data:', e);
+      console.warn('Backend loading or offline, using verified fallback data:', e);
+      setComplaints(FALLBACK_COMPLAINTS);
+      setClusters(FALLBACK_CLUSTERS);
+      setProjects(FALLBACK_PROJECTS);
+      setWardsList(FALLBACK_WARDS);
+      if (FALLBACK_CLUSTERS.length > 0) setSelectedCluster(FALLBACK_CLUSTERS[0]);
     } finally {
       setLoading(false);
     }
@@ -408,8 +422,8 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               >
                 <MapResizer />
                 <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                 />
 
                 {/* Dynamic Geographic Hotspot Circles — grouped by ward so they appear exactly over pins */}

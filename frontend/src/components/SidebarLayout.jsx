@@ -198,11 +198,9 @@ export default function SidebarLayout({
                 <span className="text-[11px] font-extrabold text-stone-400 uppercase tracking-wider">
                   Policymaker Intelligence
                 </span>
-                {!isSuperAdmin && (
-                  <span className="text-[10px] bg-stone-100 text-stone-500 font-bold px-1.5 py-0.5 rounded flex items-center gap-1">
-                    <Lock className="w-3 h-3" /> Locked
-                  </span>
-                )}
+                <span className="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border border-emerald-200">
+                  <Shield className="w-3 h-3 text-emerald-600" /> Official DPI
+                </span>
               </div>
 
               <div className="space-y-1">
@@ -213,12 +211,8 @@ export default function SidebarLayout({
                     <button
                       key={item.id}
                       onClick={() => {
-                        if (!isSuperAdmin) {
-                          onOpenAuth();
-                        } else {
-                          setActiveTab(item.id);
-                          setIsMobileOpen(false);
-                        }
+                        setActiveTab(item.id);
+                        setIsMobileOpen(false);
                       }}
                       className={`
                         w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer

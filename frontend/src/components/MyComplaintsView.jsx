@@ -19,10 +19,17 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
     try {
       const res = await fetch(`${API_BASE_URL}/api/complaints/user/${activeEmail}`);
       const data = await res.json();
-      setComplaints(data);
+      let local = [];
+      try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(e) {}
+      const combined = [...local, ...(Array.isArray(data) ? data : [])];
+      const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+      setComplaints(unique);
     } catch (e) {
-      console.error(e);
-      setComplaints([
+      console.warn("Backend offline/sleeping, using local & sample complaints:", e);
+      let local = [];
+      try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(err) {}
+      const fallbackList = [
+        ...local,
         {
           id: 'NM-IND-2026-04821',
           transcript: 'Bhaiyaji, humare ward 14 me paani ka nala beh raha hai, bacche bimar ho rahe hain, sadak poori toot gayi hai!',
@@ -37,7 +44,8 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
           current_status: 'APPROVED_BY_ADMIN',
           created_at: '2026-08-25T20:30:00Z'
         }
-      ]);
+      ];
+      setComplaints(fallbackList);
     } finally {
       setLoading(false);
     }

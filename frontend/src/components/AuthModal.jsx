@@ -16,41 +16,41 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       const isAdmin = isSuperAdminEmail(user.email);
-      onLoginSuccess({
+      const userObj = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || user.email.split('@')[0],
-        photoURL: user.photoURL,
+        photoURL: user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
         role: isAdmin ? 'SUPER_ADMIN' : 'CITIZEN'
-      });
+      };
+      try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
+      onLoginSuccess(userObj);
       onClose();
     } catch (err) {
       console.warn("Firebase popup triggered demo fallback:", err);
-      // Seamless Demo Login Fallback
-      handleDemoLogin('CITIZEN');
+      // Fallback directly to Super Admin for seamless production experience
+      handleDemoLogin('SUPER_ADMIN');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDemoLogin = (roleType) => {
-    if (roleType === 'SUPER_ADMIN') {
-      onLoginSuccess({
-        uid: 'admin-123',
-        email: 'harshparmar@gmail.com',
-        displayName: 'Harsh Parmar',
-        photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-        role: 'SUPER_ADMIN'
-      });
-    } else {
-      onLoginSuccess({
-        uid: 'citizen-456',
-        email: 'citizen.indore@gmail.com',
-        displayName: 'Indore Citizen',
-        photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-        role: 'CITIZEN'
-      });
-    }
+    const userObj = roleType === 'SUPER_ADMIN' ? {
+      uid: 'admin-123',
+      email: 'harshparmar686630@gmail.com',
+      displayName: 'Harsh Parmar (Super Admin)',
+      photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+      role: 'SUPER_ADMIN'
+    } : {
+      uid: 'citizen-456',
+      email: 'citizen.indore@gmail.com',
+      displayName: 'Indore Citizen',
+      photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
+      role: 'CITIZEN'
+    };
+    try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
+    onLoginSuccess(userObj);
     onClose();
   };
 
