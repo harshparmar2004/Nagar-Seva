@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 // Firebase configuration for project 'nagar-seva' (nagar-seva-fbae2)
 // Uses environment variable VITE_FIREBASE_API_KEY when provided, with fallback
@@ -16,6 +17,64 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+export const db = getFirestore(app);
+
+/**
+ * Save / sync user profile directly to Firebase Firestore
+ */
+export const syncUserToFirestore = async (userObj) => {
+  if (!userObj?.email) return;
+  try {
+    const cleanEmail = userObj.email.toLowerCase().trim();
+    const userRef = doc(db, 'users', cleanEmail);
+    await setDoc(userRef, {
+      name: userObj.displayName || '',
+      email: cleanEmail,
+      aadhaar: userObj.aadhaar || '',
+      role: userObj.role || 'CITIZEN',
+      photoURL: userObj.photoURL || '',
+      lastLoginAt: new Date().toISOString()
+    }, { merge: true });
+    console.log("✓ User synced to Firebase Firestore:", cleanEmail);
+  } catch (err) {
+    console.warn("Firestore user sync note (check if Firestore is created in Firebase Console):", err.message);
+  }
+};
+
+/**
+ * Save a complaint directly to Firebase Firestore
+ */
+export const saveComplaintToFirestore = async (complaintObj) => {
+  if (!complaintObj?.id) return;
+  try {
+    const complaintRef = doc(db, 'complaints', complaintObj.id);
+    await setDoc(complaintRef, {
+      ...complaintObj,
+      savedAt: new Date().toISOString()
+    }, { merge: true });
+    console.log("✓ Complaint saved to Firebase Firestore:", complaintObj.id);
+  } catch (err) {
+    console.warn("Firestore complaint save note:", err.message);
+  }
+};
+
+/**
+ * Fetch complaints for a user directly from Firebase Firestore
+ */
+export const getFirestoreUserComplaints = async (userEmail) => {
+  if (!userEmail) return [];
+  try {
+    const cleanEmail = userEmail.toLowerCase().trim();
+    const q = query(collection(db, 'complaints'), where('user_email', '==', cleanEmail));
+    const snapshot = await getDocs(q);
+    const complaints = [];
+    snapshot.forEach(doc => complaints.push(doc.data()));
+    return complaints;
+  } catch (err) {
+    console.warn("Firestore user complaints fetch note:", err.message);
+    return [];
+  }
+};
 
 // Strict Super Admin: harshparmar686630@gmail.com is ALWAYS granted SUPER_ADMIN
 export const SUPER_ADMIN_EMAIL = 'harshparmar686630@gmail.com';

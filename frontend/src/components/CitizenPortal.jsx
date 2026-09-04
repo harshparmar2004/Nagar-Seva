@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import { saveComplaintToFirestore } from '../lib/firebase';
 import { FALLBACK_WARDS } from '../data/fallbackData';
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
@@ -371,6 +372,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
       }
 
       setIsAnalyzing(false);
+      saveComplaintToFirestore(data.complaint);
       setAiResult(data);
       setStep(5);
       if (onComplaintCreated) onComplaintCreated(data.complaint);
@@ -410,6 +412,8 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
       } catch(e) {
         console.warn("localStorage quota exceeded, skipping local storage:", e);
       }
+
+      saveComplaintToFirestore(fallbackComplaint);
 
       setAiResult({
         status: 'SUCCESS',

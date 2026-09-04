@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import { getFirestoreUserComplaints } from '../lib/firebase';
 import React, { useState, useEffect } from 'react';
 import { FolderCheck, Search, Building2, Landmark, User, Clock, CheckCircle2, AlertTriangle, Filter, MapPin, ExternalLink, ShieldCheck, Plus, Sparkles } from 'lucide-react';
 
@@ -17,16 +18,22 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
   const fetchUserComplaints = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/complaints/user/${activeEmail}`);
-      const data = await res.json();
+      const [backendPromise, firestorePromise] = await Promise.allSettled([
+        fetch(`${API_BASE_URL}/api/complaints/user/${activeEmail}`).then(r => r.ok ? r.json() : []),
+        getFirestoreUserComplaints(activeEmail)
+      ]);
+      const backendData = backendPromise.status === 'fulfilled' && Array.isArray(backendPromise.value) ? backendPromise.value : [];
+      const firestoreData = firestorePromise.status === 'fulfilled' && Array.isArray(firestorePromise.value) ? firestorePromise.value : [];
+
       let local = [];
       try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(e) {}
       const userLocal = local.filter(item => !item.user_email || item.user_email.toLowerCase() === activeEmail.toLowerCase());
-      const combined = [...userLocal, ...(Array.isArray(data) ? data : [])];
+
+      const combined = [...firestoreData, ...backendData, ...userLocal];
       const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
       setComplaints(unique);
     } catch (e) {
-      console.warn("Backend offline/sleeping, using local complaints:", e);
+      console.warn("Backend or Firestore offline, using local complaints:", e);
       let local = [];
       try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(err) {}
       const userLocal = local.filter(item => !item.user_email || item.user_email.toLowerCase() === activeEmail.toLowerCase());

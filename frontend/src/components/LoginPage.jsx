@@ -1,7 +1,7 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Shield, User, ArrowRight, AlertCircle, Compass, CreditCard, Mail, CheckCircle2 } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, isSuperAdminEmail } from '../lib/firebase';
+import { auth, googleProvider, isSuperAdminEmail, syncUserToFirestore } from '../lib/firebase';
 import { API_BASE_URL } from '../config';
 
 export default function LoginPage({ onLoginSuccess }) {
@@ -32,6 +32,14 @@ export default function LoginPage({ onLoginSuccess }) {
   };
 
   const syncUserToBackend = async (userObj) => {
+    // 1. Save directly to Firebase Firestore Database
+    try {
+      await syncUserToFirestore(userObj);
+    } catch (err) {
+      console.warn("Firestore sync error:", err);
+    }
+
+    // 2. Save to Backend Database
     try {
       await fetch(`${API_BASE_URL}/api/users/sync`, {
         method: 'POST',
