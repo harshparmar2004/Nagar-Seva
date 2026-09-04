@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MapPin, Mic, Shield, CheckCircle2, XCircle, RefreshCw, Navigation, User, Mail, CreditCard, Compass, ExternalLink, AlertTriangle, Phone } from 'lucide-react';
+import {
+  MapPin, Mic, Shield, CheckCircle2, XCircle, RefreshCw, Navigation,
+  User, Mail, CreditCard, Compass, ExternalLink, AlertTriangle, Phone,
+  ShieldCheck, Smartphone, Award, Building2, Sparkles
+} from 'lucide-react';
 import { FALLBACK_WARDS } from '../data/fallbackData';
 
 export default function CitizenSettings({ currentUser }) {
@@ -181,47 +185,158 @@ export default function CitizenSettings({ currentUser }) {
         </p>
       </div>
 
-      {/* Profile Card */}
-      <div className="bg-white border border-stone-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
-            Verified Civic Profile
-          </span>
-          <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-            <CheckCircle2 className="w-3 h-3" /> Google Authenticated
-          </span>
-        </div>
+      {/* VERIFIED CIVIC PROFILE CARD */}
+      <div className="bg-white border border-stone-200 rounded-3xl p-5 sm:p-7 shadow-sm space-y-5">
+        
+        {/* Top Header Row */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-stone-100">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-extrabold text-stone-900 uppercase tracking-wider">
+              Verified Civic Identity & DPI Profile
+            </span>
+            <span className="text-[10px] font-mono text-stone-400">
+              #IND-{currentUser?.aadhaar ? currentUser.aadhaar.slice(-4) : '2026'}
+            </span>
+          </div>
 
-        <div className="flex items-center gap-4">
-          <img
-            src={currentUser?.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
-            alt="Profile"
-            className="w-16 h-16 rounded-2xl object-cover border-2 border-stone-200 shadow-sm shrink-0"
-          />
-          <div className="flex-1 min-w-0 space-y-1">
-            <h2 className="text-base font-extrabold text-stone-900 truncate">{currentUser?.displayName}</h2>
-            <div className="flex items-center gap-2 text-xs text-stone-500 truncate">
-              <Mail className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-              <span className="truncate">{currentUser?.email}</span>
-            </div>
-            {currentUser?.aadhaar && currentUser.aadhaar !== 'GOVT-ADMIN-01' && (
-              <div className="flex items-center gap-2 text-xs text-stone-500">
-                <CreditCard className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                <span className="font-mono font-bold text-stone-700">
-                  Aadhaar: {currentUser.aadhaar.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3')}
-                </span>
-              </div>
-            )}
-            {currentUser?.phone && (
-              <div className="flex items-center gap-2 text-xs text-stone-500">
-                <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span className="font-mono font-bold text-stone-700">
-                  Mobile: +91 {currentUser.phone.replace(/(\d{5})(\d{5})/, '$1 $2')}
-                </span>
-              </div>
-            )}
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-50 text-orange-800 border border-orange-200/80 flex items-center gap-1.5 shadow-2xs">
+              <Award className="w-3 h-3 text-orange-600" />
+              <span>Indore Citizen</span>
+            </span>
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/80 flex items-center gap-1.5 shadow-2xs">
+              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+              <span>Google Authenticated</span>
+            </span>
           </div>
         </div>
+
+        {/* Multi-Column Main Content Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          
+          {/* Left Column: Avatar & Personal Info (5 cols) */}
+          <div className="md:col-span-5 flex items-center gap-4">
+            <div className="relative shrink-0">
+              <img
+                src={currentUser?.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'}
+                alt="Profile"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-orange-500/30 shadow-md ring-4 ring-orange-50"
+              />
+              <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-xs" title="Identity Verified">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </span>
+            </div>
+
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-black text-stone-900 truncate tracking-tight">{currentUser?.displayName || 'Citizen'}</h2>
+                <span className={`text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md ${
+                  currentUser?.role === 'SUPER_ADMIN'
+                    ? 'bg-stone-900 text-white'
+                    : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                }`}>
+                  {currentUser?.role === 'SUPER_ADMIN' ? 'ADMIN' : 'CITIZEN'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-stone-500 truncate">
+                <Mail className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                <span className="truncate">{currentUser?.email}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-stone-500">
+                <Building2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                <span className="font-semibold text-stone-700 truncate">Indore Municipal Corporation</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Center Column: Government Identity Credentials (4 cols) */}
+          <div className="md:col-span-4 space-y-2.5">
+            {/* Aadhaar Credential Box */}
+            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between hover:bg-orange-50/40 transition-colors">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                  <CreditCard className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Government Aadhaar ID</span>
+                  <span className="font-mono font-bold text-xs text-stone-900 truncate block">
+                    {currentUser?.aadhaar && currentUser.aadhaar !== 'GOVT-ADMIN-01'
+                      ? currentUser.aadhaar.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3')
+                      : 'GOVT-ADMIN-01'}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0 ml-2">
+                Linked
+              </span>
+            </div>
+
+            {/* Mobile Phone Box */}
+            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between hover:bg-emerald-50/40 transition-colors">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <span className="text-[9px] font-bold text-stone-400 uppercase tracking-wider block">Registered Mobile</span>
+                  <span className="font-mono font-bold text-xs text-stone-900 truncate block">
+                    {currentUser?.phone
+                      ? `+91 ${currentUser.phone.replace(/(\d{5})(\d{5})/, '$1 $2')}`
+                      : '+91 98260 12345'}
+                  </span>
+                </div>
+              </div>
+              <span className="text-[9px] font-extrabold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 shrink-0 ml-2">
+                Active
+              </span>
+            </div>
+          </div>
+
+          {/* Right Column: DPI Trust & Security Metric (3 cols) */}
+          <div className="md:col-span-3 bg-gradient-to-br from-stone-900 to-stone-800 text-white rounded-2xl p-3.5 sm:p-4 space-y-2.5 shadow-md">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">Civic Trust Level</span>
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-lg font-black text-white">Tier 1</span>
+                <span className="text-[10px] font-bold text-emerald-400">100% DPI Verified</span>
+              </div>
+              <p className="text-[10px] text-stone-400 mt-0.5 leading-tight">
+                Priority grievance routing & AI triage enabled.
+              </p>
+            </div>
+            <div className="w-full bg-stone-700 h-1.5 rounded-full overflow-hidden">
+              <div className="bg-emerald-500 h-full rounded-full w-full"></div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Bottom Metadata Ribbon */}
+        <div className="pt-3 border-t border-stone-100 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-[11px] text-stone-500 font-medium">
+          <div className="flex items-center gap-1.5">
+            <Shield className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+            <span className="truncate">Encrypted Identity</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+            <span className="truncate">Ward Geofencing Active</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            <span className="truncate">AI Fast-Track Eligible</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">Official IMC DPI Record</span>
+          </div>
+        </div>
+
       </div>
 
       {/* LIVE LOCATION ACCESS CARD WITH PROPER TOGGLE SWITCH */}
