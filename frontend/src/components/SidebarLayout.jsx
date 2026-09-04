@@ -146,45 +146,49 @@ export default function SidebarLayout({
           </div>
         </div>
 
-        {/* Center: Two Distinct Portal Switcher Tabs */}
-        <div className="flex items-center p-1 bg-stone-100/90 rounded-2xl border border-stone-200 shrink-0">
-          <button
-            onClick={() => onSwitchPortal('CITIZEN')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              isCitizenPortal
-                ? 'bg-white text-orange-700 shadow-sm border border-stone-200/80 font-black'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
+        {/* Center: Portal Switcher (Visible ONLY for Super Admin) or Citizen Badge (for Citizens) */}
+        {isSuperAdmin ? (
+          <div className="flex items-center p-1 bg-stone-100/90 rounded-2xl border border-stone-200 shrink-0">
+            <button
+              onClick={() => onSwitchPortal('CITIZEN')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                isCitizenPortal
+                  ? 'bg-white text-orange-700 shadow-sm border border-stone-200/80 font-black'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <User className="w-3.5 h-3.5 text-orange-600" />
+              <span className="hidden sm:inline">Citizen Portal</span>
+              <span className="sm:hidden">Citizen</span>
+              {isCitizenPortal && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              )}
+            </button>
+
+            <button
+              onClick={() => onSwitchPortal('SUPER_ADMIN')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                !isCitizenPortal
+                  ? 'bg-stone-900 text-white shadow-sm font-black'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Shield className={`w-3.5 h-3.5 ${!isCitizenPortal ? 'text-orange-400' : 'text-stone-500'}`} />
+              <span className="hidden sm:inline">Super Admin Portal</span>
+              <span className="sm:hidden">Admin</span>
+              {!isCitizenPortal && (
+                <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="hidden sm:flex items-center space-x-2 bg-orange-50 text-orange-800 border border-orange-200/80 rounded-2xl px-3 py-1 text-xs font-bold shadow-xs">
             <User className="w-3.5 h-3.5 text-orange-600" />
-            <span className="hidden sm:inline">Citizen Portal</span>
-            <span className="sm:hidden">Citizen</span>
-            {isCitizenPortal && (
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            )}
-          </button>
+            <span>Citizen Governance Portal</span>
+          </div>
+        )}
 
-          <button
-            onClick={() => onSwitchPortal('SUPER_ADMIN')}
-            className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-              !isCitizenPortal
-                ? 'bg-stone-900 text-white shadow-sm font-black'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            <Shield className={`w-3.5 h-3.5 ${!isCitizenPortal ? 'text-orange-400' : 'text-stone-500'}`} />
-            <span className="hidden sm:inline">Super Admin Portal</span>
-            <span className="sm:hidden">Admin</span>
-            {!isSuperAdmin && (
-              <Lock className="w-3 h-3 text-stone-400" />
-            )}
-            {!isCitizenPortal && (
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-            )}
-          </button>
-        </div>
-
-        {/* Right: Live GPS Badge & Auth Status / Login Button */}
+        {/* Right: Live GPS Badge & Auth Status / Logout */}
         <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
           
           {/* Live GPS Location Badge */}
@@ -193,8 +197,8 @@ export default function SidebarLayout({
             <span className="truncate">{liveLocationStr}</span>
           </div>
 
-          {/* User Auth Login Status / Login Button */}
-          {currentUser && currentUser.uid !== 'citizen-guest' ? (
+          {/* User Auth Login Status / Logout Button */}
+          {currentUser ? (
             <div className="flex items-center space-x-2 bg-stone-50 border border-stone-200 rounded-xl p-1 pr-2.5">
               <img
                 src={currentUser.photoURL}
@@ -204,26 +208,26 @@ export default function SidebarLayout({
               <div className="text-left hidden sm:block max-w-[130px] truncate">
                 <p className="text-xs font-bold text-stone-900 leading-none truncate">{currentUser.displayName}</p>
                 <span className={`text-[9px] font-extrabold uppercase px-1 py-0.2 rounded mt-0.5 inline-block ${
-                  isSuperAdmin ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-blue-50 text-blue-700 border border-blue-200'
+                  isSuperAdmin ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                 }`}>
-                  {currentUser.role}
+                  {isSuperAdmin ? 'SUPER ADMIN' : 'CITIZEN'}
                 </span>
               </div>
               <button
                 onClick={onLogout}
-                className="text-stone-400 hover:text-stone-700 p-1 transition-colors cursor-pointer"
-                title="Logout"
+                className="text-stone-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-lg transition-colors cursor-pointer ml-1"
+                title="Log Out"
               >
-                <LogOut className="w-3.5 h-3.5" />
+                <LogOut className="w-4 h-4" />
               </button>
             </div>
           ) : (
             <button
-              onClick={onOpenAuth}
-              className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-md hover:shadow-orange-500/20 transition-all flex items-center space-x-1.5 cursor-pointer"
+              onClick={onLogout}
+              className="bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span className="whitespace-nowrap">Sign In (Google)</span>
+              <span>Log In</span>
             </button>
           )}
         </div>
@@ -253,10 +257,10 @@ export default function SidebarLayout({
                 )}
                 <div>
                   <p className="font-extrabold text-[11px] uppercase tracking-wider">
-                    {isCitizenPortal ? 'Citizen Governance' : 'Super Admin Portal'}
+                    {isCitizenPortal ? 'Citizen Services' : 'Super Admin Portal'}
                   </p>
                   <p className={`text-[10px] ${isCitizenPortal ? 'text-orange-700' : 'text-stone-400'}`}>
-                    {isCitizenPortal ? 'Public Citizen Services' : 'Executive Command Center'}
+                    {isCitizenPortal ? 'Grievances & Ward Services' : 'Executive Command Center'}
                   </p>
                 </div>
               </div>
@@ -318,7 +322,7 @@ export default function SidebarLayout({
             )}
 
             {/* IF SUPER ADMIN PORTAL: RENDER ONLY SUPER ADMIN NAVIGATION */}
-            {!isCitizenPortal && (
+            {!isCitizenPortal && isSuperAdmin && (
               <div className="space-y-1.5">
                 <div className="px-2 flex items-center justify-between">
                   <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
@@ -376,33 +380,16 @@ export default function SidebarLayout({
 
           </div>
 
-          {/* SIDEBAR FOOTER: PORTAL SWITCH CALLOUT & SWACHH INDORE BADGE */}
+          {/* SIDEBAR FOOTER */}
           <div className="space-y-3 pt-3 border-t border-stone-100">
-            {isCitizenPortal ? (
-              <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 text-center space-y-2">
-                <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-stone-700">
-                  <Shield className="w-3.5 h-3.5 text-orange-600" />
-                  <span>Municipal Official Login</span>
-                </div>
-                <p className="text-[10px] text-stone-500">
-                  Are you a city engineer or policymaker?
-                </p>
-                <button
-                  onClick={() => onSwitchPortal('SUPER_ADMIN')}
-                  className="w-full py-1.5 px-3 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <span>Enter Super Admin Portal</span>
-                  <ArrowRight className="w-3 h-3" />
-                </button>
-              </div>
-            ) : (
+            {isSuperAdmin && !isCitizenPortal && (
               <div className="bg-orange-50/70 border border-orange-200/80 rounded-2xl p-3 text-center space-y-2">
                 <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-orange-900">
                   <User className="w-3.5 h-3.5 text-orange-600" />
                   <span>Citizen Grievance Mode</span>
                 </div>
                 <p className="text-[10px] text-stone-600">
-                  Switch to citizen portal to lodge or track complaints.
+                  Inspect the public portal experience as a citizen.
                 </p>
                 <button
                   onClick={() => onSwitchPortal('CITIZEN')}
@@ -414,9 +401,25 @@ export default function SidebarLayout({
               </div>
             )}
 
+            {isSuperAdmin && isCitizenPortal && (
+              <div className="bg-stone-900 border border-stone-800 rounded-2xl p-3 text-center space-y-2 text-white">
+                <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-orange-400">
+                  <Shield className="w-3.5 h-3.5" />
+                  <span>Super Admin Available</span>
+                </div>
+                <button
+                  onClick={() => onSwitchPortal('SUPER_ADMIN')}
+                  className="w-full py-1.5 px-3 bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                >
+                  <span>Return to Super Admin Portal</span>
+                  <ArrowRight className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+
             <div className="text-center">
               <p className="text-[10px] text-stone-400 font-semibold">
-                NagarSeva DPI • Built for Indore Municipal Corporation
+                NagarSeva DPI • Indore Municipal Corporation
               </p>
             </div>
           </div>

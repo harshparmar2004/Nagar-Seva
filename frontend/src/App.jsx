@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { signOut } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import LoginPage from './components/LoginPage';
 import SidebarLayout from './components/SidebarLayout';
 import CitizenPortal from './components/CitizenPortal';
 import MyComplaintsView from './components/MyComplaintsView';
@@ -19,14 +22,7 @@ export default function App() {
       const saved = localStorage.getItem('nagarmitra_user');
       if (saved) return JSON.parse(saved);
     } catch(e) {}
-    // Default to clean citizen guest profile
-    return {
-      uid: 'citizen-guest',
-      email: 'citizen.indore@gmail.com',
-      displayName: 'Indore Citizen',
-      photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      role: 'CITIZEN'
-    };
+    return null;
   });
 
   const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
@@ -58,6 +54,17 @@ export default function App() {
   const [selectedClusterForDPR, setSelectedClusterForDPR] = useState(null);
   const [selectedTrackingId, setSelectedTrackingId] = useState('');
 
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    if (user.role === 'SUPER_ADMIN') {
+      setCurrentPortal('SUPER_ADMIN');
+      setActiveTab('admin-gis');
+    } else {
+      setCurrentPortal('CITIZEN');
+      setActiveTab('citizen-voice');
+    }
+  };
+
   const handleSwitchPortal = (targetPortal) => {
     if (targetPortal === 'SUPER_ADMIN') {
       if (!isSuperAdmin) {
@@ -76,18 +83,20 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => {
-    try { localStorage.removeItem('nagarmitra_user'); } catch(e) {}
-    setCurrentUser({
-      uid: 'citizen-guest',
-      email: 'citizen.indore@gmail.com',
-      displayName: 'Indore Citizen',
-      photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      role: 'CITIZEN'
-    });
+  const handleLogout = async () => {
+    try {
+      localStorage.removeItem('nagarmitra_user');
+      await signOut(auth);
+    } catch(e) {}
+    setCurrentUser(null);
     setCurrentPortal('CITIZEN');
     setActiveTab('citizen-voice');
   };
+
+  // If user is not signed in, show the dedicated LoginPage
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
 
   return (
     <>
