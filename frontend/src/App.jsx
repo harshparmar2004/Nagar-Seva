@@ -140,10 +140,27 @@ export default function App() {
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(user) => {
           setCurrentUser(user);
+
+          // Multi-user Live Location Prompt: Ask every user for their live GPS location upon login
+          if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                console.log(`Live GPS acquired for ${user.displayName}:`, pos.coords.latitude, pos.coords.longitude);
+              },
+              (err) => {
+                console.warn("User geolocation prompt dismissed or unavailable:", err.message);
+              },
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+          }
+
+          // Strict Role-Based Routing:
+          // Super Admin -> lands on Super Admin GIS Platform (admin-gis)
+          // Citizen -> lands on Citizen Governance Portal (citizen-voice) to lodge grievances from their live location
           if (user.role === 'SUPER_ADMIN') {
             setActiveTab('admin-gis');
           } else {
-            setActiveTab('citizen-my-complaints');
+            setActiveTab('citizen-voice');
           }
         }}
       />

@@ -249,10 +249,16 @@ export default function SidebarLayout({
                 {adminNavItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
+                  const isRestrictedAdminTab = !item.isEmergency && !isSuperAdmin;
+
                   return (
                     <button
                       key={item.id}
                       onClick={() => {
+                        if (isRestrictedAdminTab) {
+                          onOpenAuth();
+                          return;
+                        }
                         setActiveTab(item.id);
                         setIsMobileOpen(false);
                       }}
@@ -272,13 +278,18 @@ export default function SidebarLayout({
                         <Icon className={`w-4 h-4 ${item.isEmergency ? 'text-red-600' : (isActive ? 'text-orange-600' : 'text-stone-400')}`} />
                         <span>{item.label}</span>
                       </div>
-                      <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
-                        item.isEmergency
-                          ? 'bg-red-600 text-white'
-                          : (isActive ? 'bg-orange-200 text-orange-800' : 'bg-stone-100 text-stone-500')
-                      }`}>
-                        {item.badge}
-                      </span>
+                      <div className="flex items-center space-x-1.5">
+                        {isRestrictedAdminTab && (
+                          <Lock className="w-3 h-3 text-stone-400" />
+                        )}
+                        <span className={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                          item.isEmergency
+                            ? 'bg-red-600 text-white'
+                            : (isActive ? 'bg-orange-200 text-orange-800' : 'bg-stone-100 text-stone-500')
+                        }`}>
+                          {item.badge}
+                        </span>
+                      </div>
                     </button>
                   );
                 })}

@@ -183,9 +183,9 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }) {
             >
               <div className="flex items-center space-x-1.5 text-xs font-bold text-orange-700">
                 <ShieldCheck className="w-3.5 h-3.5 text-orange-600" />
-                <span>Demo Admin</span>
+                <span>Super Admin</span>
               </div>
-              <p className="text-[10px] text-orange-600/80 mt-0.5 truncate">harshparmar@gmail.com</p>
+              <p className="text-[10px] text-orange-600/80 mt-0.5 truncate">harshparmar686630@gmail.com</p>
             </button>
           </div>
         </div>
