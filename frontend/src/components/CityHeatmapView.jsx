@@ -284,8 +284,9 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
             <MapFlyTo center={mapCenter} />
             
             <TileLayer
-              attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-              url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+              attribution='&copy; Google Maps'
+              url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+              maxZoom={20}
             />
 
             {/* REAL SMOOTH CONTINUOUS LEAFLET HEATMAP LAYER */}

@@ -422,8 +422,9 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               >
                 <MapResizer />
                 <TileLayer
-                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+                  attribution='&copy; Google Maps'
+                  url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                  maxZoom={20}
                 />
 
                 {/* Dynamic Geographic Hotspot Circles — grouped by ward so they appear exactly over pins */}
