@@ -99,8 +99,33 @@ export default function LoginPage({ onLoginSuccess }) {
         return;
       }
 
-      // Check if user already registered in Firebase Firestore or backend
-      const existingProfile = await getUserProfileFromFirestore(verifiedEmail);
+      // FAST PATH: Check localStorage cache first (instant, no network)
+      try {
+        const cachedUser = JSON.parse(localStorage.getItem('nagarmitra_user') || 'null');
+        if (cachedUser && cachedUser.email === verifiedEmail && cachedUser.aadhaar && cachedUser.role === 'CITIZEN') {
+          // Update uid and photo from fresh Google auth
+          cachedUser.uid = user.uid;
+          cachedUser.photoURL = user.photoURL || cachedUser.photoURL;
+          try { localStorage.setItem('nagarmitra_user', JSON.stringify(cachedUser)); } catch(e) {}
+          requestLiveGPS();
+          onLoginSuccess(cachedUser);
+          syncUserToBackend(cachedUser).catch(() => {});
+          return;
+        }
+      } catch(e) {}
+
+      // SLOW PATH: Check Firestore (with 3s timeout so it never hangs)
+      let existingProfile = null;
+      try {
+        existingProfile = await Promise.race([
+          getUserProfileFromFirestore(verifiedEmail),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+        ]);
+      } catch(e) {
+        // Timeout or Firestore error — treat as new user
+        existingProfile = null;
+      }
+
       if (existingProfile && existingProfile.aadhaar) {
         // Returning citizen with existing profile
         const citizenUserObj = {
@@ -115,7 +140,6 @@ export default function LoginPage({ onLoginSuccess }) {
         try { localStorage.setItem('nagarmitra_user', JSON.stringify(citizenUserObj)); } catch(e) {}
         requestLiveGPS();
         onLoginSuccess(citizenUserObj);
-        // Sync to Firebase & backend in background — don't block navigation
         syncUserToBackend(citizenUserObj).catch(() => {});
         return;
       }
