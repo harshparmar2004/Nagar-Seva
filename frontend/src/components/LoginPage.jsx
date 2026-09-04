@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, User, ArrowRight, AlertCircle, Compass, CreditCard, Mail, CheckCircle2, Sparkles, ChevronRight, Lock } from 'lucide-react';
+import { Shield, User, ArrowRight, AlertCircle, Compass, CreditCard, Mail, CheckCircle2, Sparkles, ChevronRight, Lock, MapPin, Mic } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, isSuperAdminEmail, syncUserToFirestore, getUserProfileFromFirestore } from '../lib/firebase';
 import { API_BASE_URL } from '../config';
@@ -8,9 +8,15 @@ export default function LoginPage({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Step state: 'SIGN_IN' (initial Google sign-in) or 'PROFILE_SETUP' (for new citizen identity completion)
+  // Step state: 'SIGN_IN' | 'PROFILE_SETUP' | 'PERMISSIONS'
   const [step, setStep] = useState('SIGN_IN');
   const [authenticatedGoogleUser, setAuthenticatedGoogleUser] = useState(null);
+
+  // Permissions state
+  const [locationGranted, setLocationGranted] = useState(false);
+  const [micGranted, setMicGranted] = useState(false);
+  const [pendingUserObj, setPendingUserObj] = useState(null);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
 
   // Profile setup form state
   const [name, setName] = useState('');
@@ -23,18 +29,75 @@ export default function LoginPage({ onLoginSuccess }) {
     setAadhaar(formatted);
   };
 
-  const requestLiveGPS = () => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          console.log("Live GPS acquired at login:", pos.coords.latitude, pos.coords.longitude);
-        },
-        (err) => {
-          console.warn("GPS request note:", err.message);
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
+  // Request location permission
+  const requestLocationPermission = async () => {
+    try {
+      const pos = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true, timeout: 10000, maximumAge: 0
+        });
+      });
+      console.log("Location granted:", pos.coords.latitude, pos.coords.longitude);
+      setLocationGranted(true);
+      return true;
+    } catch (err) {
+      console.warn("Location denied:", err.message);
+      setLocationGranted(false);
+      return false;
     }
+  };
+
+  // Request microphone permission
+  const requestMicPermission = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Stop the mic immediately — we just needed the permission
+      stream.getTracks().forEach(track => track.stop());
+      console.log("Microphone granted");
+      setMicGranted(true);
+      return true;
+    } catch (err) {
+      console.warn("Microphone denied:", err.message);
+      setMicGranted(false);
+      return false;
+    }
+  };
+
+  // Request all permissions at once
+  const requestAllPermissions = async () => {
+    setPermissionsLoading(true);
+    setError(null);
+    const [locResult, micResult] = await Promise.all([
+      requestLocationPermission(),
+      requestMicPermission()
+    ]);
+    setPermissionsLoading(false);
+
+    if (locResult && micResult) {
+      // Both granted — proceed to portal
+      finishLogin(pendingUserObj);
+    } else {
+      const denied = [];
+      if (!locResult) denied.push('Location');
+      if (!micResult) denied.push('Microphone');
+      setError(`${denied.join(' & ')} permission denied. Please allow access in your browser settings and try again.`);
+    }
+  };
+
+  // Final login — called only after both permissions are granted
+  const finishLogin = (userObj) => {
+    try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
+    onLoginSuccess(userObj);
+    syncUserToBackend(userObj).catch(() => {});
+  };
+
+  // Navigate to permissions step (stores user, shows permissions UI)
+  const proceedToPermissionsStep = (userObj) => {
+    setPendingUserObj(userObj);
+    setLocationGranted(false);
+    setMicGranted(false);
+    setError(null);
+    setStep('PERMISSIONS');
   };
 
   const syncUserToBackend = async (userObj) => {
@@ -91,11 +154,7 @@ export default function LoginPage({ onLoginSuccess }) {
           role: 'SUPER_ADMIN'
         };
 
-        try { localStorage.setItem('nagarmitra_user', JSON.stringify(adminUserObj)); } catch(e) {}
-        requestLiveGPS();
-        onLoginSuccess(adminUserObj);
-        // Sync to Firebase & backend in background — don't block navigation
-        syncUserToBackend(adminUserObj).catch(() => {});
+        proceedToPermissionsStep(adminUserObj);
         return;
       }
 
@@ -106,10 +165,7 @@ export default function LoginPage({ onLoginSuccess }) {
           // Update uid and photo from fresh Google auth
           cachedUser.uid = user.uid;
           cachedUser.photoURL = user.photoURL || cachedUser.photoURL;
-          try { localStorage.setItem('nagarmitra_user', JSON.stringify(cachedUser)); } catch(e) {}
-          requestLiveGPS();
-          onLoginSuccess(cachedUser);
-          syncUserToBackend(cachedUser).catch(() => {});
+          proceedToPermissionsStep(cachedUser);
           return;
         }
       } catch(e) {}
@@ -138,9 +194,7 @@ export default function LoginPage({ onLoginSuccess }) {
         };
 
         try { localStorage.setItem('nagarmitra_user', JSON.stringify(citizenUserObj)); } catch(e) {}
-        requestLiveGPS();
-        onLoginSuccess(citizenUserObj);
-        syncUserToBackend(citizenUserObj).catch(() => {});
+        proceedToPermissionsStep(citizenUserObj);
         return;
       }
 
@@ -196,11 +250,8 @@ export default function LoginPage({ onLoginSuccess }) {
     };
 
     try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
-    requestLiveGPS();
-    onLoginSuccess(userObj);
     setLoading(false);
-    // Sync to Firebase & backend in background — don't block navigation
-    syncUserToBackend(userObj).catch(() => {});
+    proceedToPermissionsStep(userObj);
   };
 
   return (
@@ -366,6 +417,97 @@ export default function LoginPage({ onLoginSuccess }) {
             </div>
 
           </form>
+        )}
+
+        {/* STEP 3: MANDATORY PERMISSIONS */}
+        {step === 'PERMISSIONS' && (
+          <div className="space-y-5 animate-fade-in">
+            <div className="text-center space-y-1.5">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-[11px] font-bold">
+                <Shield className="w-3 h-3 text-blue-600" />
+                <span>Device Permissions Required</span>
+              </div>
+              <h2 className="text-lg font-extrabold text-stone-900 mt-1">Grant Access to Continue</h2>
+              <p className="text-xs text-stone-500 max-w-xs mx-auto">
+                NagarSeva requires live location and microphone access to verify your ward, enable voice-based complaint filing, and ensure accurate geo-tagging.
+              </p>
+            </div>
+
+            {/* Permission Cards */}
+            <div className="space-y-3">
+              {/* Location Permission */}
+              <div className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                locationGranted 
+                  ? 'bg-emerald-50 border-emerald-200' 
+                  : 'bg-stone-50 border-stone-200'
+              }`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  locationGranted ? 'bg-emerald-500 text-white' : 'bg-stone-200 text-stone-500'
+                }`}>
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-stone-800">Live Location Access</p>
+                  <p className="text-[10px] text-stone-500 mt-0.5">Auto-detect ward, geo-tag complaints & verify proximity</p>
+                </div>
+                {locationGranted ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 shrink-0" />
+                )}
+              </div>
+
+              {/* Microphone Permission */}
+              <div className={`flex items-center gap-3 p-3.5 rounded-2xl border transition-all ${
+                micGranted 
+                  ? 'bg-emerald-50 border-emerald-200' 
+                  : 'bg-stone-50 border-stone-200'
+              }`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  micGranted ? 'bg-emerald-500 text-white' : 'bg-stone-200 text-stone-500'
+                }`}>
+                  <Mic className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-stone-800">Microphone Access</p>
+                  <p className="text-[10px] text-stone-500 mt-0.5">Voice-based complaint filing & AI-assisted descriptions</p>
+                </div>
+                {micGranted ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                ) : (
+                  <div className="w-5 h-5 rounded-full border-2 border-stone-300 shrink-0" />
+                )}
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="pt-1 space-y-2">
+              {locationGranted && micGranted ? (
+                <button
+                  type="button"
+                  onClick={() => finishLogin(pendingUserObj)}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all cursor-pointer"
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  <span>All Permissions Granted — Enter Portal</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={requestAllPermissions}
+                  disabled={permissionsLoading}
+                  className="w-full bg-stone-900 hover:bg-stone-800 active:scale-[0.99] text-white font-bold text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Shield className="w-5 h-5" />
+                  <span>{permissionsLoading ? 'Requesting Permissions...' : 'Grant Location & Mic Access'}</span>
+                </button>
+              )}
+
+              <p className="text-[10px] text-stone-400 text-center mt-1">
+                These permissions are mandatory for all NagarSeva services. Your data stays encrypted on-device.
+              </p>
+            </div>
+          </div>
         )}
 
       </div>
