@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, AlertOctagon, PhoneCall, ShieldAlert, CheckCircle2, Sparkles, MapPin } from 'lucide-react';
 
 export default function EmergencyAlertModal({ isOpen, onClose }) {
@@ -52,10 +52,10 @@ export default function EmergencyAlertModal({ isOpen, onClose }) {
                 onChange={(e) => setEmergencyType(e.target.value)}
                 className="w-full bg-rose-50/50 border border-rose-200 rounded-xl p-3 font-bold text-stone-900 focus:outline-none"
               >
-                <option value="OPEN_SEWER">ðŸš¨ Open Sewerage Pit / Uncovered Drain (Child Hazard)</option>
-                <option value="HIGH_VOLTAGE">âš¡ Live High-Voltage Wire Fallen on Public Road</option>
-                <option value="MAIN_BURST">ðŸ’§ Drinking Water Main Pipeline Burst / Flooding</option>
-                <option value="BUILDING_COLLAPSE">ðŸšï¸ Dangerous Building Structure Hazard</option>
+                <option value="OPEN_SEWER">🚨 Open Sewerage Pit / Uncovered Drain (Child Hazard)</option>
+                <option value="HIGH_VOLTAGE">⚡ Live High-Voltage Wire Fallen on Public Road</option>
+                <option value="MAIN_BURST">💧 Drinking Water Main Pipeline Burst / Flooding</option>
+                <option value="BUILDING_COLLAPSE">🏚️ Dangerous Building Structure Hazard</option>
               </select>
             </div>
 

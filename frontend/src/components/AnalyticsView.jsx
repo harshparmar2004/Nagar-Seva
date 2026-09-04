@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area } from 'recharts';
 import { BarChart2, PieChart as PieIcon, TrendingUp, AlertTriangle, Activity, Database, CheckCircle2, Clock, AlertOctagon, Layers, Loader2, Calendar, ShieldCheck, CheckCheck, Filter, ChevronDown } from 'lucide-react';
 
@@ -37,8 +38,8 @@ export default function AnalyticsView() {
     setLoading(true);
     try {
       const [analyticsRes, compRes] = await Promise.all([
-        fetch('https://nagarmitra-backend.onrender.com/api/analytics'),
-        fetch('https://nagarmitra-backend.onrender.com/api/complaints')
+        fetch(API_BASE_URL + '/api/analytics'),
+        fetch(API_BASE_URL + '/api/complaints')
       ]);
 
       const analytics = await analyticsRes.json();
@@ -190,7 +191,7 @@ export default function AnalyticsView() {
                       : 'bg-white text-stone-700 hover:bg-stone-100 border border-stone-200'
                   }`}
                 >
-                  {yr} {yr === '2026' ? 'âš¡ (Active)' : 'ðŸ“œ (Archive)'}
+                  {yr} {yr === '2026' ? '⚡ (Active)' : '📜 (Archive)'}
                 </button>
               ))}
             </div>

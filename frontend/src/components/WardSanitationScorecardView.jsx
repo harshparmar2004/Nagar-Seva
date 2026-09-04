@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
+import React, { useState, useEffect } from 'react';
 import {
   Trophy, CheckCircle2, Truck, Droplets, Zap, Activity, Award, Shield,
   Heart, Sparkles, MapPin, Compass, AlertCircle, Clock, CheckCheck, Loader2,
@@ -33,7 +34,7 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
 
   const fetchWardsList = async () => {
     try {
-      const res = await fetch('https://nagarmitra-backend.onrender.com/api/wards');
+      const res = await fetch(API_BASE_URL + '/api/wards');
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         setWardsList(data);
@@ -50,32 +51,32 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           try {
-            const res = await fetch(`https://nagarmitra-backend.onrender.com/api/geotag/resolve?lat=${lat}&lng=${lng}`);
+            const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${lat}&lng=${lng}`);
             const data = await res.json();
             if (data && data.ward_id) {
               setLiveGpsWardId(data.ward_id);
               setSelectedWardId(data.ward_id);
               const locName = data.address ? data.address.split(',')[0] : 'Indore Sector';
-              setLiveGpsLabel(`ðŸ“ Live GPS: ${locName} (Ward ${data.ward_number})`);
+              setLiveGpsLabel(`📍 Live GPS: ${locName} (Ward ${data.ward_number})`);
             }
           } catch (e) {
-            setLiveGpsLabel('ðŸ“ GPS: Ward 52 (Musakhedi Sector)');
+            setLiveGpsLabel('📍 GPS: Ward 52 (Musakhedi Sector)');
           }
         },
         () => {
-          setLiveGpsLabel('ðŸ“ GPS: Ward 52 (Musakhedi Sector)');
+          setLiveGpsLabel('📍 GPS: Ward 52 (Musakhedi Sector)');
         },
         { timeout: 8000 }
       );
     } else {
-      setLiveGpsLabel('ðŸ“ GPS: Ward 52 (Musakhedi Sector)');
+      setLiveGpsLabel('📍 GPS: Ward 52 (Musakhedi Sector)');
     }
   };
 
   const fetchWardAnalytics = async (wardId) => {
     setLoading(true);
     try {
-      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/wards/${wardId}/analytics`);
+      const res = await fetch(`${API_BASE_URL}/api/wards/${wardId}/analytics`);
       const data = await res.json();
       setAnalytics(data);
     } catch (e) {
@@ -88,11 +89,11 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
   const handleAdminResolve = async (complaintId) => {
     setResolvingId(complaintId);
     try {
-      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/complaints/resolve/${complaintId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/resolve/${complaintId}`, {
         method: 'POST'
       });
       const data = await res.json();
-      setAdminActionMsg(`âœ… Complaint #${complaintId} marked as RESOLVED & notification sent to citizen!`);
+      setAdminActionMsg(`✅ Complaint #${complaintId} marked as RESOLVED & notification sent to citizen!`);
       setTimeout(() => setAdminActionMsg(null), 5000);
       
       // Refresh analytics to show updated status
@@ -159,11 +160,11 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
                 ))
               ) : (
                 <>
-                  <option value="ward_52" className="bg-white text-stone-900">Ward 52 â€” Musakhedi, Mayur Nagar & Ring Road</option>
-                  <option value="ward_14" className="bg-white text-stone-900">Ward 14 â€” Rajendra Nagar & Cat Road Corridor</option>
-                  <option value="ward_40" className="bg-white text-stone-900">Ward 40 â€” Khajrana Main Sector</option>
-                  <option value="ward_27" className="bg-white text-stone-900">Ward 27 â€” Vijay Nagar Sector A-C</option>
-                  <option value="ward_1" className="bg-white text-stone-900">Ward 1 â€” Sirpur & Kalani Nagar</option>
+                  <option value="ward_52" className="bg-white text-stone-900">Ward 52 — Musakhedi, Mayur Nagar & Ring Road</option>
+                  <option value="ward_14" className="bg-white text-stone-900">Ward 14 — Rajendra Nagar & Cat Road Corridor</option>
+                  <option value="ward_40" className="bg-white text-stone-900">Ward 40 — Khajrana Main Sector</option>
+                  <option value="ward_27" className="bg-white text-stone-900">Ward 27 — Vijay Nagar Sector A-C</option>
+                  <option value="ward_1" className="bg-white text-stone-900">Ward 1 — Sirpur & Kalani Nagar</option>
                 </>
               )}
             </select>
@@ -429,7 +430,7 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
             <h4 className="font-extrabold text-stone-900 text-sm">Indore Swachhata Champion</h4>
             <p className="text-stone-500 text-[11px] font-medium">Earned by registering verified civic complaints & upvoting ward projects.</p>
             <span className="inline-block bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
-              UNLOCKED âœ“
+              UNLOCKED ✓
             </span>
           </div>
 
@@ -440,7 +441,7 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
             <h4 className="font-extrabold text-stone-900 text-sm">Ward Vigilant Resident</h4>
             <p className="text-stone-500 text-[11px] font-medium">Earned by endorsing neighborhood complaints with co-filer status.</p>
             <span className="inline-block bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded">
-              UNLOCKED âœ“
+              UNLOCKED ✓
             </span>
           </div>
 
@@ -462,7 +463,7 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
               </button>
             ) : (
               <span className="inline-block bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                CLAIMED âœ“ (+100 Pts)
+                CLAIMED ✓ (+100 Pts)
               </span>
             )}
           </div>

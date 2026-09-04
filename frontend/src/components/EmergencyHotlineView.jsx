@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { AlertOctagon, ShieldAlert, Sparkles, PhoneCall, CheckCircle2, MapPin, Clock, Camera, Send, Flame, Zap, AlertTriangle, ShieldCheck, Building2, User } from 'lucide-react';
 
 export default function EmergencyHotlineView({ currentUser }) {
@@ -17,7 +17,7 @@ export default function EmergencyHotlineView({ currentUser }) {
       severity: 'GRADE 5 CRITICAL (98.5/100 Risk Score)',
       status: 'CONTROL ROOM DISPATCHED',
       reportedAt: '12 mins ago',
-      aiVerdict: 'GENUINE LIFE HAZARD â€” Priority 1 Incident',
+      aiVerdict: 'GENUINE LIFE HAZARD — Priority 1 Incident',
       dept: 'Paschim DISCOM Electricity Rapid Action Team',
       officer: 'Er. Sandeep Joshi (Discom Control Room)'
     },
@@ -114,10 +114,10 @@ export default function EmergencyHotlineView({ currentUser }) {
               onChange={(e) => setHazardType(e.target.value)}
               className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-red-500 cursor-pointer"
             >
-              <option value="ELECTRICAL_LIVE_WIRE">âš¡ Fallen High Voltage Cable / Live Wire</option>
-              <option value="OPEN_SEWER_PIT">âš ï¸ Deep Open Drain / Uncovered Manhole</option>
-              <option value="GAS_LEAKAGE">ðŸ”¥ LPG / Industrial Chemical Gas Leak</option>
-              <option value="BRIDGE_COLLAPSE">ðŸš§ Structural Wall / Bridge Collapse Risk</option>
+              <option value="ELECTRICAL_LIVE_WIRE">⚡ Fallen High Voltage Cable / Live Wire</option>
+              <option value="OPEN_SEWER_PIT">⚠️ Deep Open Drain / Uncovered Manhole</option>
+              <option value="GAS_LEAKAGE">🔥 LPG / Industrial Chemical Gas Leak</option>
+              <option value="BRIDGE_COLLAPSE">🚧 Structural Wall / Bridge Collapse Risk</option>
             </select>
           </div>
 
@@ -169,7 +169,7 @@ export default function EmergencyHotlineView({ currentUser }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-white p-3 rounded-xl border border-red-200 space-y-0.5">
                 <span className="text-[10px] text-stone-400 font-bold uppercase">AI Authenticity Verdict</span>
-                <p className="font-extrabold text-emerald-700 text-xs">GENUINE LIFE HAZARD âœ“</p>
+                <p className="font-extrabold text-emerald-700 text-xs">GENUINE LIFE HAZARD ✓</p>
               </div>
 
               <div className="bg-white p-3 rounded-xl border border-red-200 space-y-0.5">

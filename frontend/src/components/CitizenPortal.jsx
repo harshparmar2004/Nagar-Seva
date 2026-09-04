@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
+import React, { useState, useEffect } from 'react';
 import { Mic, MicOff, Send, MapPin, Sparkles, CheckCircle, FileText, ThumbsUp, Camera, ShieldCheck, UserCheck, Smartphone, Key, AlertTriangle, Layers, ArrowRight, ArrowLeft, Check, MessageSquare, Download, CheckCircle2, Volume2, Navigation, Compass, Crosshair, Eye, Shield, Image } from 'lucide-react';
 
 export default function CitizenPortal({ activeSubTab, onComplaintCreated, currentUser }) {
@@ -15,15 +16,15 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const [idHash, setIdHash] = useState('VOTER-IND-4821');
 
   const [indoreWardsList, setIndoreWardsList] = useState([
-    { id: 'ward_52', name: 'Ward 52 â€” Musakhedi, Mayur Nagar & Ring Road Sector (Zone 14)', lat: 22.7120, lng: 75.9080 },
-    { id: 'ward_40', name: 'Ward 40 â€” Khajrana Main & Shaheed Bhagat Singh Sector (Zone 9)', lat: 22.7250, lng: 75.8850 },
-    { id: 'ward_27', name: 'Ward 27 â€” Vijay Nagar Sector A-C (Zone 7)', lat: 22.7533, lng: 75.8937 },
-    { id: 'ward_1', name: 'Ward 1 â€” Sirpur & Kalani Nagar (Zone 1)', lat: 22.7196, lng: 75.8577 },
-    { id: 'ward_14', name: 'Ward 14 â€” Rajendra Nagar & Cat Road Corridor (Zone 15)', lat: 22.6800, lng: 75.8250 }
+    { id: 'ward_52', name: 'Ward 52 — Musakhedi, Mayur Nagar & Ring Road Sector (Zone 14)', lat: 22.7120, lng: 75.9080 },
+    { id: 'ward_40', name: 'Ward 40 — Khajrana Main & Shaheed Bhagat Singh Sector (Zone 9)', lat: 22.7250, lng: 75.8850 },
+    { id: 'ward_27', name: 'Ward 27 — Vijay Nagar Sector A-C (Zone 7)', lat: 22.7533, lng: 75.8937 },
+    { id: 'ward_1', name: 'Ward 1 — Sirpur & Kalani Nagar (Zone 1)', lat: 22.7196, lng: 75.8577 },
+    { id: 'ward_14', name: 'Ward 14 — Rajendra Nagar & Cat Road Corridor (Zone 15)', lat: 22.6800, lng: 75.8250 }
   ]);
 
   useEffect(() => {
-    fetch('https://nagarmitra-backend.onrender.com/api/wards')
+    fetch(API_BASE_URL + '/api/wards')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -40,7 +41,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const [lat, setLat] = useState('22.712015');
   const [lng, setLng] = useState('75.908045');
   const [isGeolocating, setIsGeolocating] = useState(false);
-  const [locationStatus, setLocationStatus] = useState('GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) â€¢ Lat: 22.712015, Lng: 75.908045');
+  const [locationStatus, setLocationStatus] = useState('GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) • Lat: 22.712015, Lng: 75.908045');
 
   useEffect(() => {
     handleDetectLiveLocation();
@@ -53,7 +54,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
       setLat(wardObj.lat.toString());
       setLng(wardObj.lng.toString());
       setLandmark(wardObj.name);
-      setLocationStatus(`Selected Location: ${wardObj.name} â€¢ [Lat: ${wardObj.lat}, Lng: ${wardObj.lng}]`);
+      setLocationStatus(`Selected Location: ${wardObj.name} • [Lat: ${wardObj.lat}, Lng: ${wardObj.lng}]`);
     }
   };
 
@@ -72,9 +73,9 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
             const data = await res.json();
             const displayName = data.display_name || 'Mayur Nagar, Musakhedi, Indore';
-            setLocationStatus(`Pinpoint GPS Geotagged: ${displayName} â€¢ [Lat: ${latitude}, Lng: ${longitude}]`);
+            setLocationStatus(`Pinpoint GPS Geotagged: ${displayName} • [Lat: ${latitude}, Lng: ${longitude}]`);
           } catch (e) {
-            setLocationStatus(`Pinpoint GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) â€¢ [Lat: ${latitude}, Lng: ${longitude}]`);
+            setLocationStatus(`Pinpoint GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) • [Lat: ${latitude}, Lng: ${longitude}]`);
           }
         },
         (error) => {
@@ -82,7 +83,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           setIsGeolocating(false);
           setLat('22.712015');
           setLng('75.908045');
-          setLocationStatus('Pinpoint GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) â€¢ [Lat: 22.712015, Lng: 75.908045]');
+          setLocationStatus('Pinpoint GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) • [Lat: 22.712015, Lng: 75.908045]');
         },
         { enableHighAccuracy: true, timeout: 8000 }
       );
@@ -187,7 +188,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
         formData.append('photo_file', rawPhotoFile);
       }
 
-      const response = await fetch('https://nagarmitra-backend.onrender.com/api/complaints', {
+      const response = await fetch(API_BASE_URL + '/api/complaints', {
         method: 'POST',
         body: formData,
       });
@@ -214,7 +215,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           citizen_id_hash: idHash,
           landmark: landmark,
           photo_url: photoPreview || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80',
-          responsible_department: 'Indore Municipal Corporation (IMC) â€” Zone 14 Musakhedi Secretariat',
+          responsible_department: 'Indore Municipal Corporation (IMC) — Zone 14 Musakhedi Secretariat',
           responsible_ministry: 'Ministry of Housing & Urban Affairs (MoHUA)',
           nodal_officer: 'Er. R. K. Sharma (Assistant Engineer)',
           created_at: new Date().toISOString()
@@ -234,7 +235,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
   const getWardNameStr = () => {
     const found = indoreWardsList.find(w => w.id === selectedWard);
-    return found ? found.name : 'Ward 52 â€” Musakhedi, Mayur Nagar & Ring Road Sector (Zone 14)';
+    return found ? found.name : 'Ward 52 — Musakhedi, Mayur Nagar & Ring Road Sector (Zone 14)';
   };
 
   return (
@@ -290,7 +291,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                     {s.title}
                   </p>
                   <p className="text-[10px] font-semibold text-stone-400 hidden sm:block">
-                    {isCompleted ? 'âœ“ Verified' : s.desc}
+                    {isCompleted ? '✓ Verified' : s.desc}
                   </p>
                 </div>
               </div>
@@ -314,7 +315,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-stone-700">Full Name (à¤œà¥ˆà¤¸à¤¾ à¤ªà¤¹à¤šà¤¾à¤¨ à¤ªà¤¤à¥à¤° à¤®à¥‡à¤‚ à¤¹à¥ˆ):</label>
+              <label className="text-xs font-bold text-stone-700">Full Name (जैसा पहचान पत्र में है):</label>
               <input
                 type="text"
                 value={citizenName}
@@ -344,7 +345,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               </span>
               {otpVerified && (
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Mobile OTP Verified âœ“
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Mobile OTP Verified ✓
                 </span>
               )}
             </div>
@@ -421,7 +422,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
           {/* Ward Selection Dropdown */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-stone-700">Select Your Municipal Ward (à¤‡à¤‚à¤¦à¥Œà¤° à¤µà¤¾à¤°à¥à¤¡ à¤šà¥à¤¨à¥‡à¤‚):</label>
+            <label className="text-xs font-bold text-stone-700">Select Your Municipal Ward (इंदौर वार्ड चुनें):</label>
             <select
               value={selectedWard}
               onChange={(e) => handleWardSelectChange(e.target.value)}
@@ -472,7 +473,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-stone-700">Landmark / Building Address (à¤®à¥à¤–à¥à¤¯ à¤²à¥ˆà¤‚à¤¡à¤®à¤¾à¤°à¥à¤•):</label>
+              <label className="text-xs font-bold text-stone-700">Landmark / Building Address (मुख्य लैंडमार्क):</label>
               <input
                 type="text"
                 value={landmark}
@@ -532,7 +533,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 flex flex-col items-center justify-center text-center space-y-3">
-              <span className="text-xs font-bold text-stone-600 uppercase tracking-wider">Voice Recording (à¤¬à¥‹à¤²à¤•à¤° à¤¬à¤¤à¤¾à¤à¤‚)</span>
+              <span className="text-xs font-bold text-stone-600 uppercase tracking-wider">Voice Recording (बोलकर बताएं)</span>
               <button
                 onClick={isRecording ? handleStopRecording : handleStartRecording}
                 className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${
@@ -580,7 +581,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           )}
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-stone-700">Detailed Complaint Description (à¤¸à¤®à¤¸à¥à¤¯à¤¾ à¤µà¤¿à¤µà¤°à¤£):</label>
+            <label className="text-xs font-bold text-stone-700">Detailed Complaint Description (समस्या विवरण):</label>
             <textarea
               rows={3}
               value={inputText}
@@ -740,11 +741,11 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               </div>
             </div>
             <button
-              onClick={() => handleSpeakStatus(`à¤†à¤ªà¤•à¥€ à¤¶à¤¿à¤•à¤¾à¤¯à¤¤ à¤¸à¤‚à¤–à¥à¤¯à¤¾ ${aiResult.complaint.id} à¤¸à¤«à¤²à¤¤à¤¾à¤ªà¥‚à¤°à¥à¤µà¤• à¤¦à¤°à¥à¤œ à¤•à¤° à¤²à¥€ à¤—à¤ˆ à¤¹à¥ˆà¥¤ à¤µà¤¾à¤°à¥à¤¡ 52 à¤®à¥à¤¸à¤¾à¤–à¥‡à¤¡à¤¼à¥€ à¤®à¤¯à¥‚à¤° à¤¨à¤—à¤° à¤®à¥‡à¤‚ à¤¶à¤¿à¤•à¤¾à¤¯à¤¤ à¤¦à¤°à¥à¤œ à¤•à¥€ à¤—à¤ˆ à¤¹à¥ˆà¥¤`)}
+              onClick={() => handleSpeakStatus(`आपकी शिकायत संख्या ${aiResult.complaint.id} सफलतापूर्वक दर्ज कर ली गई है। वार्ड 52 मुसाखेड़ी मयूर नगर में शिकायत दर्ज की गई है।`)}
               className="bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-300 flex items-center gap-1.5 transition-all shrink-0"
             >
               <Volume2 className="w-4 h-4 text-orange-600" />
-              <span>Listen Status in Dialect (à¤¬à¥‹à¤²à¤•à¤° à¤¸à¥à¤¨à¥‡à¤‚)</span>
+              <span>Listen Status in Dialect (बोलकर सुनें)</span>
             </button>
           </div>
 
@@ -763,7 +764,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                   <Image className="w-4 h-4 text-orange-600" /> Geotagged Evidence Photo Preserved
                 </span>
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                  ATTACHMENT STORED âœ“
+                  ATTACHMENT STORED ✓
                 </span>
               </div>
               <p className="text-stone-600 text-[11px] font-semibold">
@@ -775,20 +776,20 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-xs">
             <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 space-y-1">
-              <span className="text-[11px] text-emerald-700 font-bold">âœ“ Resident Name</span>
+              <span className="text-[11px] text-emerald-700 font-bold">✓ Resident Name</span>
               <p className="font-extrabold text-stone-900">{aiResult.complaint.citizen_name}</p>
             </div>
             <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 space-y-1">
-              <span className="text-[11px] text-emerald-700 font-bold">âœ“ Verified Phone & ID</span>
+              <span className="text-[11px] text-emerald-700 font-bold">✓ Verified Phone & ID</span>
               <p className="font-extrabold text-stone-900">{aiResult.complaint.citizen_phone}</p>
               <p className="text-[10px] text-stone-500">{aiResult.complaint.citizen_id_hash}</p>
             </div>
             <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 space-y-1">
-              <span className="text-[11px] text-emerald-700 font-bold">âœ“ Assigned Department</span>
+              <span className="text-[11px] text-emerald-700 font-bold">✓ Assigned Department</span>
               <p className="font-extrabold text-stone-900">{aiResult.complaint.responsible_department || 'IMC Zone 14 Secretariat'}</p>
             </div>
             <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 space-y-1">
-              <span className="text-[11px] text-emerald-700 font-bold">âœ“ Nodal Officer</span>
+              <span className="text-[11px] text-emerald-700 font-bold">✓ Nodal Officer</span>
               <p className="font-extrabold text-stone-900">{aiResult.complaint.nodal_officer || 'Er. R. K. Sharma'}</p>
             </div>
           </div>

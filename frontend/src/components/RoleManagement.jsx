@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { ShieldCheck, UserPlus, Trash2, Mail, CheckCircle2, AlertCircle, Sparkles, Lock } from 'lucide-react';
 import { getApprovedSuperAdmins, addApprovedSuperAdmin, removeApprovedSuperAdmin } from '../lib/firebase';
 
@@ -120,7 +120,7 @@ export default function RoleManagement({ currentUser, isSuperAdmin }) {
                         </span>
                       )}
                     </div>
-                    <span className="text-xs text-stone-500">Super Admin â€¢ Full Access Granted</span>
+                    <span className="text-xs text-stone-500">Super Admin • Full Access Granted</span>
                   </div>
                 </div>
 

@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, LogIn, ShieldCheck, User, Sparkles, AlertCircle } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider, isSuperAdminEmail } from '../lib/firebase';

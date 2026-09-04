@@ -1,4 +1,5 @@
-﻿import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import {
@@ -64,7 +65,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
     locality: '',
     category: 'Public Works & Transportation',
     estimated_budget_inr: 45000000,
-    formatted_budget: 'â‚¹4.50 Crores',
+    formatted_budget: '₹4.50 Crores',
     target_beneficiaries: 50000,
     funding_scheme: 'PM Gati Shakti / Smart Cities Mission',
     problem_justification: '',
@@ -84,20 +85,20 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const fetchData = async () => {
     setLoading(true);
     try {
-      const compRes = await fetch('https://nagarmitra-backend.onrender.com/api/complaints');
+      const compRes = await fetch(API_BASE_URL + '/api/complaints');
       const compData = await compRes.json();
       setComplaints(compData);
 
-      const clusRes = await fetch('https://nagarmitra-backend.onrender.com/api/clusters');
+      const clusRes = await fetch(API_BASE_URL + '/api/clusters');
       const clusData = await clusRes.json();
       setClusters(clusData);
       if (clusData.length > 0) setSelectedCluster(clusData[0]);
 
-      const projRes = await fetch('https://nagarmitra-backend.onrender.com/api/projects');
+      const projRes = await fetch(API_BASE_URL + '/api/projects');
       const projData = await projRes.json();
       setProjects(projData);
 
-      const wardsRes = await fetch('https://nagarmitra-backend.onrender.com/api/wards');
+      const wardsRes = await fetch(API_BASE_URL + '/api/wards');
       const wardsData = await wardsRes.json();
       setWardsList(wardsData);
     } catch (e) {
@@ -110,12 +111,12 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const handleApproveComplaint = async (complaintId) => {
     setProcessingId(complaintId);
     try {
-      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/complaints/approve/${complaintId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/approve/${complaintId}`, {
         method: 'POST'
       });
       if (res.ok) {
         setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
-        setActionMessage(`âœ… Complaint #${complaintId} APPROVED & dispatched to department! Citizen notified via WhatsApp.`);
+        setActionMessage(`✅ Complaint #${complaintId} APPROVED & dispatched to department! Citizen notified via WhatsApp.`);
         setTimeout(() => setActionMessage(null), 4000);
       }
     } catch (e) {
@@ -129,12 +130,12 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const handleResolveComplaint = async (complaintId) => {
     setProcessingId(complaintId);
     try {
-      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/complaints/resolve/${complaintId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/resolve/${complaintId}`, {
         method: 'POST'
       });
       if (res.ok) {
         setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
-        setActionMessage(`ðŸŽ‰ Complaint #${complaintId} marked as SOLVED! Map pin removed from active overview.`);
+        setActionMessage(`🎉 Complaint #${complaintId} marked as SOLVED! Map pin removed from active overview.`);
         setTimeout(() => setActionMessage(null), 4000);
       }
     } catch (e) {
@@ -148,12 +149,12 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const handleRejectComplaint = async (complaintId) => {
     setProcessingId(complaintId);
     try {
-      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/complaints/reject/${complaintId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/reject/${complaintId}`, {
         method: 'POST'
       });
       if (res.ok) {
         setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'REJECTED' } : c));
-        setActionMessage(`ðŸ”´ Complaint #${complaintId} marked as REJECTED.`);
+        setActionMessage(`🔴 Complaint #${complaintId} marked as REJECTED.`);
         setTimeout(() => setActionMessage(null), 4000);
       }
     } catch (e) {
@@ -179,7 +180,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
       formData.append('funding_scheme', newProject.funding_scheme);
       formData.append('problem_justification', newProject.problem_justification || 'Synthesized Super Admin Infrastructure Development Plan');
 
-      const res = await fetch('https://nagarmitra-backend.onrender.com/api/admin/projects', {
+      const res = await fetch(API_BASE_URL + '/api/admin/projects', {
         method: 'POST',
         body: formData
       });
@@ -189,7 +190,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         setProjects(prev => [data.project, ...prev]);
       }
       
-      setActionMessage(`ðŸš€ Infrastructure Project "${newProject.title}" published to Public Community Portal! Citizens can now view & vote.`);
+      setActionMessage(`🚀 Infrastructure Project "${newProject.title}" published to Public Community Portal! Citizens can now view & vote.`);
       setTimeout(() => setActionMessage(null), 5000);
       setShowPublishPortal(false);
       setNewProject({
@@ -197,7 +198,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
         locality: '',
         category: 'Public Works & Transportation',
         estimated_budget_inr: 45000000,
-        formatted_budget: 'â‚¹4.50 Crores',
+        formatted_budget: '₹4.50 Crores',
         target_beneficiaries: 50000,
         funding_scheme: 'PM Gati Shakti / Smart Cities Mission',
         problem_justification: '',
@@ -316,7 +317,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               </span>
             </div>
             <h2 className="text-base sm:text-lg font-extrabold text-stone-900">
-              Indore District Secretariat â€¢ Grievance Approval & Infrastructure Publishing Panel
+              Indore District Secretariat • Grievance Approval & Infrastructure Publishing Panel
             </h2>
           </div>
         </div>
@@ -360,7 +361,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-stone-100">
               <div className="flex items-center space-x-2">
                 <Layers className="w-5 h-5 text-orange-600" />
-                <h3 className="text-base font-extrabold text-stone-900">GIS Spatial Demand Map â€” Indore City Overview</h3>
+                <h3 className="text-base font-extrabold text-stone-900">GIS Spatial Demand Map — Indore City Overview</h3>
                 <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-orange-200">
                   {activeMapComplaints.length} Unresolved Pins Active
                 </span>
@@ -411,7 +412,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
 
-                {/* Dynamic Geographic Hotspot Circles â€” grouped by ward so they appear exactly over pins */}
+                {/* Dynamic Geographic Hotspot Circles — grouped by ward so they appear exactly over pins */}
                 {(() => {
                   // Group complaints by ward_id (geographic location, not category)
                   const wardGroups = {};
@@ -506,7 +507,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
               <div className="flex items-center space-x-3 text-xs">
                 <span className="bg-orange-100 text-orange-800 border border-orange-200 px-3 py-1 rounded-full font-bold">
-                  ðŸ“… {todayCount} Requests Filed Today
+                  📅 {todayCount} Requests Filed Today
                 </span>
                 
                 {/* Toggle to show/hide resolved pins */}
@@ -536,7 +537,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   <span className="w-3.5 h-3.5 rounded-full bg-rose-500 shadow-md shadow-rose-500/30 shrink-0" />
                   <div>
                     <p className="font-extrabold text-stone-900 text-xs">Sanitation & Sewer</p>
-                    <p className="text-[10px] text-rose-700 font-semibold">ðŸ”´ Red Critical Pins</p>
+                    <p className="text-[10px] text-rose-700 font-semibold">🔴 Red Critical Pins</p>
                   </div>
                 </div>
                 <span className="text-lg font-black text-rose-600">{redCount}</span>
@@ -553,7 +554,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   <span className="w-3.5 h-3.5 rounded-full bg-orange-500 shadow-md shadow-orange-500/30 shrink-0" />
                   <div>
                     <p className="font-extrabold text-stone-900 text-xs">Roads & Potholes</p>
-                    <p className="text-[10px] text-orange-700 font-semibold">ðŸŸ§ Orange Pins</p>
+                    <p className="text-[10px] text-orange-700 font-semibold">🟧 Orange Pins</p>
                   </div>
                 </div>
                 <span className="text-lg font-black text-orange-600">{orangeCount}</span>
@@ -570,7 +571,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   <span className="w-3.5 h-3.5 rounded-full bg-amber-400 shadow-md shadow-amber-400/30 shrink-0" />
                   <div>
                     <p className="font-extrabold text-stone-900 text-xs">Electricity & Light</p>
-                    <p className="text-[10px] text-amber-700 font-semibold">ðŸŸ¨ Yellow Pins</p>
+                    <p className="text-[10px] text-amber-700 font-semibold">🟨 Yellow Pins</p>
                   </div>
                 </div>
                 <span className="text-lg font-black text-amber-600">{yellowCount}</span>
@@ -587,7 +588,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shadow-md shadow-blue-500/30 shrink-0" />
                   <div>
                     <p className="font-extrabold text-stone-900 text-xs">Water Supply</p>
-                    <p className="text-[10px] text-blue-700 font-semibold">ðŸŸ¦ Blue Pins</p>
+                    <p className="text-[10px] text-blue-700 font-semibold">🟦 Blue Pins</p>
                   </div>
                 </div>
                 <span className="text-lg font-black text-blue-600">{blueCount}</span>
@@ -602,7 +603,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/30 shrink-0" />
                   <div>
                     <p className="font-extrabold text-stone-900 text-xs">Solved / Healthy</p>
-                    <p className="text-[10px] text-emerald-700 font-semibold">ðŸŸ© Green Solved</p>
+                    <p className="text-[10px] text-emerald-700 font-semibold">🟩 Green Solved</p>
                   </div>
                 </div>
                 <span className="text-lg font-black text-emerald-600">{greenCount}</span>
@@ -618,10 +619,10 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 <div>
                   <div className="flex items-center space-x-2">
                     <AlertTriangle className="w-4 h-4 text-rose-500" />
-                    <span className="text-xs font-extrabold text-rose-600 uppercase tracking-wider">#1 CITY GROUND HOTSPOT â€” SENSITIVE SECTOR</span>
+                    <span className="text-xs font-extrabold text-rose-600 uppercase tracking-wider">#1 CITY GROUND HOTSPOT — SENSITIVE SECTOR</span>
                   </div>
                   <h3 className="text-xl font-extrabold text-stone-900 mt-0.5">{selectedCluster.label}</h3>
-                  <p className="text-xs text-stone-500 font-semibold">{selectedCluster.locality} â€¢ {selectedCluster.complaint_count} Verified Voice Grievances</p>
+                  <p className="text-xs text-stone-500 font-semibold">{selectedCluster.locality} • {selectedCluster.complaint_count} Verified Voice Grievances</p>
                 </div>
 
                 <div className="bg-orange-50 border border-orange-200 px-5 py-3 rounded-2xl text-center shrink-0">
@@ -655,7 +656,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-1">
                   <span className="text-[11px] text-stone-500 font-bold uppercase">Budget Deficit</span>
                   <p className="text-xl font-extrabold text-rose-600">{selectedCluster.budget_gap_score} / 100</p>
-                  <p className="text-[10px] text-stone-400 font-semibold">â‚¹0 Municipal Budget Allocated</p>
+                  <p className="text-[10px] text-stone-400 font-semibold">₹0 Municipal Budget Allocated</p>
                 </div>
               </div>
 
@@ -738,7 +739,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                     sortByAI === 'urgency' ? 'bg-rose-600 text-white' : 'bg-white text-stone-700 border border-stone-200'
                   }`}
                 >
-                  ðŸ”´ Critical First
+                  🔴 Critical First
                 </button>
                 <button
                   onClick={() => setSortByAI('endorsed')}
@@ -746,7 +747,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                     sortByAI === 'endorsed' ? 'bg-purple-600 text-white' : 'bg-white text-stone-700 border border-stone-200'
                   }`}
                 >
-                  ðŸ‘¥ Most Endorsed
+                  👥 Most Endorsed
                 </button>
               </div>
             </div>
@@ -771,7 +772,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 onChange={(e) => setSelectedWardFilter(e.target.value)}
                 className="bg-white border border-stone-300 rounded-xl px-2.5 py-2 text-stone-900 focus:outline-none cursor-pointer shadow-sm"
               >
-                <option value="ALL">ðŸ“ All Wards (1â€“85)</option>
+                <option value="ALL">📍 All Wards (1–85)</option>
                 {wardsList.map((w) => (
                   <option key={w.id} value={w.id}>
                     {w.name}
@@ -785,7 +786,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 onChange={(e) => setSelectedZoneFilter(e.target.value)}
                 className="bg-white border border-stone-300 rounded-xl px-2.5 py-2 text-stone-900 focus:outline-none cursor-pointer shadow-sm"
               >
-                <option value="ALL">ðŸ¢ All Municipal Zones (1â€“22)</option>
+                <option value="ALL">🏢 All Municipal Zones (1–22)</option>
                 {uniqueZones.map((z) => (
                   <option key={z} value={z}>
                     {z}
@@ -799,7 +800,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="bg-white border border-stone-300 rounded-xl px-2.5 py-2 text-stone-900 focus:outline-none cursor-pointer shadow-sm"
               >
-                <option value="ALL">ðŸ·ï¸ All Categories</option>
+                <option value="ALL">🏷️ All Categories</option>
                 <option value="Sanitation & Drainage">Sanitation & Sewer</option>
                 <option value="Public Works">Roads & Potholes</option>
                 <option value="Electricity">Electricity & Lights</option>
@@ -813,7 +814,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                 onChange={(e) => setSelectedStatusFilter(e.target.value)}
                 className="bg-white border border-stone-300 rounded-xl px-2.5 py-2 text-stone-900 focus:outline-none cursor-pointer shadow-sm"
               >
-                <option value="ALL">âš¡ All Review Statuses</option>
+                <option value="ALL">⚡ All Review Statuses</option>
                 <option value="PENDING">Pending Review</option>
                 <option value="APPROVED">Approved & Dispatched</option>
                 <option value="RESOLVED">Work Resolved</option>
@@ -878,7 +879,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                           <div className="flex items-center justify-between">
                             <p className="font-extrabold text-stone-900">{c.citizen_name || 'Harsh Parmar'}</p>
                             <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-200">
-                              âœ“ DigiLocker Verified DPI
+                              ✓ DigiLocker Verified DPI
                             </span>
                           </div>
                           
@@ -900,7 +901,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                           <div className="flex items-center justify-between">
                             <span className="font-bold text-purple-700">{c.category}</span>
                             <span className="text-[10px] font-extrabold text-stone-600 bg-stone-200/70 px-2.5 py-0.5 rounded-full">
-                              ðŸ‘¥ {coFilers} Co-Filers Endorsed
+                              👥 {coFilers} Co-Filers Endorsed
                             </span>
                           </div>
                           
@@ -1331,7 +1332,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                       required
                       value={newProject.formatted_budget}
                       onChange={(e) => setNewProject({ ...newProject, formatted_budget: e.target.value })}
-                      placeholder="e.g. â‚¹45.0 Crores"
+                      placeholder="e.g. ₹45.0 Crores"
                       className="w-full px-3.5 py-2.5 border border-stone-300 rounded-xl font-bold text-stone-900 focus:outline-none focus:border-orange-500"
                     />
                   </div>
@@ -1444,7 +1445,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                     <div className="flex items-center space-x-3 shrink-0">
                       <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl text-center">
                         <span className="text-[9px] text-emerald-700 font-extrabold uppercase tracking-wider">BUDGET</span>
-                        <p className="text-xl font-black text-emerald-600 leading-none mt-0.5">{p.formatted_budget || `â‚¹${p.estimated_budget_inr / 10000000} Cr`}</p>
+                        <p className="text-xl font-black text-emerald-600 leading-none mt-0.5">{p.formatted_budget || `₹${p.estimated_budget_inr / 10000000} Cr`}</p>
                       </div>
 
                       <button
@@ -1525,7 +1526,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                         
                         <div className="space-y-2 text-xs">
                           <div className="flex items-center gap-3">
-                            <span className="w-16 text-stone-600">5 Stars â­</span>
+                            <span className="w-16 text-stone-600">5 Stars ⭐</span>
                             <div className="flex-1 bg-stone-100 h-2.5 rounded-full overflow-hidden border border-stone-200">
                               <div className="bg-amber-400 h-full rounded-full w-[78%]" />
                             </div>
@@ -1533,7 +1534,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className="w-16 text-stone-600">4 Stars â­</span>
+                            <span className="w-16 text-stone-600">4 Stars ⭐</span>
                             <div className="flex-1 bg-stone-100 h-2.5 rounded-full overflow-hidden border border-stone-200">
                               <div className="bg-amber-400 h-full rounded-full w-[14%]" />
                             </div>
@@ -1541,7 +1542,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                           </div>
 
                           <div className="flex items-center gap-3">
-                            <span className="w-16 text-stone-600">3 Stars â­</span>
+                            <span className="w-16 text-stone-600">3 Stars ⭐</span>
                             <div className="flex-1 bg-stone-100 h-2.5 rounded-full overflow-hidden border border-stone-200">
                               <div className="bg-amber-400 h-full rounded-full w-[5%]" />
                             </div>

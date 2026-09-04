@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { X, FileText, Download, CheckCircle, Sparkles, DollarSign, Users, ShieldCheck } from 'lucide-react';
 
 export default function DPRModal({ cluster, onClose }) {
@@ -8,11 +8,11 @@ export default function DPRModal({ cluster, onClose }) {
     locality: "Wards 14 & 15, South Indore, Madhya Pradesh",
     category: "Sanitation & Urban Infrastructure",
     estimated_budget_inr: 38000000,
-    formatted_budget: "â‚¹3.80 Crores",
+    formatted_budget: "₹3.80 Crores",
     target_beneficiaries: 43500,
     roi_score: 95,
     funding_scheme: "AMRUT 2.0 / Swachh Bharat Mission (Urban)",
-    problem_justification: "Synthesized from 847 verified citizen voice requests across Wards 14 & 15. Fused with Census 2021 data (52% poverty rate, high child density) and PM Gati Shakti GIS layers confirming 0 stormwater drains in a 3.2km radius. Current municipal budget allocation of â‚¹0 creates a severe public health hazard.",
+    problem_justification: "Synthesized from 847 verified citizen voice requests across Wards 14 & 15. Fused with Census 2021 data (52% poverty rate, high child density) and PM Gati Shakti GIS layers confirming 0 stormwater drains in a 3.2km radius. Current municipal budget allocation of ₹0 creates a severe public health hazard.",
     scope_of_work: [
       "Installation of 3.4 km high-density RCC underground sewerage and stormwater trunk pipeline",
       "Construction of 18 junction inspection chambers with automated debris traps",
@@ -22,7 +22,7 @@ export default function DPRModal({ cluster, onClose }) {
     impact_metrics: {
       disease_reduction: "65% estimated drop in waterborne diseases within 12 months",
       flood_prevention: "Prevents annual monsoon inundation for 8,700 households",
-      economic_savings: "â‚¹1.4 Crores saved annually in individual health and property repairs"
+      economic_savings: "₹1.4 Crores saved annually in individual health and property repairs"
     },
     community_upvotes: 2340,
     status: "APPROVED_FOR_DPR"
@@ -42,10 +42,10 @@ export default function DPRModal({ cluster, onClose }) {
         <div className="space-y-2 border-b border-stone-200 pb-5">
           <div className="flex items-center space-x-2 text-xs font-bold text-orange-600 uppercase tracking-wider">
             <Sparkles className="w-4 h-4" />
-            <span>AI-GENERATED DETAILED PROJECT REPORT (DPR) â€” GOOGLE GEMINI PRO</span>
+            <span>AI-GENERATED DETAILED PROJECT REPORT (DPR) — GOOGLE GEMINI PRO</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold text-stone-900 leading-tight">{dpr.title}</h2>
-          <p className="text-xs text-stone-500">{dpr.locality} â€¢ Scheme: <span className="text-orange-600 font-bold">{dpr.funding_scheme}</span></p>
+          <p className="text-xs text-stone-500">{dpr.locality} • Scheme: <span className="text-orange-600 font-bold">{dpr.funding_scheme}</span></p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -55,7 +55,7 @@ export default function DPRModal({ cluster, onClose }) {
               <span>Estimated Budget</span>
             </div>
             <p className="text-xl font-extrabold text-emerald-600">{dpr.formatted_budget}</p>
-            <p className="text-[10px] text-stone-400">â‚¹873 / Beneficiary</p>
+            <p className="text-[10px] text-stone-400">₹873 / Beneficiary</p>
           </div>
 
           <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-1">

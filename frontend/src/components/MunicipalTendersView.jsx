@@ -1,13 +1,13 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Building2, CheckCircle2, Clock, DollarSign, FileCheck, Star, Users, ExternalLink, ShieldCheck, Sparkles, ThumbsUp } from 'lucide-react';
 
 export default function MunicipalTendersView() {
   const [tenders, setTenders] = useState([
     {
       id: 'TND-IMC-2026-089',
-      title: '3.4km Covered RCC Trunk Sewerage Line â€” Ward 14 & 15',
+      title: '3.4km Covered RCC Trunk Sewerage Line — Ward 14 & 15',
       contractor: 'L&T Urban Infrastructure Pvt. Ltd.',
-      budget: 'â‚¹3.80 Crores',
+      budget: '₹3.80 Crores',
       fundingScheme: 'AMRUT 2.0 / Swachh Bharat Mission (Urban)',
       completion: 65,
       citizenRating: 4.8,
@@ -28,7 +28,7 @@ export default function MunicipalTendersView() {
       id: 'TND-IMC-2026-042',
       title: 'Sanwer Industrial Highway Road Reconstruction & Asphalt Sealing',
       contractor: 'Indore Highway Infrastructure Developers',
-      budget: 'â‚¹4.20 Crores',
+      budget: '₹4.20 Crores',
       fundingScheme: 'PM Gati Shakti Infrastructure Grant',
       completion: 90,
       citizenRating: 4.6,
@@ -142,7 +142,7 @@ export default function MunicipalTendersView() {
                       <Star className="w-3.5 h-3.5" />
                     </button>
                   ))}
-                  {t.userRating > 0 && <span className="text-[10px] text-emerald-600 font-extrabold ml-1">âœ“ Rated</span>}
+                  {t.userRating > 0 && <span className="text-[10px] text-emerald-600 font-extrabold ml-1">✓ Rated</span>}
                 </div>
               </div>
             </div>
