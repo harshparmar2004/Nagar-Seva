@@ -34,20 +34,20 @@ export default function SidebarLayout({
               const cleanWardTitle = data.ward_name ? data.ward_name.split('—')[1] : `Ward ${data.ward_number}`;
               setLiveLocationStr(`📍 ${localityPart} (Ward ${data.ward_number}: ${cleanWardTitle.trim()}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
             } else {
-              setLiveLocationStr(`📍 GPS Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} • Ward 52 (Musakhedi & Mayur Nagar)`);
+              setLiveLocationStr(`📍 Indore • GPS [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
             }
           } catch (e) {
-            setLiveLocationStr(`📍 GPS Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} • Ward 52 (Musakhedi & Mayur Nagar)`);
+            setLiveLocationStr(`📍 Indore • GPS [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
           }
         },
         (err) => {
           console.warn("GPS lookup error:", err);
-          setLiveLocationStr('📍 Ward 52 (Musakhedi, Mayur Nagar, Indore)');
+          setLiveLocationStr('📍 Indore Municipal Corporation, MP');
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
-      setLiveLocationStr('📍 Ward 52 (Musakhedi, Mayur Nagar, Indore)');
+      setLiveLocationStr('📍 Indore Municipal Corporation, MP');
     }
   }, []);
 

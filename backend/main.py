@@ -5,6 +5,7 @@ import math
 import uuid
 import urllib.request
 import base64
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +19,16 @@ from services.whatsapp_service import send_whatsapp_status_notification
 
 db_path = os.path.join(os.path.dirname(__file__), "nagarmitra.db")
 engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+
+# Load all 85 Indore wards into memory for instant spatial calculations
+_WARDS_FILE = os.path.join(os.path.dirname(__file__), "seed_data", "indore_wards.json")
+_ALL_WARDS_CACHE = []
+if os.path.exists(_WARDS_FILE):
+    try:
+        with open(_WARDS_FILE, "r", encoding="utf-8") as _f:
+            _ALL_WARDS_CACHE = json.load(_f)
+    except Exception as _e:
+        print(f"Error loading indore_wards.json cache: {_e}")
 
 # Ensure uploads directory exists
 uploads_dir = os.path.join(os.path.dirname(__file__), "static", "uploads")
@@ -72,93 +83,52 @@ def on_startup():
 # Real-time calculation based on coordinates (Lat, Lng)
 # ------------------------------------------------------------------------------
 
-def resolve_indore_spatial_ward(lat: float, lon: float) -> Dict[str, Any]:
+def resolve_indore_spatial_ward(lat: float, lon: float, preferred_ward_id: Optional[str] = None) -> Dict[str, Any]:
     """
-    Dynamically computes the exact Indore Ward (1-85) and Zone (1-22) for any GPS coordinates.
+    Dynamically computes the exact Indore Ward (1-85) and Zone (1-22) for any GPS coordinates
+    by finding the nearest ward centroid among all 85 Indore municipal wards, or looking up preferred_ward_id.
     """
-    # Musakhedi / Mayur Nagar Sector: Lat [22.6800 - 22.7220], Lon [75.8900 - 75.9250] -> WARD 52
-    if 22.6800 <= lat <= 22.7220 and 75.8900 <= lon <= 75.9250:
+    matched_ward = None
+    if preferred_ward_id and _ALL_WARDS_CACHE:
+        for w in _ALL_WARDS_CACHE:
+            if w.get("id") == preferred_ward_id:
+                matched_ward = w
+                break
+
+    if not matched_ward and _ALL_WARDS_CACHE:
+        # Euclidean distance closest ward match
+        matched_ward = min(_ALL_WARDS_CACHE, key=lambda w: (lat - w["lat"])**2 + (lon - w["lng"])**2)
+
+    if matched_ward:
+        ward_num_str = str(matched_ward["id"]).replace("ward_", "")
+        ward_num = int(ward_num_str) if ward_num_str.isdigit() else 52
+        zone_num = ((ward_num - 1) % 22) + 1
+        raw_name = matched_ward.get("name", f"Ward {ward_num}")
+        short_loc = raw_name.split("—")[1].split("&")[0].strip() if "—" in raw_name else raw_name
         return {
-            "ward_id": "ward_52",
-            "ward_number": 52,
-            "ward_name": "Ward 52 — Musakhedi, Mayur Nagar & Ring Road Sector",
-            "zone_id": "ZONE-14",
-            "zone_number": 14,
-            "zone_name": "Zone 14 (Hawa Bunglow / Dwarkapuri / Musakhedi)",
-            "zonal_office": "Musakhedi Zonal Secretariat, Zone 14",
-            "nodal_officer": "Er. R. K. Sharma (Assistant Engineer)",
-            "contact_email": "zone14.musakhedi@indore.gov.in"
+            "ward_id": matched_ward["id"],
+            "ward_number": ward_num,
+            "ward_name": raw_name,
+            "zone_id": f"ZONE-{zone_num}",
+            "zone_number": zone_num,
+            "zone_name": f"Zone {zone_num} ({short_loc})",
+            "zonal_office": f"{short_loc} Zonal Secretariat, Zone {zone_num}",
+            "nodal_officer": f"Er. Municipal Officer (Zone {zone_num})",
+            "contact_email": f"zone{zone_num}.indore@indore.gov.in"
         }
 
-    # Khajrana Main Sector: Lat [22.7220 - 22.7450], Lon [75.8750 - 75.9200] -> WARD 40
-    elif 22.7220 <= lat <= 22.7450 and 75.8750 <= lon <= 75.9200:
-        return {
-            "ward_id": "ward_40",
-            "ward_number": 40,
-            "ward_name": "Ward 40 — Khajrana Main & Shaheed Bhagat Singh Sector",
-            "zone_id": "ZONE-9",
-            "zone_number": 9,
-            "zone_name": "Zone 9 (Khajrana)",
-            "zonal_office": "Khajrana Zonal Secretariat, Zone 9",
-            "nodal_officer": "Er. Vikramaditya Joshi (Executive Engineer)",
-            "contact_email": "zone9.khajrana@indore.gov.in"
-        }
-
-    # Vijay Nagar Sector: Lat [22.7450 - 22.7750], Lon [75.8800 - 75.9100] -> WARD 27
-    elif 22.7450 <= lat <= 22.7750 and 75.8800 <= lon <= 75.9100:
-        return {
-            "ward_id": "ward_27",
-            "ward_number": 27,
-            "ward_name": "Ward 27 — Vijay Nagar Sector A-C",
-            "zone_id": "ZONE-7",
-            "zone_number": 7,
-            "zone_name": "Zone 7 (Vijay Nagar)",
-            "zonal_office": "Vijay Nagar Zonal Secretariat, Zone 7",
-            "nodal_officer": "Er. Anita Mehta (Chief Engineer)",
-            "contact_email": "zone7.vijaynagar@indore.gov.in"
-        }
-
-    # Rajwada Central Market: Lat [22.7100 - 22.7300], Lon [75.8450 - 75.8650] -> WARD 1
-    elif 22.7100 <= lat <= 22.7300 and 75.8450 <= lon <= 75.8650:
-        return {
-            "ward_id": "ward_1",
-            "ward_number": 1,
-            "ward_name": "Ward 1 — Sirpur & Kalani Nagar",
-            "zone_id": "ZONE-1",
-            "zone_number": 1,
-            "zone_name": "Zone 1 (Kila Maidan)",
-            "zonal_office": "Kila Maidan Zonal Office, Zone 1",
-            "nodal_officer": "Shri Rajesh Gupta (Zonal Officer)",
-            "contact_email": "zone1.kilamaidan@indore.gov.in"
-        }
-
-    # Rajendra Nagar / CAT Road Sector: Lat [22.6500 - 22.6850], Lon [75.8000 - 75.8400] -> WARD 14
-    elif 22.6500 <= lat <= 22.6850 and 75.8000 <= lon <= 75.8400:
-        return {
-            "ward_id": "ward_14",
-            "ward_number": 14,
-            "ward_name": "Ward 14 — Rajendra Nagar & Cat Road Corridor",
-            "zone_id": "ZONE-15",
-            "zone_number": 15,
-            "zone_name": "Zone 15 (Rajendra Nagar)",
-            "zonal_office": "Rajendra Nagar Zonal Office, Zone 15",
-            "nodal_officer": "Er. Sandeep Verma (Nodal Officer)",
-            "contact_email": "zone15.rajendranagar@indore.gov.in"
-        }
-
-    # Default Spatial Computation Fallback -> WARD 52
-    else:
-        return {
-            "ward_id": "ward_52",
-            "ward_number": 52,
-            "ward_name": "Ward 52 — Musakhedi, Mayur Nagar & Ring Road Sector",
-            "zone_id": "ZONE-14",
-            "zone_number": 14,
-            "zone_name": "Zone 14 (Hawa Bunglow / Dwarkapuri / Musakhedi)",
-            "zonal_office": "Musakhedi Zonal Secretariat, Zone 14",
-            "nodal_officer": "Er. R. K. Sharma (Assistant Engineer)",
-            "contact_email": "zone14.musakhedi@indore.gov.in"
-        }
+    # Ultimate fallback if wards cache is unavailable
+    return {
+        "ward_id": "ward_52",
+        "ward_number": 52,
+        "ward_name": "Ward 52 — Musakhedi, Mayur Nagar & Ring Road Sector",
+        "zone_id": "ZONE-14",
+        "zone_number": 14,
+        "zone_name": "Zone 14 (Musakhedi)",
+        "zonal_office": "Musakhedi Zonal Secretariat, Zone 14",
+        "nodal_officer": "Er. R. K. Sharma (Assistant Engineer)",
+        "contact_email": "zone14.musakhedi@indore.gov.in"
+    }
 
 def analyze_complaint_text_with_ai(text: str) -> Dict[str, Any]:
     text_lower = text.lower()
@@ -199,14 +169,16 @@ def read_root():
     return {"message": "NagarSeva DPI Governance Intelligence API is running!"}
 
 @app.get("/api/geotag/resolve")
-def resolve_live_gps_geotag(lat: float = Query(...), lng: float = Query(...)):
+def resolve_live_gps_geotag(lat: float = Query(...), lng: float = Query(...), ward_id: Optional[str] = Query(None)):
     """
     Endpoint called dynamically when citizen enables GPS. Calculates exact spatial ward, zone, and address.
     """
-    spatial_info = resolve_indore_spatial_ward(lat, lng)
+    spatial_info = resolve_indore_spatial_ward(lat, lng, preferred_ward_id=ward_id)
+    
+    clean_short_name = spatial_info['ward_name'].split('—')[1].split('&')[0].strip() if '—' in spatial_info['ward_name'] else spatial_info['ward_name']
     
     # Attempt OpenStreetMap Nominatim Reverse Geocoding
-    address_str = f"Indore Sector, Lat: {lat:.4f}, Lng: {lng:.4f}"
+    address_str = f"{spatial_info['ward_name']}, Indore [Lat: {lat:.4f}, Lng: {lng:.4f}]"
     try:
         url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json"
         req = urllib.request.Request(url, headers={'User-Agent': 'NagarSevaDPI/2.0'})
@@ -214,7 +186,7 @@ def resolve_live_gps_geotag(lat: float = Query(...), lng: float = Query(...)):
             data = json.loads(resp.read().decode())
             address_str = data.get('display_name', address_str)
     except Exception as e:
-        address_str = f"Musakhedi / Mayur Nagar Corridor, Indore [Lat: {lat:.4f}, Lng: {lng:.4f}]"
+        address_str = f"{clean_short_name}, Indore [Lat: {lat:.4f}, Lng: {lng:.4f}]"
 
     return {
         "status": "SUCCESS",
@@ -228,7 +200,7 @@ def resolve_live_gps_geotag(lat: float = Query(...), lng: float = Query(...)):
         "zone_name": spatial_info["zone_name"],
         "zonal_office": spatial_info["zonal_office"],
         "nodal_officer": spatial_info["nodal_officer"],
-        "badge_str": f"📍 Ward {spatial_info['ward_number']} ({spatial_info['ward_name'].split('—')[1].split('&')[0].strip()}) • {lat:.2f}, {lng:.2f}"
+        "badge_str": f"📍 Ward {spatial_info['ward_number']} ({clean_short_name}) • {lat:.2f}, {lng:.2f}"
     }
 
 @app.get("/api/wards")
@@ -542,11 +514,12 @@ async def create_complaint(
     language: Optional[str] = Form("Hindi"),
     lat: Optional[str] = Form("22.7120"),
     lng: Optional[str] = Form("75.9080"),
+    ward_id: Optional[str] = Form(None),
     user_email: Optional[str] = Form("citizen.indore@gmail.com"),
     citizen_name: Optional[str] = Form("Indore Citizen"),
     citizen_phone: Optional[str] = Form("+91 9826012345"),
     citizen_id_hash: Optional[str] = Form("VOTER-IND-4821"),
-    landmark: Optional[str] = Form("Mayur Nagar, Musakhedi Sector"),
+    landmark: Optional[str] = Form(None),
     photo_file: Optional[UploadFile] = File(None),
     file: Optional[UploadFile] = File(None),
     photo_base64: Optional[str] = Form(None)
@@ -603,11 +576,13 @@ async def create_complaint(
     except (ValueError, TypeError):
         target_lng = 75.9080
 
-    spatial_info = resolve_indore_spatial_ward(target_lat, target_lng)
+    spatial_info = resolve_indore_spatial_ward(target_lat, target_lng, preferred_ward_id=ward_id)
     
     ai_triage = analyze_complaint_text_with_ai(text or "Grievance registered")
     
     comp_id = f"IMC-IND-2026-W{spatial_info['ward_number']}-{random.randint(1000, 9999)}"
+    
+    actual_landmark = landmark or spatial_info['ward_name']
     
     now_iso = datetime.now(timezone.utc).isoformat()
     new_complaint = Complaint(
@@ -617,7 +592,7 @@ async def create_complaint(
         category=ai_triage.get("domain", "Sanitation & Drainage"),
         urgency=ai_triage.get("urgency_badge", "Critical"),
         health_impact=True,
-        locality=f"{landmark}, {spatial_info['ward_name']}, Indore",
+        locality=f"{actual_landmark}, {spatial_info['ward_name']}, Indore",
         ward_id=spatial_info["ward_id"],
         lat=target_lat,
         lng=target_lng,
@@ -627,7 +602,7 @@ async def create_complaint(
         citizen_name=citizen_name or "Indore Citizen",
         citizen_phone=citizen_phone or "+91 9826012345",
         citizen_id_hash=citizen_id_hash or "VOTER-IND-4821",
-        landmark=landmark or "Mayur Nagar, Musakhedi",
+        landmark=actual_landmark,
         verification_status="VERIFIED_CITIZEN",
         responsible_department=f"IMC {ai_triage['domain']} Department ({spatial_info['zonal_office']})",
         responsible_ministry="Ministry of Housing & Urban Affairs (MoHUA)",
@@ -644,7 +619,7 @@ async def create_complaint(
         phone=citizen_phone or "9826012345",
         complaint_id=comp_id,
         status_title="OFFICIAL REGISTRATION COMPLETE",
-        detail_msg=f"Grievance token #{comp_id} registered under IT Act for {landmark} ({spatial_info['ward_name']}, {spatial_info['zone_id']})."
+        detail_msg=f"Grievance token #{comp_id} registered under IT Act for {actual_landmark} ({spatial_info['ward_name']}, {spatial_info['zone_id']})."
     )
         
     return {
@@ -666,7 +641,7 @@ async def create_complaint(
         "telemetry_geotag": {
             "latitude": target_lat,
             "longitude": target_lng,
-            "user_landmark": landmark,
+            "user_landmark": actual_landmark,
             "geofence_verified": True
         },
         "ai_triage_metadata": {

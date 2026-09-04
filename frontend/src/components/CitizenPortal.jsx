@@ -19,6 +19,12 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const [indoreWardsList, setIndoreWardsList] = useState(FALLBACK_WARDS);
 
   useEffect(() => {
+    if (currentUser?.displayName) {
+      setCitizenName(currentUser.displayName);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
     fetch(API_BASE_URL + '/api/wards')
       .then(res => res.json())
       .then(data => {
@@ -30,17 +36,17 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   }, []);
 
   // Step 2 State: Location & Geotagging
-  const [selectedWard, setSelectedWard] = useState('ward_52');
-  const [landmark, setLandmark] = useState('Mayur Nagar, Musakhedi Sector B, Indore');
-  const [houseNo, setHouseNo] = useState('House #52, Mayur Nagar');
-  const [lat, setLat] = useState('22.712015');
-  const [lng, setLng] = useState('75.908045');
+  const [selectedWard, setSelectedWard] = useState('ward_1');
+  const [landmark, setLandmark] = useState('Rajwada Central Market, Indore');
+  const [houseNo, setHouseNo] = useState('');
+  const [lat, setLat] = useState('22.7196');
+  const [lng, setLng] = useState('75.8577');
   const [isGeolocating, setIsGeolocating] = useState(false);
-  const [locationStatus, setLocationStatus] = useState('GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) • Lat: 22.712015, Lng: 75.908045');
+  const [locationStatus, setLocationStatus] = useState('Detecting GPS Live Location...');
 
   useEffect(() => {
     handleDetectLiveLocation();
-  }, []);
+  }, [indoreWardsList]);
 
   const handleWardSelectChange = (wardId) => {
     setSelectedWard(wardId);
@@ -65,22 +71,53 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           setIsGeolocating(false);
 
           try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
-            const data = await res.json();
-            const displayName = data.display_name || 'Mayur Nagar, Musakhedi, Indore';
-            setLocationStatus(`Pinpoint GPS Geotagged: ${displayName} • [Lat: ${latitude}, Lng: ${longitude}]`);
+            // Call backend geotag resolver to dynamically map to the nearest of 85 Indore wards
+            const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${latitude}&lng=${longitude}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.ward_id) {
+                setSelectedWard(data.ward_id);
+              }
+              const displayLoc = data.ward_name || data.address || `Indore [Lat: ${latitude}, Lng: ${longitude}]`;
+              setLandmark(displayLoc);
+              setLocationStatus(`Live GPS Geotagged: ${displayLoc} • [Lat: ${latitude}, Lng: ${longitude}]`);
+              return;
+            }
           } catch (e) {
-            setLocationStatus(`Pinpoint GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) • [Lat: ${latitude}, Lng: ${longitude}]`);
+            console.warn('Backend geotag resolve error:', e);
           }
+
+          // Client-side fallback nearest ward computation
+          if (indoreWardsList && indoreWardsList.length > 0) {
+            const latNum = parseFloat(latitude);
+            const lngNum = parseFloat(longitude);
+            const nearest = indoreWardsList.reduce((prev, curr) => {
+              const prevDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
+              const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
+              return currDist < prevDist ? curr : prev;
+            }, indoreWardsList[0]);
+            if (nearest) {
+              setSelectedWard(nearest.id);
+              setLandmark(nearest.name);
+              setLocationStatus(`Live GPS Geotagged: ${nearest.name} • [Lat: ${latitude}, Lng: ${longitude}]`);
+              return;
+            }
+          }
+
+          setLocationStatus(`Live GPS Geotagged: Indore [Lat: ${latitude}, Lng: ${longitude}]`);
         },
         (error) => {
           console.warn('Geolocation fallback:', error);
           setIsGeolocating(false);
-          setLat('22.712015');
-          setLng('75.908045');
-          setLocationStatus('Pinpoint GPS Geotagged: Ward 52 (Musakhedi & Mayur Nagar, Indore) • [Lat: 22.712015, Lng: 75.908045]');
+          const defaultWard = indoreWardsList.find(w => w.id === selectedWard) || indoreWardsList[0];
+          if (defaultWard) {
+            setLat(defaultWard.lat?.toString() || '22.7196');
+            setLng(defaultWard.lng?.toString() || '75.8577');
+            setLandmark(defaultWard.name || 'Rajwada Central, Indore');
+            setLocationStatus(`Location: ${defaultWard.name} • [Lat: ${defaultWard.lat}, Lng: ${defaultWard.lng}]`);
+          }
         },
-        { enableHighAccuracy: true, timeout: 8000 }
+        { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
       setIsGeolocating(false);
@@ -88,7 +125,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   };
 
   // Step 3 State: Complaint Content & Photo Attachment
-  const [inputText, setInputText] = useState('Bhaiyaji, humare Ward 52 Musakhedi Mayur Nagar me paani ka nala beh raha hai, sadak par paani bhar gaya hai!');
+  const [inputText, setInputText] = useState('Bhaiyaji, sadak par paani bhar gaya hai aur nala overflow ho raha hai, kripya jald se jald karwai karein!');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [timerInterval, setTimerInterval] = useState(null);
@@ -145,7 +182,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const handleStopRecording = () => {
     setIsRecording(false);
     clearInterval(timerInterval);
-    setInputText("Bhaiyaji, humare Ward 52 Musakhedi Mayur Nagar me paani ka nala beh raha hai!");
+    setInputText("Bhaiyaji, humare ilake me sadak aur nala kharab hai, paani overflow ho raha hai!");
   };
 
   // Helper to compress camera photos on mobile to lightweight JPEG (~200KB)
@@ -161,7 +198,6 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
         img.onload = () => {
           let width = img.width;
           let height = img.height;
-
           if (width > height) {
             if (width > maxWidth) {
               height = Math.round((height * maxWidth) / width);
@@ -239,11 +275,12 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
       formData.append('language', 'Hindi / Central Malvi');
       formData.append('lat', String(lat || '22.712015'));
       formData.append('lng', String(lng || '75.908045'));
+      formData.append('ward_id', selectedWard);
       formData.append('user_email', userEmail || 'citizen.indore@gmail.com');
       formData.append('citizen_name', citizenName || 'Indore Citizen');
       formData.append('citizen_phone', phone || '9826012345');
       formData.append('citizen_id_hash', idHash || 'VOTER-IND-4821');
-      formData.append('landmark', landmark || 'Mayur Nagar, Musakhedi');
+      formData.append('landmark', landmark || getWardNameStr());
       if (rawPhotoFile) {
         formData.append('photo_file', rawPhotoFile);
       }
@@ -339,7 +376,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
   const getWardNameStr = () => {
     const found = indoreWardsList.find(w => w.id === selectedWard);
-    return found ? found.name : 'Ward 52 — Musakhedi, Mayur Nagar & Ring Road Sector (Zone 14)';
+    return found ? found.name : 'Indore Municipal Area';
   };
 
   return (
@@ -355,7 +392,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           Citizen Complaint Registration Wizard
         </h1>
         <p className="text-stone-600 text-xs sm:text-sm max-w-xl mx-auto">
-          Logged in as: <span className="font-bold text-stone-900">{userEmail}</span>. Spatial Ward 52 (Musakhedi & Mayur Nagar) pinpoint geotagged.
+          Logged in as: <span className="font-bold text-stone-900">{userEmail}</span> • {getWardNameStr()} pinpoint geotagged.
         </p>
 
         {/* Live GPS Auto-Detection Pill */}
@@ -848,7 +885,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               </div>
             </div>
             <button
-              onClick={() => handleSpeakStatus(`आपकी शिकायत संख्या ${aiResult.complaint?.id} सफलतापूर्वक दर्ज कर ली गई है। वार्ड 52 मुसाखेड़ी मयूर नगर में शिकायत दर्ज की गई है।`)}
+              onClick={() => handleSpeakStatus(`आपकी शिकायत संख्या ${aiResult.complaint?.id} सफलतापूर्वक दर्ज कर ली गई है। ${aiResult.complaint?.locality || getWardNameStr()} में शिकायत दर्ज की गई है।`)}
               className="bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-300 flex items-center gap-1.5 transition-all shrink-0 cursor-pointer"
             >
               <Volume2 className="w-4 h-4 text-orange-600" />
@@ -893,18 +930,18 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             </div>
             <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 space-y-1">
               <span className="text-[11px] text-emerald-700 font-bold">✓ Assigned Department</span>
-              <p className="font-extrabold text-stone-900">{aiResult.complaint?.responsible_department || 'IMC Zone 14 Secretariat'}</p>
+              <p className="font-extrabold text-stone-900">{aiResult.complaint?.responsible_department || 'IMC Zonal Secretariat'}</p>
             </div>
             <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 space-y-1">
               <span className="text-[11px] text-emerald-700 font-bold">✓ Nodal Officer</span>
-              <p className="font-extrabold text-stone-900">{aiResult.complaint?.nodal_officer || 'Er. R. K. Sharma'}</p>
+              <p className="font-extrabold text-stone-900">{aiResult.complaint?.nodal_officer || 'Municipal Nodal Officer'}</p>
             </div>
           </div>
 
           {/* Action Buttons: WhatsApp Direct Bridge & Download PDF */}
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <a
-              href={`https://wa.me/919826012345?text=Hello%20Er.%20R.%20K.%20Sharma,%20I%20registered%20complaint%20token%20${aiResult.complaint?.id || ''}%20for%20${encodeURIComponent(landmark || 'Indore')}`}
+              href={`https://wa.me/919826012345?text=Hello%20Officer,%20I%20registered%20complaint%20token%20${aiResult.complaint?.id || ''}%20for%20${encodeURIComponent(landmark || getWardNameStr())}`}
               target="_blank"
               rel="noreferrer"
               className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
@@ -926,7 +963,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             <div className="flex items-center space-x-3">
               <Sparkles className="w-5 h-5 text-emerald-600 shrink-0" />
               <p className="text-xs text-emerald-900 font-semibold">
-                WhatsApp automated alert sent to <span className="font-bold">{phone}</span>! Geotagged to Ward 52 (Musakhedi / Mayur Nagar).
+                WhatsApp automated alert sent to <span className="font-bold">{phone}</span>! Geotagged to {aiResult.complaint?.locality || getWardNameStr()}.
               </p>
             </div>
             <button
