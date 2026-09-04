@@ -106,10 +106,10 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const [aiResult, setAiResult] = useState(null);
 
   const stepsInfo = [
-    { num: 1, title: 'Citizen Identity', desc: 'Mobile OTP & Govt ID' },
-    { num: 2, title: 'Ward & GPS Geotag', desc: 'Ward & Pinpoint Coordinates' },
-    { num: 3, title: 'Voice & Evidence', desc: 'Audio, Photo & Vision AI' },
-    { num: 4, title: 'Preview & Submit', desc: 'Verify Filled Information' },
+    { num: 1, title: 'Identity', desc: 'Mobile OTP & ID' },
+    { num: 2, title: 'Location', desc: 'Ward & GPS Pin' },
+    { num: 3, title: 'Evidence', desc: 'Voice & Camera' },
+    { num: 4, title: 'Submit', desc: 'Verify & Lodge' },
   ];
 
   const handleSpeakStatus = (textToSpeak) => {
@@ -325,7 +325,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                 value={citizenName}
                 onChange={(e) => setCitizenName(e.target.value)}
                 placeholder="Enter Full Name"
-                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
               />
             </div>
 
@@ -336,40 +336,41 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                 value={idHash}
                 onChange={(e) => setIdHash(e.target.value)}
                 placeholder="e.g. VOTER-IND-4821"
-                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
               />
             </div>
           </div>
 
           {/* Mobile OTP Box */}
-          <div className="bg-stone-50 border border-stone-200 rounded-2xl p-5 space-y-4">
+          <div className="bg-stone-50 border border-stone-200 rounded-2xl p-4 sm:p-5 space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
-                <Smartphone className="w-4 h-4 text-orange-600" /> Mobile Number & SMS OTP Verification
+                <Smartphone className="w-4 h-4 text-orange-600" /> Mobile Number & SMS OTP
               </span>
               {otpVerified && (
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Mobile OTP Verified ✓
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Verified ✓
                 </span>
               )}
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
-                <span className="absolute left-3.5 top-2.5 text-xs font-bold text-stone-400">+91</span>
+                <span className="absolute left-3.5 top-3 sm:top-2.5 text-xs font-bold text-stone-400">+91</span>
                 <input
-                  type="text"
+                  type="tel"
+                  inputMode="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Enter 10-digit mobile number"
-                  className="w-full pl-12 pr-4 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                  className="w-full pl-12 pr-4 py-3 sm:py-2.5 bg-white border border-stone-300 rounded-xl text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
                 />
               </div>
 
               {!otpSent ? (
                 <button
                   onClick={handleSendOtp}
-                  className="bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-sm shrink-0"
+                  className="bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs py-3 sm:py-2.5 px-5 rounded-xl transition-all shadow-sm shrink-0 cursor-pointer"
                 >
                   Send Verification OTP
                 </button>
@@ -377,16 +378,18 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                 <div className="flex items-center space-x-2 flex-1">
                   <input
                     type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter OTP (Use 1234)"
-                    className="w-full px-3 py-2.5 bg-white border border-stone-300 rounded-xl text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                    placeholder="Enter OTP (1234)"
+                    className="w-full px-3 py-3 sm:py-2.5 bg-white border border-stone-300 rounded-xl text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
                   />
                   <button
                     onClick={handleVerifyOtp}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm shrink-0"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 sm:py-2.5 px-4 rounded-xl transition-all shadow-sm shrink-0 cursor-pointer"
                   >
-                    Verify OTP
+                    Verify
                   </button>
                 </div>
               )}
@@ -398,9 +401,9 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               setOtpVerified(true);
               setStep(2);
             }}
-            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm py-3.5 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer"
+            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm py-4 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer"
           >
-            <span>Verify & Proceed to Step 2: Ward & GPS Geotag</span>
+            <span>Verify & Proceed to Step 2: Ward & GPS</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -430,7 +433,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             <select
               value={selectedWard}
               onChange={(e) => handleWardSelectChange(e.target.value)}
-              className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-3 text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer"
+              className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-3 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer"
             >
               {indoreWardsList.map(w => (
                 <option key={w.id} value={w.id}>{w.name}</option>
@@ -439,16 +442,16 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           </div>
 
           {/* Auto-Detected GPS Location & Coordinate Tuning */}
-          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-xs font-extrabold text-emerald-800 flex items-center gap-1.5">
-                <CheckCircle className="w-4 h-4 text-emerald-600" /> EXACT GPS GEOTAG VERIFIED
+                <CheckCircle className="w-4 h-4 text-emerald-600" /> GPS GEOTAG VERIFIED
               </span>
               <button
                 onClick={handleDetectLiveLocation}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-sm flex items-center gap-1.5 transition-all"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-3.5 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
               >
-                <Crosshair className="w-3.5 h-3.5" /> Fetch Live Pinpoint GPS
+                <Crosshair className="w-3.5 h-3.5" /> Use Live Phone GPS
               </button>
             </div>
 
@@ -459,7 +462,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                   type="text"
                   value={lat}
                   onChange={(e) => setLat(e.target.value)}
-                  className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-stone-900"
+                  className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2.5 text-sm sm:text-xs font-mono font-bold text-stone-900"
                 />
               </div>
 
@@ -469,7 +472,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                   type="text"
                   value={lng}
                   onChange={(e) => setLng(e.target.value)}
-                  className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-stone-900"
+                  className="w-full bg-white border border-emerald-300 rounded-xl px-3 py-2.5 text-sm sm:text-xs font-mono font-bold text-stone-900"
                 />
               </div>
             </div>
@@ -483,7 +486,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                 value={landmark}
                 onChange={(e) => setLandmark(e.target.value)}
                 placeholder="e.g. Mayur Nagar Square, Musakhedi, Indore"
-                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
               />
             </div>
 
@@ -494,23 +497,23 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                 value={houseNo}
                 onChange={(e) => setHouseNo(e.target.value)}
                 placeholder="e.g. House #52, Mayur Nagar"
-                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-2.5 text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
               />
             </div>
           </div>
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 pt-1">
             <button
               onClick={() => setStep(1)}
-              className="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-5 py-3 rounded-2xl transition-all"
+              className="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-5 py-3.5 rounded-2xl transition-all cursor-pointer"
             >
               Back
             </button>
             <button
               onClick={() => setStep(3)}
-              className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm py-3.5 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm py-4 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer"
             >
-              <span>Confirm Geotag & Proceed to Step 3: Voice & Photo</span>
+              <span>Confirm Location & Proceed to Step 3</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -557,8 +560,8 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                 <div className="w-20 h-20 rounded-2xl bg-white border border-stone-300 flex items-center justify-center text-stone-400 relative overflow-hidden shadow-sm">
                   {photoPreview ? <img src={photoPreview} alt="Preview" className="w-full h-full object-cover rounded-2xl" /> : <Camera className="w-7 h-7" />}
                 </div>
-                <span className="text-xs font-bold text-orange-600">{photoPreview ? 'Change Attached Photo' : 'Attach Photo'}</span>
-                <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                <span className="text-xs font-bold text-orange-600">{photoPreview ? 'Change Attached Photo' : 'Attach / Capture Photo'}</span>
+                <input type="file" accept="image/*" capture="environment" onChange={handlePhotoUpload} className="hidden" />
               </label>
             </div>
           </div>
@@ -567,10 +570,10 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 space-y-2 text-xs animate-fade-in">
               <div className="flex items-center justify-between">
                 <span className="font-extrabold text-orange-700 flex items-center gap-1.5">
-                  <Sparkles className="w-4 h-4 text-orange-600" /> Gemini Vision AI Photo Inspection
+                  <Sparkles className="w-4 h-4 text-orange-600" /> Gemini Vision AI Inspection
                 </span>
                 <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                  {aiVisionResult.authenticityConfidence}% Photo Authenticity
+                  {aiVisionResult.authenticityConfidence}% Authenticity
                 </span>
               </div>
               <p className="text-stone-800 font-bold">Severity: {aiVisionResult.damageGrade}</p>
@@ -591,23 +594,23 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="Describe problem details..."
-              className="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500 resize-none"
+              className="w-full bg-stone-50 border border-stone-300 rounded-xl p-3 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500 resize-none"
             />
           </div>
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 pt-1">
             <button
               onClick={() => setStep(2)}
-              className="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-5 py-3 rounded-2xl transition-all"
+              className="bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-5 py-3.5 rounded-2xl transition-all cursor-pointer"
             >
               Back
             </button>
             <button
               onClick={() => setStep(4)}
-              className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold text-sm py-3.5 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm py-4 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer"
             >
               <Eye className="w-4 h-4" />
-              <span>Proceed to Step 4: Verify & Preview All Filled Information</span>
+              <span>Review & Submit Step 4</span>
             </button>
           </div>
         </div>

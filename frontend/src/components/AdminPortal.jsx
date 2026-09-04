@@ -413,7 +413,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             </div>
 
             {/* Map Container */}
-            <div className="w-full h-[540px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
+            <div className="w-full h-[360px] sm:h-[480px] lg:h-[540px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
               <MapContainer
                 center={[22.7000, 75.8350]}
                 zoom={12}

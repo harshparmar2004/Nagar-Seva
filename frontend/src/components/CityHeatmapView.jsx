@@ -273,7 +273,7 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
         </div>
 
         {/* Full Width Map Container */}
-        <div className="w-full h-[580px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
+        <div className="w-full h-[360px] sm:h-[480px] lg:h-[580px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
           <MapContainer
             center={mapCenter}
             zoom={12}

@@ -65,21 +65,21 @@ export default function EmergencyHotlineView({ currentUser }) {
     <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-12">
       
       {/* Emergency Hero Header */}
-      <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 rounded-3xl p-6 sm:p-8 text-white shadow-xl space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 rounded-3xl p-5 sm:p-8 text-white shadow-xl space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-2">
             <span className="relative flex h-3 w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
             </span>
-            <span className="text-xs font-extrabold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full border border-white/30">
-              24/7 Indore Control Room 181 Direct Hotline
+            <span className="text-[11px] sm:text-xs font-extrabold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full border border-white/30">
+              24/7 Indore Control Room 181 Hotline
             </span>
           </div>
 
           <a
             href="tel:181"
-            className="bg-white text-red-700 hover:bg-red-50 font-extrabold text-xs px-4 py-2 rounded-xl shadow-md flex items-center space-x-1.5 transition-all"
+            className="w-full sm:w-auto bg-white text-red-700 hover:bg-red-50 font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md flex items-center justify-center space-x-1.5 transition-all"
           >
             <PhoneCall className="w-4 h-4 text-red-600" />
             <span>DIRECT CALL 181 CONTROL ROOM</span>

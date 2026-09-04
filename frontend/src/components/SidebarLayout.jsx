@@ -253,12 +253,73 @@ export default function SidebarLayout({
 
         </aside>
 
+        {/* Mobile Backdrop Overlay */}
+        {isMobileOpen && (
+          <div
+            onClick={() => setIsMobileOpen(false)}
+            className="fixed inset-0 bg-stone-950/50 backdrop-blur-xs z-20 lg:hidden animate-fade-in"
+          />
+        )}
+
         {/* MAIN CONTENT WORKSPACE */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto overflow-y-auto">
+        <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl mx-auto overflow-y-auto pb-24 lg:pb-8 w-full">
           {children}
         </main>
 
       </div>
+
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-stone-200/90 px-1 py-1 flex items-center justify-around shadow-lg">
+        <button
+          onClick={() => { setActiveTab('citizen-voice'); setIsMobileOpen(false); }}
+          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'citizen-voice' ? 'text-orange-600 font-extrabold' : 'text-stone-500 font-semibold'
+          }`}
+        >
+          <Mic className={`w-5 h-5 ${activeTab === 'citizen-voice' ? 'text-orange-600 scale-110' : 'text-stone-400'}`} />
+          <span className="text-[10px] mt-0.5">Grievance</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('citizen-my-complaints'); setIsMobileOpen(false); }}
+          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'citizen-my-complaints' ? 'text-orange-600 font-extrabold' : 'text-stone-500 font-semibold'
+          }`}
+        >
+          <ListChecks className={`w-5 h-5 ${activeTab === 'citizen-my-complaints' ? 'text-orange-600 scale-110' : 'text-stone-400'}`} />
+          <span className="text-[10px] mt-0.5">My Tokens</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('citizen-track'); setIsMobileOpen(false); }}
+          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'citizen-track' ? 'text-orange-600 font-extrabold' : 'text-stone-500 font-semibold'
+          }`}
+        >
+          <Search className={`w-5 h-5 ${activeTab === 'citizen-track' ? 'text-orange-600 scale-110' : 'text-stone-400'}`} />
+          <span className="text-[10px] mt-0.5">Track</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('admin-gis'); setIsMobileOpen(false); }}
+          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'admin-gis' ? 'text-orange-600 font-extrabold' : 'text-stone-500 font-semibold'
+          }`}
+        >
+          <MapPin className={`w-5 h-5 ${activeTab === 'admin-gis' ? 'text-orange-600 scale-110' : 'text-stone-400'}`} />
+          <span className="text-[10px] mt-0.5">City GIS</span>
+        </button>
+
+        <button
+          onClick={() => { setActiveTab('citizen-emergency'); setIsMobileOpen(false); }}
+          className={`flex flex-col items-center py-1.5 px-3 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'citizen-emergency' || activeTab === 'admin-emergency' ? 'text-red-600 font-extrabold' : 'text-stone-500 font-semibold'
+          }`}
+        >
+          <AlertOctagon className="w-5 h-5 text-red-600 animate-pulse" />
+          <span className="text-[10px] mt-0.5 text-red-600 font-bold">181 Alert</span>
+        </button>
+      </nav>
 
     </div>
   );
