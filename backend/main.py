@@ -177,14 +177,23 @@ def resolve_live_gps_geotag(lat: float = Query(...), lng: float = Query(...), wa
     
     clean_short_name = spatial_info['ward_name'].split('—')[1].split('&')[0].strip() if '—' in spatial_info['ward_name'] else spatial_info['ward_name']
     
-    # Attempt OpenStreetMap Nominatim Reverse Geocoding
+    # Attempt OpenStreetMap Nominatim Reverse Geocoding with zoom=15
     address_str = f"{spatial_info['ward_name']}, Indore [Lat: {lat:.4f}, Lng: {lng:.4f}]"
     try:
-        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json"
+        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json&zoom=15"
         req = urllib.request.Request(url, headers={'User-Agent': 'NagarSevaDPI/2.0'})
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
-            address_str = data.get('display_name', address_str)
+            addr = data.get('address', {})
+            specific = data.get('name') or addr.get('square') or addr.get('suburb') or addr.get('neighbourhood') or addr.get('residential')
+            road = addr.get('road')
+            parts = []
+            if specific and 'indore city' not in specific.lower() and 'tahsil' not in specific.lower():
+                parts.append(specific)
+            if road and road not in parts:
+                parts.append(road)
+            parts.append(spatial_info['ward_name'])
+            address_str = ", ".join(parts)
     except Exception as e:
         address_str = f"{clean_short_name}, Indore [Lat: {lat:.4f}, Lng: {lng:.4f}]"
 

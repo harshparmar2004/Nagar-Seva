@@ -46,15 +46,16 @@ export default function SidebarLayout({
             setLiveLocationStr(`📍 Indore • GPS [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
           }
 
-          // 2. OpenStreetMap Nominatim reverse geocode for exact neighborhood
+          // 2. OpenStreetMap Nominatim reverse geocode for exact neighborhood with zoom=15
           try {
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=15`);
             if (geoRes.ok) {
               const geoData = await geoRes.json();
-              const subArea = geoData.address?.suburb || geoData.address?.neighbourhood || geoData.address?.city_district || geoData.address?.road;
-              if (subArea) {
-                const wardName = matchedWard ? matchedWard.name : 'Indore';
-                setLiveLocationStr(`📍 ${subArea} (${wardName}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
+              const addr = geoData.address || {};
+              const placeName = geoData.name || addr.square || addr.suburb || addr.neighbourhood || addr.residential;
+              if (placeName && !placeName.toLowerCase().includes('indore city') && !placeName.toLowerCase().includes('tahsil')) {
+                const cleanWardTitle = matchedWard ? matchedWard.name : 'Indore';
+                setLiveLocationStr(`📍 ${placeName} (${cleanWardTitle}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
                 return;
               }
             }
