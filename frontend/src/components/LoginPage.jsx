@@ -92,9 +92,10 @@ export default function LoginPage({ onLoginSuccess }) {
         };
 
         try { localStorage.setItem('nagarmitra_user', JSON.stringify(adminUserObj)); } catch(e) {}
-        await syncUserToBackend(adminUserObj);
         requestLiveGPS();
         onLoginSuccess(adminUserObj);
+        // Sync to Firebase & backend in background — don't block navigation
+        syncUserToBackend(adminUserObj).catch(() => {});
         return;
       }
 
@@ -112,9 +113,10 @@ export default function LoginPage({ onLoginSuccess }) {
         };
 
         try { localStorage.setItem('nagarmitra_user', JSON.stringify(citizenUserObj)); } catch(e) {}
-        await syncUserToBackend(citizenUserObj);
         requestLiveGPS();
         onLoginSuccess(citizenUserObj);
+        // Sync to Firebase & backend in background — don't block navigation
+        syncUserToBackend(citizenUserObj).catch(() => {});
         return;
       }
 
@@ -170,10 +172,11 @@ export default function LoginPage({ onLoginSuccess }) {
     };
 
     try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
-    await syncUserToBackend(userObj);
     requestLiveGPS();
     onLoginSuccess(userObj);
     setLoading(false);
+    // Sync to Firebase & backend in background — don't block navigation
+    syncUserToBackend(userObj).catch(() => {});
   };
 
   return (
