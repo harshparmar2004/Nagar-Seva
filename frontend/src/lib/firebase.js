@@ -42,6 +42,25 @@ export const syncUserToFirestore = async (userObj) => {
 };
 
 /**
+ * Fetch existing user profile directly from Firebase Firestore
+ */
+export const getUserProfileFromFirestore = async (email) => {
+  if (!email) return null;
+  try {
+    const cleanEmail = email.toLowerCase().trim();
+    const userRef = doc(db, 'users', cleanEmail);
+    const snap = await getDoc(userRef);
+    if (snap.exists()) {
+      return snap.data();
+    }
+    return null;
+  } catch (err) {
+    console.warn("Firestore getUserProfile error:", err.message);
+    return null;
+  }
+};
+
+/**
  * Save a complaint directly to Firebase Firestore
  */
 export const saveComplaintToFirestore = async (complaintObj) => {
