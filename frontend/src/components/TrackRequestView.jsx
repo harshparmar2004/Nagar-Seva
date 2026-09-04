@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   Search, CheckCircle2, Clock, MapPin, Sparkles, FileText, ArrowRight,
   ShieldCheck, Building2, User, Landmark, Filter, Tag, Flame, Layers,
@@ -79,7 +79,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
     setTrackingData(null);
     setHasEndorsed(false);
     try {
-      const res = await fetch(`http://localhost:8000/api/complaints/track/${idToFetch.trim()}`);
+      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/complaints/track/${idToFetch.trim()}`);
       const data = await res.json();
       if (data.found === false) {
         setErrorMsg(data.message || 'No complaint found with this token.');
@@ -121,7 +121,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
 
   const handleEndorse = async () => {
     try {
-      const res = await fetch(`http://localhost:8000/api/complaints/endorse/${searchId}`, { method: 'POST' });
+      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/complaints/endorse/${searchId}`, { method: 'POST' });
       await res.json();
     } catch (e) { /* ignore */ }
     setHasEndorsed(true);
@@ -144,9 +144,9 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-16">
 
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* SECTION 1: TOKEN SEARCH BAR                                    */}
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
         <div className="space-y-1">
           <div className="flex items-center space-x-2 text-xs font-bold text-orange-600 uppercase tracking-wider">
@@ -213,9 +213,9 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
         </div>
       </div>
 
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* ERROR STATE: Token not found                                   */}
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {errorMsg && !loading && (
         <div className="bg-red-50 border border-red-200 rounded-3xl p-6 sm:p-8 shadow-sm flex items-start gap-4">
           <div className="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
@@ -232,9 +232,9 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* LOADING STATE                                                  */}
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {loading && (
         <div className="bg-white border border-stone-200 rounded-3xl p-12 shadow-sm flex flex-col items-center justify-center gap-4">
           <Loader2 className="w-10 h-10 text-orange-600 animate-spin" />
@@ -242,13 +242,13 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
         </div>
       )}
 
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {/* RESULTS: Full complaint tracking data                          */}
-      {/* ─────────────────────────────────────────────────────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {trackingData && trackingData.found && (
         <div className="space-y-6">
 
-          {/* ── CARD A: Status Header + Progress Bar ────────────────── */}
+          {/* â”€â”€ CARD A: Status Header + Progress Bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <div className={`border rounded-3xl p-6 sm:p-8 shadow-sm space-y-5 ${st.bgClass}`}>
             {/* Token + Status Badge Row */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -270,20 +270,20 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
                 <button
                   onClick={() => {
                     const c = trackingData.complaint;
-                    const ward = trackingData.ward_name || 'अज्ञात';
+                    const ward = trackingData.ward_name || 'à¤…à¤œà¥à¤žà¤¾à¤¤';
                     handleSpeakStatus(
-                      `शिकायत टोकन ${c?.id} की स्थिति: ${trackingData.status_label}। ` +
-                      `श्रेणी: ${trackingData.complaint_category}। ` +
-                      `वॉर्ड: ${ward}। ` +
-                      `इस वॉर्ड में इसी प्रकार की ${trackingData.same_category_same_ward_count} शिकायतें दर्ज हैं। ` +
-                      `पूरे शहर में कुल ${trackingData.same_category_city_count} शिकायतें इसी श्रेणी में हैं। ` +
-                      `प्रभावित नागरिक: ${trackingData.affected_citizens}।`
+                      `à¤¶à¤¿à¤•à¤¾à¤¯à¤¤ à¤Ÿà¥‹à¤•à¤¨ ${c?.id} à¤•à¥€ à¤¸à¥à¤¥à¤¿à¤¤à¤¿: ${trackingData.status_label}à¥¤ ` +
+                      `à¤¶à¥à¤°à¥‡à¤£à¥€: ${trackingData.complaint_category}à¥¤ ` +
+                      `à¤µà¥‰à¤°à¥à¤¡: ${ward}à¥¤ ` +
+                      `à¤‡à¤¸ à¤µà¥‰à¤°à¥à¤¡ à¤®à¥‡à¤‚ à¤‡à¤¸à¥€ à¤ªà¥à¤°à¤•à¤¾à¤° à¤•à¥€ ${trackingData.same_category_same_ward_count} à¤¶à¤¿à¤•à¤¾à¤¯à¤¤à¥‡à¤‚ à¤¦à¤°à¥à¤œ à¤¹à¥ˆà¤‚à¥¤ ` +
+                      `à¤ªà¥‚à¤°à¥‡ à¤¶à¤¹à¤° à¤®à¥‡à¤‚ à¤•à¥à¤² ${trackingData.same_category_city_count} à¤¶à¤¿à¤•à¤¾à¤¯à¤¤à¥‡à¤‚ à¤‡à¤¸à¥€ à¤¶à¥à¤°à¥‡à¤£à¥€ à¤®à¥‡à¤‚ à¤¹à¥ˆà¤‚à¥¤ ` +
+                      `à¤ªà¥à¤°à¤­à¤¾à¤µà¤¿à¤¤ à¤¨à¤¾à¤—à¤°à¤¿à¤•: ${trackingData.affected_citizens}à¥¤`
                     );
                   }}
                   className="bg-orange-100 hover:bg-orange-200 text-orange-800 text-xs font-bold px-3 py-1.5 rounded-full border border-orange-300 flex items-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Volume2 className="w-4 h-4 text-orange-600" />
-                  <span>Listen (बोलकर सुनें)</span>
+                  <span>Listen (à¤¬à¥‹à¤²à¤•à¤° à¤¸à¥à¤¨à¥‡à¤‚)</span>
                 </button>
 
                 <span className={`${st.badgeBg} ${st.textClass} text-xs font-extrabold px-3.5 py-1.5 rounded-full border border-current/20 flex items-center gap-1.5`}>
@@ -343,7 +343,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
             )}
           </div>
 
-          {/* ── CARD B: Statistics Grid ──────────────────────────────── */}
+          {/* â”€â”€ CARD B: Statistics Grid â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {/* Same category, Same ward */}
             <div className="bg-white border border-stone-200 rounded-2xl p-4 space-y-1.5 shadow-sm">
@@ -352,7 +352,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
               </span>
               <p className="text-2xl font-extrabold text-stone-900">{trackingData.same_category_same_ward_count}</p>
               <p className="text-[10px] text-stone-500 font-semibold">
-                {trackingData.complaint_category} complaints in {trackingData.ward_name?.split('—')[0]?.trim()}
+                {trackingData.complaint_category} complaints in {trackingData.ward_name?.split('â€”')[0]?.trim()}
               </p>
             </div>
 
@@ -374,7 +374,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
               </span>
               <p className="text-2xl font-extrabold text-stone-900">{trackingData.same_ward_total_count}</p>
               <p className="text-[10px] text-stone-500 font-semibold">
-                All categories in {trackingData.ward_name?.split('—')[0]?.trim()}
+                All categories in {trackingData.ward_name?.split('â€”')[0]?.trim()}
               </p>
             </div>
 
@@ -388,7 +388,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
             </div>
           </div>
 
-          {/* ── CARD C: Ward + Department + Officer details ──────────── */}
+          {/* â”€â”€ CARD C: Ward + Department + Officer details â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm space-y-5">
             <h3 className="text-sm font-extrabold text-stone-900 flex items-center gap-2">
               <Building2 className="w-4.5 h-4.5 text-orange-600" /> Administrative Routing & Assignment
@@ -458,7 +458,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
             </div>
           </div>
 
-          {/* ── CARD D: Other Wards With Same Issue ──────────────────── */}
+          {/* â”€â”€ CARD D: Other Wards With Same Issue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {trackingData.other_wards_with_same_issue && trackingData.other_wards_with_same_issue.length > 0 && (
             <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm space-y-4">
               <button
@@ -480,8 +480,8 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
                   {trackingData.other_wards_with_same_issue.map((w) => (
                     <div key={w.id} className="flex items-center justify-between bg-stone-50 border border-stone-200 rounded-xl px-3.5 py-2.5">
                       <div>
-                        <p className="text-xs font-bold text-stone-800">{w.name?.split('—')[0]?.trim()}</p>
-                        <p className="text-[10px] text-stone-500">{w.name?.split('—')[1]?.trim() || ''}</p>
+                        <p className="text-xs font-bold text-stone-800">{w.name?.split('â€”')[0]?.trim()}</p>
+                        <p className="text-[10px] text-stone-500">{w.name?.split('â€”')[1]?.trim() || ''}</p>
                       </div>
                       <span className="bg-orange-100 text-orange-800 text-[11px] font-extrabold px-2 py-0.5 rounded-lg">
                         {w.count} complaints
@@ -493,7 +493,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
             </div>
           )}
 
-          {/* ── CARD E: Cluster & Project Info ───────────────────────── */}
+          {/* â”€â”€ CARD E: Cluster & Project Info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {(trackingData.cluster || trackingData.project) && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {trackingData.cluster && (
@@ -538,7 +538,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
             </div>
           )}
 
-          {/* ── CARD F: Government Resolution Timeline ───────────────── */}
+          {/* â”€â”€ CARD F: Government Resolution Timeline â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
             <h3 className="text-sm font-extrabold text-stone-900 flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-orange-600" /> Official Resolution Timeline
@@ -584,7 +584,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
                               ? 'bg-blue-100 text-blue-800 border border-blue-200'
                               : 'bg-stone-100 text-stone-500 border border-stone-200'
                         }`}>
-                          {item.status === 'COMPLETED' ? '✓ COMPLETED' : item.status === 'IN_PROGRESS' ? '⟳ IN PROGRESS' : '○ PENDING'}
+                          {item.status === 'COMPLETED' ? 'âœ“ COMPLETED' : item.status === 'IN_PROGRESS' ? 'âŸ³ IN PROGRESS' : 'â—‹ PENDING'}
                         </span>
                       </div>
                       <p className="text-xs text-stone-600 font-medium leading-relaxed">{item.detail}</p>
@@ -595,7 +595,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
             </div>
           </div>
 
-          {/* ── CARD G: Citizen Info Footer ──────────────────────────── */}
+          {/* â”€â”€ CARD G: Citizen Info Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           <div className="bg-stone-50 border border-stone-200 rounded-3xl p-5 shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs">
               <div className="flex items-center gap-3">

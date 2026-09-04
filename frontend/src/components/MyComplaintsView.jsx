@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { FolderCheck, Search, Building2, Landmark, User, Clock, CheckCircle2, AlertTriangle, Filter, MapPin, ExternalLink, ShieldCheck, Plus, Sparkles } from 'lucide-react';
 
 export default function MyComplaintsView({ currentUser, onSelectComplaintForTracking, onNavigateToCreate }) {
@@ -16,7 +16,7 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
   const fetchUserComplaints = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:8000/api/complaints/user/${activeEmail}`);
+      const res = await fetch(`https://nagarmitra-backend.onrender.com/api/complaints/user/${activeEmail}`);
       const data = await res.json();
       setComplaints(data);
     } catch (e) {
@@ -30,7 +30,7 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
           health_impact: true,
           locality: 'Near Cat Road Square, Ward 14, Indore',
           landmark: 'Cat Road Square',
-          responsible_department: 'Indore Municipal Corporation (IMC) — Drainage & Sewerage Department',
+          responsible_department: 'Indore Municipal Corporation (IMC) â€” Drainage & Sewerage Department',
           responsible_ministry: 'Ministry of Housing & Urban Affairs (MoHUA)',
           nodal_officer: 'Er. Rajesh Sharma (Chief Engineer)',
           current_status: 'APPROVED_BY_ADMIN',
@@ -79,7 +79,7 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
               onClick={fetchUserComplaints}
               className="bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs px-3 py-2.5 rounded-xl transition-all"
             >
-              ↻ Refresh
+              â†» Refresh
             </button>
           </div>
         </div>

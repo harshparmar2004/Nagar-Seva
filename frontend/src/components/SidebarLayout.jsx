@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Shield, Mic, ListChecks, Search, ThumbsUp, Layers, MapPin, Flame,
   TrendingUp, Sparkles, BarChart3, Database, LogIn, LogOut, CheckCircle2,
@@ -17,7 +17,7 @@ export default function SidebarLayout({
   isSuperAdmin
 }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [liveLocationStr, setLiveLocationStr] = useState('📍 Fetching Live GPS Geotag...');
+  const [liveLocationStr, setLiveLocationStr] = useState('ðŸ“ Fetching Live GPS Geotag...');
 
   useEffect(() => {
     if ('geolocation' in navigator) {
@@ -26,27 +26,27 @@ export default function SidebarLayout({
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
           try {
-            const res = await fetch(`http://localhost:8000/api/geotag/resolve?lat=${lat}&lng=${lng}`);
+            const res = await fetch(`https://nagarmitra-backend.onrender.com/api/geotag/resolve?lat=${lat}&lng=${lng}`);
             const data = await res.json();
             if (data && data.status === 'SUCCESS') {
               const localityPart = data.address ? data.address.split(',')[0] : 'Indore Sector';
-              const cleanWardTitle = data.ward_name ? data.ward_name.split('—')[1] : `Ward ${data.ward_number}`;
-              setLiveLocationStr(`📍 ${localityPart} (Ward ${data.ward_number}: ${cleanWardTitle.trim()}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
+              const cleanWardTitle = data.ward_name ? data.ward_name.split('â€”')[1] : `Ward ${data.ward_number}`;
+              setLiveLocationStr(`ðŸ“ ${localityPart} (Ward ${data.ward_number}: ${cleanWardTitle.trim()}) â€¢ [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
             } else {
-              setLiveLocationStr(`📍 GPS Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} • Ward 52 (Musakhedi & Mayur Nagar)`);
+              setLiveLocationStr(`ðŸ“ GPS Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} â€¢ Ward 52 (Musakhedi & Mayur Nagar)`);
             }
           } catch (e) {
-            setLiveLocationStr(`📍 GPS Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} • Ward 52 (Musakhedi & Mayur Nagar)`);
+            setLiveLocationStr(`ðŸ“ GPS Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)} â€¢ Ward 52 (Musakhedi & Mayur Nagar)`);
           }
         },
         (err) => {
           console.warn("GPS lookup error:", err);
-          setLiveLocationStr('📍 Ward 52 (Musakhedi, Mayur Nagar, Indore)');
+          setLiveLocationStr('ðŸ“ Ward 52 (Musakhedi, Mayur Nagar, Indore)');
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
     } else {
-      setLiveLocationStr('📍 Ward 52 (Musakhedi, Mayur Nagar, Indore)');
+      setLiveLocationStr('ðŸ“ Ward 52 (Musakhedi, Mayur Nagar, Indore)');
     }
   }, []);
 
@@ -92,7 +92,7 @@ export default function SidebarLayout({
               <div className="flex items-center space-x-2">
                 <span className="font-extrabold text-stone-900 tracking-tight text-lg">NagarSeva DPI</span>
                 <span className="bg-orange-100 text-orange-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-200">
-                  🏆 SWACHH SURVEKSHAN #1 INDORE
+                  ðŸ† SWACHH SURVEKSHAN #1 INDORE
                 </span>
               </div>
             </div>
@@ -253,7 +253,7 @@ export default function SidebarLayout({
           {/* Sidebar Footer: DPI Governance Badge */}
           <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3.5 text-center space-y-1">
             <p className="text-[11px] font-extrabold text-stone-800">Swachh Survekshan #1 Indore</p>
-            <p className="text-[10px] text-stone-500 font-medium">Digital Public Infrastructure (DPI) • Built with Google AI</p>
+            <p className="text-[10px] text-stone-500 font-medium">Digital Public Infrastructure (DPI) â€¢ Built with Google AI</p>
           </div>
 
         </aside>

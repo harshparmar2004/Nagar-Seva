@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Shield, Sparkles, MapPin, Layers, BarChart2, Globe, Cpu } from 'lucide-react';
 
 export default function Header({ currentView, setCurrentView, activeCountry, setActiveCountry }) {
@@ -73,9 +73,9 @@ export default function Header({ currentView, setCurrentView, activeCountry, set
               onChange={(e) => setActiveCountry(e.target.value)}
               className="bg-transparent text-xs font-semibold text-white focus:outline-none cursor-pointer"
             >
-              <option value="IN" className="bg-slate-800 text-white">🇮🇳 India (Indore IMC)</option>
-              <option value="BR" className="bg-slate-800 text-white">🇧🇷 Brazil (São Paulo)</option>
-              <option value="ZA" className="bg-slate-800 text-white">🇿🇦 South Africa (Joburg)</option>
+              <option value="IN" className="bg-slate-800 text-white">ðŸ‡®ðŸ‡³ India (Indore IMC)</option>
+              <option value="BR" className="bg-slate-800 text-white">ðŸ‡§ðŸ‡· Brazil (SÃ£o Paulo)</option>
+              <option value="ZA" className="bg-slate-800 text-white">ðŸ‡¿ðŸ‡¦ South Africa (Joburg)</option>
             </select>
           </div>
 

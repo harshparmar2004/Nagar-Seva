@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import {
@@ -119,8 +119,8 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
     setLoading(true);
     try {
       const [compRes, wardRes] = await Promise.all([
-        fetch('http://localhost:8000/api/complaints'),
-        fetch('http://localhost:8000/api/wards')
+        fetch('https://nagarmitra-backend.onrender.com/api/complaints'),
+        fetch('https://nagarmitra-backend.onrender.com/api/wards')
       ]);
       const compData = await compRes.json();
       const wardData = await wardRes.json();
@@ -143,11 +143,11 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
 
   // Top Ward Hotspots Ranking
   const wardHotspots = [
-    { rank: 1, wardId: 'ward_52', name: 'Ward 52 — Musakhedi & Mayur Nagar', lat: 22.7120, lng: 75.9080, count: 847, urgency: 'EXTREME_CRITICAL', color: '#dc2626', ppi: 94.2, category: 'Sanitation & Sewer Overflow' },
-    { rank: 2, wardId: 'ward_14', name: 'Ward 14 — Rajendra Nagar Corridor', lat: 22.6800, lng: 75.8250, count: 620, urgency: 'EXTREME_CRITICAL', color: '#dc2626', ppi: 91.5, category: 'Stormwater Drainage Deficit' },
-    { rank: 3, wardId: 'ward_15', name: 'Ward 15 — Silicon City & Bijasan', lat: 22.7310, lng: 75.8250, count: 450, urgency: 'HIGH_RISK', color: '#ea580c', ppi: 86.4, category: 'Water Pipeline Leakage' },
-    { rank: 4, wardId: 'ward_8', name: 'Ward 8 — Banganga Industrial Area', lat: 22.7190, lng: 75.8570, count: 380, urgency: 'HIGH_RISK', color: '#ea580c', ppi: 83.5, category: 'Arterial Pothole Damage' },
-    { rank: 5, wardId: 'ward_7', name: 'Ward 7 — Chandan Nagar Sector', lat: 22.7200, lng: 75.8410, count: 290, urgency: 'MODERATE', color: '#eab308', ppi: 75.0, category: 'Streetlight Wire Snaps' },
+    { rank: 1, wardId: 'ward_52', name: 'Ward 52 â€” Musakhedi & Mayur Nagar', lat: 22.7120, lng: 75.9080, count: 847, urgency: 'EXTREME_CRITICAL', color: '#dc2626', ppi: 94.2, category: 'Sanitation & Sewer Overflow' },
+    { rank: 2, wardId: 'ward_14', name: 'Ward 14 â€” Rajendra Nagar Corridor', lat: 22.6800, lng: 75.8250, count: 620, urgency: 'EXTREME_CRITICAL', color: '#dc2626', ppi: 91.5, category: 'Stormwater Drainage Deficit' },
+    { rank: 3, wardId: 'ward_15', name: 'Ward 15 â€” Silicon City & Bijasan', lat: 22.7310, lng: 75.8250, count: 450, urgency: 'HIGH_RISK', color: '#ea580c', ppi: 86.4, category: 'Water Pipeline Leakage' },
+    { rank: 4, wardId: 'ward_8', name: 'Ward 8 â€” Banganga Industrial Area', lat: 22.7190, lng: 75.8570, count: 380, urgency: 'HIGH_RISK', color: '#ea580c', ppi: 83.5, category: 'Arterial Pothole Damage' },
+    { rank: 5, wardId: 'ward_7', name: 'Ward 7 â€” Chandan Nagar Sector', lat: 22.7200, lng: 75.8410, count: 290, urgency: 'MODERATE', color: '#eab308', ppi: 75.0, category: 'Streetlight Wire Snaps' },
   ];
 
   return (
@@ -197,7 +197,7 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
             
             {/* Month Filter Dropdown */}
             <div className="space-y-1">
-              <label className="text-[11px] text-stone-500 font-bold uppercase">📅 Monthly Telemetry Window</label>
+              <label className="text-[11px] text-stone-500 font-bold uppercase">ðŸ“… Monthly Telemetry Window</label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
@@ -212,7 +212,7 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
 
             {/* Category Filter Dropdown */}
             <div className="space-y-1">
-              <label className="text-[11px] text-stone-500 font-bold uppercase">🏷️ Grievance Category</label>
+              <label className="text-[11px] text-stone-500 font-bold uppercase">ðŸ·ï¸ Grievance Category</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
@@ -228,13 +228,13 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
 
             {/* Ward Filter Dropdown */}
             <div className="space-y-1">
-              <label className="text-[11px] text-stone-500 font-bold uppercase">📍 Ward Sector Filter</label>
+              <label className="text-[11px] text-stone-500 font-bold uppercase">ðŸ“ Ward Sector Filter</label>
               <select
                 value={selectedWardFilter}
                 onChange={(e) => setSelectedWardFilter(e.target.value)}
                 className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer shadow-sm"
               >
-                <option value="ALL">All Wards (1–85)</option>
+                <option value="ALL">All Wards (1â€“85)</option>
                 {wards.map((w) => (
                   <option key={w.id} value={w.id}>
                     {w.name}
@@ -257,7 +257,7 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
           
           <div className="flex items-center space-x-2 text-xs font-bold">
             <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200">
-              🟢 Continuous Thermal Heat Render Active
+              ðŸŸ¢ Continuous Thermal Heat Render Active
             </span>
           </div>
         </div>
@@ -398,10 +398,10 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
           <div className="w-full h-4 rounded-full bg-gradient-to-r from-blue-500 via-emerald-400 via-amber-400 via-orange-500 to-rose-600 shadow-inner" />
           
           <div className="grid grid-cols-4 text-center text-[11px] font-extrabold text-stone-700 pt-1">
-            <div className="text-left"><span className="text-blue-600">🔵 Low Density</span> (1–10 Complaints)</div>
-            <div><span className="text-emerald-600">🟢 Moderate Zone</span> (10–50 Complaints)</div>
-            <div><span className="text-amber-600">🟡 High Density</span> (50–200 Complaints)</div>
-            <div className="text-right"><span className="text-rose-600">🔴 Extreme Hotspot</span> (500+ Requests)</div>
+            <div className="text-left"><span className="text-blue-600">ðŸ”µ Low Density</span> (1â€“10 Complaints)</div>
+            <div><span className="text-emerald-600">ðŸŸ¢ Moderate Zone</span> (10â€“50 Complaints)</div>
+            <div><span className="text-amber-600">ðŸŸ¡ High Density</span> (50â€“200 Complaints)</div>
+            <div className="text-right"><span className="text-rose-600">ðŸ”´ Extreme Hotspot</span> (500+ Requests)</div>
           </div>
         </div>
 

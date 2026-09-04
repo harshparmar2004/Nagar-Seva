@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Star, CheckCircle2, Loader2, MapPin, Landmark, Droplets, Bus, Sun,
   Trash2, Construction, FileText, Eye, Send
@@ -51,7 +51,7 @@ export default function CommunitySupportView({ onOpenDPR }) {
   const fetchProjects = async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:8000/api/projects');
+      const res = await fetch('https://nagarmitra-backend.onrender.com/api/projects');
       const data = await res.json();
       setProjects(data);
     } catch (e) { console.error(e); }
@@ -69,14 +69,14 @@ export default function CommunitySupportView({ onOpenDPR }) {
     setToast(`Thank you! Your ${stars}-star rating has been submitted.`);
     setTimeout(() => setToast(null), 3500);
     try {
-      await fetch(`http://localhost:8000/api/projects/${projectId}/rate?stars=${stars}`, { method: 'POST' });
+      await fetch(`https://nagarmitra-backend.onrender.com/api/projects/${projectId}/rate?stars=${stars}`, { method: 'POST' });
     } catch (e) { /* ignore */ }
   };
 
   return (
     <div className="max-w-5xl mx-auto space-y-5 animate-fade-in pb-16 text-stone-900">
 
-      {/* ── Header ── */}
+      {/* â”€â”€ Header â”€â”€ */}
       <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm space-y-2">
         <div className="inline-flex items-center space-x-2 bg-orange-100 text-orange-800 px-3.5 py-1 rounded-full border border-orange-200 text-xs font-extrabold">
           <Landmark className="w-3.5 h-3.5 text-orange-600" />
@@ -86,11 +86,11 @@ export default function CommunitySupportView({ onOpenDPR }) {
           City Infrastructure Projects
         </h2>
         <p className="text-xs text-stone-500 font-medium max-w-2xl">
-          Review infrastructure projects published by the District Administration. Rate each project by giving 1–5 stars to help prioritize civic development.
+          Review infrastructure projects published by the District Administration. Rate each project by giving 1â€“5 stars to help prioritize civic development.
         </p>
       </div>
 
-      {/* ── Toast ── */}
+      {/* â”€â”€ Toast â”€â”€ */}
       {toast && (
         <div className="bg-emerald-50 border border-emerald-300 text-emerald-800 rounded-2xl px-5 py-3 text-xs font-extrabold flex items-center gap-2 shadow-sm animate-fade-in">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -98,14 +98,14 @@ export default function CommunitySupportView({ onOpenDPR }) {
         </div>
       )}
 
-      {/* ── Loading ── */}
+      {/* â”€â”€ Loading â”€â”€ */}
       {loading && (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
         </div>
       )}
 
-      {/* ── Project Cards ── */}
+      {/* â”€â”€ Project Cards â”€â”€ */}
       <div className="space-y-4">
         {projects.map((project, idx) => {
           const CatIcon = CATEGORY_ICONS[project.category] || Bus;
@@ -118,7 +118,7 @@ export default function CommunitySupportView({ onOpenDPR }) {
               key={project.id}
               className="bg-white border border-stone-200 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4 hover:border-stone-300 transition-all"
             >
-              {/* ── Top Row: Icon + Title + Category ── */}
+              {/* â”€â”€ Top Row: Icon + Title + Category â”€â”€ */}
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow">
                   <CatIcon className="w-5 h-5" />
@@ -138,16 +138,16 @@ export default function CommunitySupportView({ onOpenDPR }) {
                 </div>
                 <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-2xl text-center shrink-0">
                   <span className="text-[9px] text-emerald-700 font-extrabold uppercase tracking-wider">BUDGET</span>
-                  <p className="text-lg font-black text-emerald-600 leading-none mt-0.5">₹{budgetCrores} Cr</p>
+                  <p className="text-lg font-black text-emerald-600 leading-none mt-0.5">â‚¹{budgetCrores} Cr</p>
                 </div>
               </div>
 
-              {/* ── Description ── */}
+              {/* â”€â”€ Description â”€â”€ */}
               <p className="text-xs text-stone-600 font-medium leading-relaxed pl-[52px]">
                 {project.problem_justification}
               </p>
 
-              {/* ── Bottom: 5-Star Rating + DPR Button ── */}
+              {/* â”€â”€ Bottom: 5-Star Rating + DPR Button â”€â”€ */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-stone-100 pl-[52px]">
 
                 {/* Rating Section */}
@@ -155,7 +155,7 @@ export default function CommunitySupportView({ onOpenDPR }) {
                   {isSubmitted ? (
                     <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl">
                       <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-extrabold text-emerald-700">Rated {userRating}/5 — Thank you!</span>
+                      <span className="text-xs font-extrabold text-emerald-700">Rated {userRating}/5 â€” Thank you!</span>
                     </div>
                   ) : (
                     <>
@@ -194,7 +194,7 @@ export default function CommunitySupportView({ onOpenDPR }) {
         })}
       </div>
 
-      {/* ── Empty ── */}
+      {/* â”€â”€ Empty â”€â”€ */}
       {!loading && projects.length === 0 && (
         <div className="bg-white border border-stone-200 rounded-3xl p-12 text-center space-y-3">
           <Construction className="w-12 h-12 text-stone-300 mx-auto" />
