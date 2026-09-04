@@ -1,4 +1,5 @@
 import { API_BASE_URL } from '../config';
+import { FALLBACK_WARDS } from '../data/fallbackData';
 import React, { useState, useEffect } from 'react';
 import {
   Shield, Mic, ListChecks, Search, ThumbsUp, Layers, MapPin, Flame,
@@ -26,25 +27,57 @@ export default function SidebarLayout({
         async (pos) => {
           const lat = pos.coords.latitude;
           const lng = pos.coords.longitude;
-          try {
-            const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${lat}&lng=${lng}`);
-            const data = await res.json();
-            if (data && data.status === 'SUCCESS') {
-              const localityPart = data.address ? data.address.split(',')[0] : 'Indore Sector';
-              const cleanWardTitle = data.ward_name ? data.ward_name.split('—')[1] : `Ward ${data.ward_number}`;
-              setLiveLocationStr(`📍 ${localityPart} (Ward ${data.ward_number}: ${cleanWardTitle.trim()}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
-            } else {
-              setLiveLocationStr(`📍 Indore • GPS [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
-            }
-          } catch (e) {
+          const latNum = parseFloat(lat);
+          const lngNum = parseFloat(lng);
+
+          // 1. Dynamic client-side nearest ward calculation among all 85 wards
+          let matchedWard = null;
+          if (FALLBACK_WARDS && FALLBACK_WARDS.length > 0) {
+            matchedWard = FALLBACK_WARDS.reduce((prev, curr) => {
+              const prevDist = Math.hypot(latNum - (prev.lat || 22.7196), lngNum - (prev.lng || 75.8577));
+              const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
+              return currDist < prevDist ? curr : prev;
+            }, FALLBACK_WARDS[0]);
+          }
+
+          if (matchedWard) {
+            setLiveLocationStr(`📍 ${matchedWard.name} • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
+          } else {
             setLiveLocationStr(`📍 Indore • GPS [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
           }
+
+          // 2. OpenStreetMap Nominatim reverse geocode for exact neighborhood
+          try {
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
+            if (geoRes.ok) {
+              const geoData = await geoRes.json();
+              const subArea = geoData.address?.suburb || geoData.address?.neighbourhood || geoData.address?.city_district || geoData.address?.road;
+              if (subArea) {
+                const wardName = matchedWard ? matchedWard.name : 'Indore';
+                setLiveLocationStr(`📍 ${subArea} (${wardName}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
+                return;
+              }
+            }
+          } catch (e) {}
+
+          // 3. Fallback to backend API
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${lat}&lng=${lng}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data && data.status === 'SUCCESS') {
+                const localityPart = data.address ? data.address.split(',')[0] : 'Indore Sector';
+                const cleanWardTitle = data.ward_name ? data.ward_name.split('—')[1] : `Ward ${data.ward_number}`;
+                setLiveLocationStr(`📍 ${localityPart} (Ward ${data.ward_number}: ${cleanWardTitle?.trim() || ''}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
+              }
+            }
+          } catch (e) {}
         },
         (err) => {
           console.warn("GPS lookup error:", err);
           setLiveLocationStr('📍 Indore Municipal Corporation, MP');
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setLiveLocationStr('📍 Indore Municipal Corporation, MP');

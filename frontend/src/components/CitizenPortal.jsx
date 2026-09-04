@@ -71,13 +71,13 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   }, []);
 
   // Step 2 State: Location & Geotagging
-  const [selectedWard, setSelectedWard] = useState('ward_1');
-  const [landmark, setLandmark] = useState('Rajwada Central Market, Indore');
+  const [selectedWard, setSelectedWard] = useState('');
+  const [landmark, setLandmark] = useState('');
   const [houseNo, setHouseNo] = useState('');
   const [lat, setLat] = useState('22.7196');
   const [lng, setLng] = useState('75.8577');
-  const [isGeolocating, setIsGeolocating] = useState(false);
-  const [locationStatus, setLocationStatus] = useState('Detecting GPS Live Location...');
+  const [isGeolocating, setIsGeolocating] = useState(true);
+  const [locationStatus, setLocationStatus] = useState('Detecting Live GPS Location from your device...');
 
   useEffect(() => {
     handleDetectLiveLocation();
@@ -101,58 +101,71 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
         async (position) => {
           const latitude = position.coords.latitude.toFixed(6);
           const longitude = position.coords.longitude.toFixed(6);
+          const latNum = parseFloat(latitude);
+          const lngNum = parseFloat(longitude);
           setLat(latitude);
           setLng(longitude);
           setIsGeolocating(false);
 
-          try {
-            // Call backend geotag resolver to dynamically map to the nearest of 85 Indore wards
-            const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${latitude}&lng=${longitude}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.ward_id) {
-                setSelectedWard(data.ward_id);
-              }
-              const displayLoc = data.ward_name || data.address || `Indore [Lat: ${latitude}, Lng: ${longitude}]`;
-              setLandmark(displayLoc);
-              setLocationStatus(`Live GPS Geotagged: ${displayLoc} • [Lat: ${latitude}, Lng: ${longitude}]`);
-              return;
-            }
-          } catch (e) {
-            console.warn('Backend geotag resolve error:', e);
-          }
-
-          // Client-side fallback nearest ward computation
+          // 1. Calculate nearest ward among all 85 Indore municipal wards via Euclidean distance
+          let matchedWard = null;
           if (indoreWardsList && indoreWardsList.length > 0) {
-            const latNum = parseFloat(latitude);
-            const lngNum = parseFloat(longitude);
-            const nearest = indoreWardsList.reduce((prev, curr) => {
-              const prevDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
+            matchedWard = indoreWardsList.reduce((prev, curr) => {
+              const prevDist = Math.hypot(latNum - (prev.lat || 22.7196), lngNum - (prev.lng || 75.8577));
               const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
               return currDist < prevDist ? curr : prev;
             }, indoreWardsList[0]);
-            if (nearest) {
-              setSelectedWard(nearest.id);
-              setLandmark(nearest.name);
-              setLocationStatus(`Live GPS Geotagged: ${nearest.name} • [Lat: ${latitude}, Lng: ${longitude}]`);
-              return;
-            }
           }
 
-          setLocationStatus(`Live GPS Geotagged: Indore [Lat: ${latitude}, Lng: ${longitude}]`);
+          if (matchedWard) {
+            setSelectedWard(matchedWard.id);
+            setLandmark(matchedWard.name);
+            setLocationStatus(`Live GPS: ${matchedWard.name} • [Lat: ${latitude}, Lng: ${longitude}]`);
+          }
+
+          // 2. Client-side reverse geocode to get actual neighborhood / street name
+          try {
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+            if (geoRes.ok) {
+              const geoData = await geoRes.json();
+              const subArea = geoData.address?.suburb || geoData.address?.neighbourhood || geoData.address?.city_district || geoData.address?.road || geoData.address?.county;
+              if (subArea) {
+                const fullLoc = matchedWard ? `${subArea}, ${matchedWard.name}` : subArea;
+                setLandmark(fullLoc);
+                setLocationStatus(`Live GPS: ${subArea} (${matchedWard?.name || 'Indore'}) • [Lat: ${latitude}, Lng: ${longitude}]`);
+                return;
+              }
+            }
+          } catch (geoErr) {
+            console.warn("Nominatim reverse geocode:", geoErr);
+          }
+
+          // 3. Fallback to backend spatial resolver if online
+          try {
+            const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${latitude}&lng=${longitude}`);
+            if (res.ok) {
+              const data = await res.json();
+              if (data.ward_id) setSelectedWard(data.ward_id);
+              if (data.ward_name) {
+                setLandmark(data.ward_name);
+                setLocationStatus(`Live GPS: ${data.ward_name} • [Lat: ${latitude}, Lng: ${longitude}]`);
+              }
+            }
+          } catch (e) {}
         },
         (error) => {
           console.warn('Geolocation fallback:', error);
           setIsGeolocating(false);
           const defaultWard = indoreWardsList.find(w => w.id === selectedWard) || indoreWardsList[0];
           if (defaultWard) {
+            setSelectedWard(defaultWard.id);
             setLat(defaultWard.lat?.toString() || '22.7196');
             setLng(defaultWard.lng?.toString() || '75.8577');
-            setLandmark(defaultWard.name || 'Rajwada Central, Indore');
+            setLandmark(defaultWard.name || 'Indore Municipal Corporation');
             setLocationStatus(`Location: ${defaultWard.name} • [Lat: ${defaultWard.lat}, Lng: ${defaultWard.lng}]`);
           }
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     } else {
       setIsGeolocating(false);
@@ -410,6 +423,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   };
 
   const getWardNameStr = () => {
+    if (!selectedWard) return '';
     const found = indoreWardsList.find(w => w.id === selectedWard);
     return found ? found.name : 'Indore Municipal Area';
   };
@@ -427,7 +441,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           Citizen Complaint Registration Wizard
         </h1>
         <p className="text-stone-600 text-xs sm:text-sm max-w-xl mx-auto">
-          Logged in as: <span className="font-bold text-stone-900">{userEmail}</span> • {getWardNameStr()} pinpoint geotagged.
+          Logged in as: <span className="font-bold text-stone-900">{userEmail}</span> • {selectedWard ? `${getWardNameStr()} pinpoint geotagged.` : 'Detecting your live GPS location...'}
         </p>
 
         {/* Live GPS Auto-Detection Pill */}
@@ -654,8 +668,42 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                       const newLatLng = e.target.getLatLng();
                       const newLat = newLatLng.lat.toFixed(6);
                       const newLng = newLatLng.lng.toFixed(6);
+                      const latNum = parseFloat(newLat);
+                      const lngNum = parseFloat(newLng);
                       setLat(newLat);
                       setLng(newLng);
+
+                      // Dynamic client-side nearest ward calculation
+                      let matched = null;
+                      if (indoreWardsList && indoreWardsList.length > 0) {
+                        matched = indoreWardsList.reduce((prev, curr) => {
+                          const prevDist = Math.hypot(latNum - (prev.lat || 22.7196), lngNum - (prev.lng || 75.8577));
+                          const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
+                          return currDist < prevDist ? curr : prev;
+                        }, indoreWardsList[0]);
+                      }
+                      if (matched) {
+                        setSelectedWard(matched.id);
+                        setLandmark(matched.name);
+                        setLocationStatus(`Custom Pinpoint: ${matched.name} • [Lat: ${newLat}, Lng: ${newLng}]`);
+                      }
+
+                      // Reverse geocode street / locality via OpenStreetMap Nominatim
+                      try {
+                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${newLat}&lon=${newLng}&format=json`);
+                        if (geoRes.ok) {
+                          const geoData = await geoRes.json();
+                          const subArea = geoData.address?.suburb || geoData.address?.neighbourhood || geoData.address?.city_district || geoData.address?.road;
+                          if (subArea) {
+                            const fullLoc = matched ? `${subArea}, ${matched.name}` : subArea;
+                            setLandmark(fullLoc);
+                            setLocationStatus(`Custom Pinpoint: ${subArea} (${matched?.name || 'Indore'}) • [Lat: ${newLat}, Lng: ${newLng}]`);
+                            return;
+                          }
+                        }
+                      } catch (e) {}
+
+                      // Backend fallback
                       try {
                         const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${newLat}&lng=${newLng}`);
                         if (res.ok) {
