@@ -105,20 +105,20 @@ export default function App() {
           <EmergencyHotlineView currentUser={currentUser} />
         )}
 
-        {(activeTab === 'admin-gis' || activeTab === 'admin-clusters' || activeTab === 'admin-dpr' || activeTab === 'admin-ranking') && (
+        {(activeTab === 'admin-gis' || activeTab === 'admin-heatmap') && (
+          <CityHeatmapView
+            isSuperAdmin={isSuperAdmin}
+            onOpenAuth={() => setIsAuthOpen(true)}
+          />
+        )}
+
+        {(activeTab === 'admin-clusters' || activeTab === 'admin-dpr' || activeTab === 'admin-ranking') && (
           <AdminPortal
             activeSubTab={activeTab}
             activeCountry={activeCountry}
             isSuperAdmin={isSuperAdmin}
             onOpenAuth={() => setIsAuthOpen(true)}
             onOpenDPR={(cluster) => setSelectedClusterForDPR(cluster || { id: 'DC-IND-001' })}
-          />
-        )}
-
-        {activeTab === 'admin-heatmap' && (
-          <CityHeatmapView
-            isSuperAdmin={isSuperAdmin}
-            onOpenAuth={() => setIsAuthOpen(true)}
           />
         )}
 

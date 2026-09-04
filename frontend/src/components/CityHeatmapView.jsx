@@ -5,15 +5,35 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import {
   Flame, Layers, Calendar, Filter, MapPin, AlertTriangle, ShieldCheck,
-  TrendingUp, Activity, Sparkles, Building2, Info, Compass, CheckCircle2, RefreshCw, SlidersHorizontal
+  TrendingUp, Activity, Sparkles, Building2, Info, Compass, CheckCircle2,
+  RefreshCw, SlidersHorizontal, Image, Check, Eye, User, Phone, CheckSquare
 } from 'lucide-react';
 
 const createSmallPinIcon = (color) => {
   return L.divIcon({
     className: 'custom-small-pin',
-    html: `<div style="background-color: ${color}; width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid white; box-shadow: 0 0 6px ${color}; cursor: pointer;"></div>`,
-    iconSize: [10, 10],
-    iconAnchor: [5, 5]
+    html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 8px ${color}; cursor: pointer;"></div>`,
+    iconSize: [12, 12],
+    iconAnchor: [6, 6]
+  });
+};
+
+const createComplaintPinIcon = (urgency, status) => {
+  let color = '#ea580c'; // default orange
+  if (status === 'RESOLVED') color = '#10b981'; // emerald
+  else if (urgency === 'Critical' || urgency === 'EXTREME_CRITICAL') color = '#dc2626'; // red
+  else if (status === 'APPROVED_BY_ADMIN' || status === 'IN_PROGRESS') color = '#2563eb'; // blue
+  
+  return L.divIcon({
+    className: 'custom-complaint-pin',
+    html: `
+      <div style="position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+        <div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 8px ${color};"></div>
+        <div style="position: absolute; width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid ${color}; opacity: 0.6; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+      </div>
+    `,
+    iconSize: [26, 26],
+    iconAnchor: [13, 13]
   });
 };
 
@@ -31,7 +51,7 @@ function MapResizer() {
 function MapFlyTo({ center }) {
   const map = useMap();
   useEffect(() => {
-    if (center) {
+    if (center && center[0] && center[1]) {
       map.flyTo(center, 13, { duration: 1.2 });
     }
   }, [center, map]);
@@ -47,7 +67,6 @@ function LeafletHeatLayer({ points, layerType }) {
     if (typeof window !== 'undefined') {
       window.L = L;
     }
-    // Load leaflet.heat plugin script dynamically if not present
     if (!window.L?.heatLayer) {
       const script = document.createElement('script');
       script.src = 'https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js';
@@ -63,23 +82,20 @@ function LeafletHeatLayer({ points, layerType }) {
     function renderHeatLayer() {
       if (!map || !window.L || !window.L.heatLayer) return;
 
-      // Remove existing heat layer if present
       if (heatLayerRef.current) {
         map.removeLayer(heatLayerRef.current);
       }
 
       if (points.length === 0) return;
 
-      // Format heat points [lat, lng, intensity]
       const heatData = points.map(p => {
         let intensity = 0.7;
         if (layerType === 'infra_deficit') intensity = p.urgency === 'Critical' ? 0.9 : 0.5;
         else if (layerType === 'construction') intensity = 0.8;
         else intensity = p.urgency === 'Critical' ? 1.0 : 0.6;
-        return [p.lat, p.lng, intensity];
+        return [parseFloat(p.lat) || 22.712, parseFloat(p.lng) || 75.908, intensity];
       });
 
-      // Configure smooth GIS gradient
       const gradientConfig = layerType === 'construction'
         ? { 0.2: '#0284c7', 0.5: '#eab308', 0.8: '#f97316', 1.0: '#ea580c' }
         : { 0.15: '#3b82f6', 0.35: '#10b981', 0.6: '#eab308', 0.8: '#f97316', 1.0: '#dc2626' };
@@ -110,11 +126,14 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
   const [complaints, setComplaints] = useState([]);
   const [wards, setWards] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState('august_2026');
-  const [selectedLayer, setSelectedLayer] = useState('grievance_density'); // 'grievance_density' | 'infra_deficit' | 'construction'
+  const [selectedLayer, setSelectedLayer] = useState('grievance_density');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [selectedWardFilter, setSelectedWardFilter] = useState('ALL');
-  const [mapCenter, setMapCenter] = useState([22.7000, 75.8350]);
+  const [mapCenter, setMapCenter] = useState([22.7196, 75.8577]);
   const [loading, setLoading] = useState(false);
+  const [showCitizenPins, setShowCitizenPins] = useState(true);
+  const [showHeatmap, setShowHeatmap] = useState(true);
+  const [showHotspotHubs, setShowHotspotHubs] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -130,13 +149,24 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
       const compData = await compRes.json();
       const wardData = await wardRes.json();
 
-      if (Array.isArray(compData) && compData.length > 0) setComplaints(compData);
-      else setComplaints(FALLBACK_COMPLAINTS);
+      let allComps = Array.isArray(compData) && compData.length > 0 ? compData : FALLBACK_COMPLAINTS;
+
+      // Merge local offline complaints from citizen submissions
+      try {
+        const localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+        if (Array.isArray(localSaved) && localSaved.length > 0) {
+          const ids = new Set(allComps.map(c => c.id));
+          const uniqueLocal = localSaved.filter(c => !ids.has(c.id));
+          allComps = [...uniqueLocal, ...allComps];
+        }
+      } catch (err) {}
+
+      setComplaints(allComps);
 
       if (Array.isArray(wardData) && wardData.length > 0) setWards(wardData);
       else setWards(FALLBACK_WARDS);
     } catch (e) {
-      console.warn("Backend loading or offline, using verified fallback heatmap data:", e);
+      console.warn("Backend loading or offline, using fallback heatmap data:", e);
       setComplaints(FALLBACK_COMPLAINTS);
       setWards(FALLBACK_WARDS);
     } finally {
@@ -144,7 +174,43 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
     }
   };
 
-  // Filter complaints based on selection for heat calculation
+  const handleApproveComplaint = async (complaintId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/approve/${complaintId}`, { method: 'POST' });
+      if (res.ok) {
+        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
+      }
+    } catch (e) {
+      console.warn('Approve error:', e);
+      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
+    }
+  };
+
+  const handleResolveComplaint = async (complaintId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/complaints/resolve/${complaintId}`, { method: 'POST' });
+      if (res.ok) {
+        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
+      }
+    } catch (e) {
+      console.warn('Resolve error:', e);
+      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
+    }
+  };
+
+  const handleWardFilterChange = (wardId) => {
+    setSelectedWardFilter(wardId);
+    if (wardId === 'ALL') {
+      setMapCenter([22.7196, 75.8577]);
+    } else {
+      const foundWard = wards.find(w => w.id === wardId);
+      if (foundWard && foundWard.lat && foundWard.lng) {
+        setMapCenter([foundWard.lat, foundWard.lng]);
+      }
+    }
+  };
+
+  // Filter complaints based on selection for heat & pin calculation
   const filteredHeatPoints = complaints.filter(c => {
     const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
     const matchesWard = selectedWardFilter === 'ALL' || c.ward_id === selectedWardFilter;
@@ -172,51 +238,80 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-orange-600">SIH CORE SPATIAL ENGINE</span>
+                <span className="text-xs font-extrabold uppercase tracking-wider text-orange-600">IMC MUNICIPAL GIS PLATFORM</span>
                 <span className="bg-orange-100 text-orange-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-orange-200">
-                  REAL-TIME THERMAL DENSITY
+                  LIVE SPATIAL TELEMETRY
                 </span>
               </div>
               <h2 className="text-xl font-extrabold text-stone-900 mt-0.5">
-                Indore City Spatial Heatmap & Density Telemetry Engine
+                City GIS Spatial Map, Citizen Pinpoints & Demand Heatmap
               </h2>
             </div>
           </div>
 
-          <button
-            onClick={fetchData}
-            className="bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 font-bold text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh Heat Map Data</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={fetchData}
+              className="bg-stone-100 hover:bg-stone-200 text-stone-700 border border-stone-300 font-bold text-xs px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refresh Map Telemetry</span>
+            </button>
+          </div>
         </div>
 
-        {/* TOP FILTER BAR: MONTH, CATEGORY & WARD FILTERS */}
+        {/* LAYER TOGGLES & FILTERS */}
         <div className="bg-orange-50/50 border border-orange-200/80 rounded-2xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="text-xs font-extrabold text-stone-800 uppercase tracking-wider flex items-center gap-1.5">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-orange-600" /> Heatmap Filters & Time Window Selection
+              <SlidersHorizontal className="w-3.5 h-3.5 text-orange-600" /> Map Pinpoint & Telemetry Controls
             </span>
-            <span className="text-[11px] font-bold text-orange-700 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-200">
-              {filteredHeatPoints.length} Geotag Points Active
-            </span>
+            <div className="flex flex-wrap items-center gap-2">
+              <label className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 bg-white px-2.5 py-1 rounded-lg border border-stone-200 cursor-pointer shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={showCitizenPins}
+                  onChange={(e) => setShowCitizenPins(e.target.checked)}
+                  className="rounded text-orange-600"
+                />
+                <span>📍 Citizen Pinpoints ({filteredHeatPoints.length})</span>
+              </label>
+
+              <label className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 bg-white px-2.5 py-1 rounded-lg border border-stone-200 cursor-pointer shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={showHeatmap}
+                  onChange={(e) => setShowHeatmap(e.target.checked)}
+                  className="rounded text-orange-600"
+                />
+                <span>🔥 Continuous Thermal Heatmap</span>
+              </label>
+
+              <label className="inline-flex items-center gap-1.5 text-xs font-bold text-stone-700 bg-white px-2.5 py-1 rounded-lg border border-stone-200 cursor-pointer shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={showHotspotHubs}
+                  onChange={(e) => setShowHotspotHubs(e.target.checked)}
+                  className="rounded text-orange-600"
+                />
+                <span>🏢 Ward Summary Hubs</span>
+              </label>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs font-bold">
             
             {/* Month Filter Dropdown */}
             <div className="space-y-1">
-              <label className="text-[11px] text-stone-500 font-bold uppercase">📅 Monthly Telemetry Window</label>
+              <label className="text-[11px] text-stone-500 font-bold uppercase">📅 Telemetry Window</label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer shadow-sm"
               >
-                <option value="august_2026">August 2026 (Monsoon Peak)</option>
-                <option value="july_2026">July 2026 (Early Monsoon)</option>
-                <option value="june_2026">June 2026 (Pre-Monsoon)</option>
-                <option value="all_time">All-Time Cumulative (1,200+ Requests)</option>
+                <option value="august_2026">August 2026 (Live Current)</option>
+                <option value="july_2026">July 2026 (Historical)</option>
+                <option value="all_time">All-Time Cumulative</option>
               </select>
             </div>
 
@@ -228,23 +323,23 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
                 onChange={(e) => setSelectedCategory(e.target.value)}
                 className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer shadow-sm"
               >
-                <option value="ALL">All Categories</option>
-                <option value="Sanitation & Drainage">Sanitation & Sewer</option>
-                <option value="Public Works">Roads & Infrastructure</option>
-                <option value="Electricity">Electricity & Lights</option>
+                <option value="ALL">All Categories ({complaints.length})</option>
+                <option value="Sanitation & Drainage">Sanitation & Drainage</option>
+                <option value="Public Works">Public Works & Roads</option>
+                <option value="Electricity">Electricity & Streetlights</option>
                 <option value="Water Supply">Water Supply</option>
               </select>
             </div>
 
             {/* Ward Filter Dropdown */}
             <div className="space-y-1">
-              <label className="text-[11px] text-stone-500 font-bold uppercase">📍 Ward Sector Filter</label>
+              <label className="text-[11px] text-stone-500 font-bold uppercase">📍 Ward Filter (Fly to Ward)</label>
               <select
                 value={selectedWardFilter}
-                onChange={(e) => setSelectedWardFilter(e.target.value)}
+                onChange={(e) => handleWardFilterChange(e.target.value)}
                 className="w-full bg-white border border-stone-300 rounded-xl px-3 py-2 text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer shadow-sm"
               >
-                <option value="ALL">All Wards (1–85)</option>
+                <option value="ALL">All 85 Municipal Wards</option>
                 {wards.map((w) => (
                   <option key={w.id} value={w.id}>
                     {w.name}
@@ -257,26 +352,26 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
         </div>
       </div>
 
-      {/* TOP SECTION 2: FULL-WIDTH GIS SPATIAL HEATMAP CANVAS (LEFT TO RIGHT FULL WIDTH SCREEN) */}
+      {/* TOP SECTION 2: FULL-WIDTH GIS SPATIAL CANVAS */}
       <div className="bg-white border border-stone-200 rounded-3xl p-5 space-y-4 shadow-sm">
-        <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-stone-100 gap-2">
           <div className="flex items-center space-x-2">
             <Compass className="w-5 h-5 text-orange-600" />
-            <h3 className="text-base font-extrabold text-stone-900">Indore Municipal GIS Spatial Heatmap Canvas (Full Width)</h3>
+            <h3 className="text-base font-extrabold text-stone-900">Indore Municipal Corporation Live GIS Map Canvas</h3>
           </div>
           
           <div className="flex items-center space-x-2 text-xs font-bold">
             <span className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200">
-              🟢 Continuous Thermal Heat Render Active
+              🟢 {filteredHeatPoints.length} Citizen Grievance Pinpoints Plotted
             </span>
           </div>
         </div>
 
         {/* Full Width Map Container */}
-        <div className="w-full h-[360px] sm:h-[480px] lg:h-[580px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
+        <div className="w-full h-[380px] sm:h-[500px] lg:h-[620px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
           <MapContainer
             center={mapCenter}
-            zoom={12}
+            zoom={13}
             scrollWheelZoom={true}
             className="w-full h-full"
           >
@@ -290,13 +385,99 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
             />
 
             {/* REAL SMOOTH CONTINUOUS LEAFLET HEATMAP LAYER */}
-            <LeafletHeatLayer
-              points={filteredHeatPoints}
-              layerType={selectedLayer}
-            />
+            {showHeatmap && (
+              <LeafletHeatLayer
+                points={filteredHeatPoints}
+                layerType={selectedLayer}
+              />
+            )}
+
+            {/* REAL CITIZEN COMPLAINTS LIVE PINPOINTS */}
+            {showCitizenPins && filteredHeatPoints.map((c) => {
+              const latNum = parseFloat(c.lat) || 22.7120;
+              const lngNum = parseFloat(c.lng) || 75.9080;
+              return (
+                <Marker
+                  key={c.id}
+                  position={[latNum, lngNum]}
+                  icon={createComplaintPinIcon(c.urgency, c.current_status)}
+                >
+                  <Popup maxWidth={320} minWidth={260}>
+                    <div className="p-2 space-y-2 text-xs font-sans">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-stone-200">
+                        <span className="font-mono font-extrabold text-orange-600 text-[11px]">{c.id}</span>
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-[9px] ${
+                          c.current_status === 'RESOLVED' ? 'bg-emerald-100 text-emerald-800' :
+                          c.current_status === 'APPROVED_BY_ADMIN' ? 'bg-blue-100 text-blue-800' :
+                          'bg-amber-100 text-amber-800'
+                        }`}>
+                          {c.current_status?.replace(/_/g, ' ') || 'PENDING REVIEW'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-1.5 font-extrabold text-stone-900 text-xs">
+                          <User className="w-3 h-3 text-stone-500" />
+                          <span>{c.citizen_name || 'Indore Citizen'}</span>
+                          {c.user_email && <span className="text-[10px] text-stone-500 font-normal">({c.user_email})</span>}
+                        </div>
+                        <p className="text-stone-600 text-[11px] font-semibold flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-orange-600 shrink-0" />
+                          <span>{c.locality || `Ward ${c.ward_id}`}</span>
+                        </p>
+                        <p className="text-[10px] text-stone-400 font-mono">
+                          Pinpoint GPS: [{latNum.toFixed(5)}, {lngNum.toFixed(5)}]
+                        </p>
+                      </div>
+
+                      <div className="bg-stone-50 p-2 rounded-xl border border-stone-200 space-y-1 text-[11px]">
+                        <div className="flex justify-between items-center">
+                          <span className="font-bold text-stone-800">{c.category}</span>
+                          <span className={`font-bold px-1.5 py-0.5 text-[9px] rounded ${
+                            c.urgency === 'Critical' ? 'bg-rose-100 text-rose-700' : 'bg-stone-200 text-stone-700'
+                          }`}>
+                            {c.urgency || 'Standard'}
+                          </span>
+                        </div>
+                        <p className="text-stone-600 italic text-[11px] line-clamp-2">
+                          "{c.transcript || 'Grievance recorded with geotagging'}"
+                        </p>
+                      </div>
+
+                      {c.photo_url && (
+                        <div className="rounded-xl overflow-hidden border border-stone-200 h-24 w-full bg-stone-100 shadow-sm">
+                          <img src={c.photo_url} alt="Evidence" className="w-full h-full object-cover" />
+                        </div>
+                      )}
+
+                      <div className="pt-1 flex gap-1.5 text-[10px]">
+                        {c.current_status !== 'APPROVED_BY_ADMIN' && c.current_status !== 'RESOLVED' && (
+                          <button
+                            type="button"
+                            onClick={() => handleApproveComplaint(c.id)}
+                            className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-1.5 px-2 rounded-lg text-center cursor-pointer transition-all"
+                          >
+                            ✓ Approve
+                          </button>
+                        )}
+                        {c.current_status !== 'RESOLVED' && (
+                          <button
+                            type="button"
+                            onClick={() => handleResolveComplaint(c.id)}
+                            className="flex-1 bg-stone-900 hover:bg-stone-800 text-white font-bold py-1.5 px-2 rounded-lg text-center cursor-pointer transition-all"
+                          >
+                            ✓ Mark Resolved
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            })}
 
             {/* Hotspot Markers for Interactive Popup Info */}
-            {wardHotspots.map((wh) => (
+            {showHotspotHubs && wardHotspots.map((wh) => (
               <Marker
                 key={wh.wardId}
                 position={[wh.lat, wh.lng]}
@@ -317,7 +498,7 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
                     <div className="bg-orange-50 p-2 rounded-xl text-[10px] space-y-1 border border-orange-200">
                       <div className="flex justify-between font-bold">
                         <span>Grievance Density:</span>
-                        <span className="text-rose-600">{wh.count} Voice Requests</span>
+                        <span className="text-rose-600">{wh.count} Complaints</span>
                       </div>
                       <div className="flex justify-between font-bold">
                         <span>PPI Priority Score:</span>
@@ -354,7 +535,7 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
                 <span className="w-3.5 h-3.5 rounded-full bg-rose-600 shrink-0 animate-ping" />
                 <div>
                   <p className="font-extrabold text-xs">Citizen Grievance Heatmap</p>
-                  <p className="text-[10px] text-rose-700 font-semibold">Voice Request Spatial Density</p>
+                  <p className="text-[10px] text-rose-700 font-semibold">Voice & Photo Spatial Density</p>
                 </div>
               </div>
               <span className="text-xs bg-rose-200 text-rose-900 px-2 py-0.5 rounded font-black shrink-0">ACTIVE</span>
@@ -379,14 +560,14 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
             <button
               onClick={() => setSelectedLayer('construction')}
               className={`p-4 rounded-2xl border transition-all cursor-pointer text-left flex items-center justify-between ${
-                selectedLayer === 'construction' ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/20 text-amber-900' : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                selectedLayer === 'construction' ? 'bg-sky-50 border-sky-400 ring-2 ring-sky-400/20 text-sky-900' : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
               }`}
             >
               <div className="flex items-center space-x-3">
-                <span className="w-3.5 h-3.5 rounded-full bg-amber-400 shrink-0" />
+                <span className="w-3.5 h-3.5 rounded-full bg-sky-500 shrink-0" />
                 <div>
-                  <p className="font-extrabold text-xs">Work In Progress & Tenders</p>
-                  <p className="text-[10px] text-amber-700 font-semibold">Municipal Construction Zones</p>
+                  <p className="font-extrabold text-xs">Active Sanctioned Works Heatmap</p>
+                  <p className="text-[10px] text-sky-700 font-semibold">Ongoing DPR & Tenders</p>
                 </div>
               </div>
               <span className="text-[10px] text-stone-400 font-bold shrink-0">LAYER 3</span>
@@ -394,59 +575,43 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
           </div>
         </div>
 
-        {/* CARD 2: HEAT THERMAL GRADIENT LENGTH & SCALE */}
-        <div className="bg-orange-50/60 border border-orange-200/80 rounded-3xl p-5 shadow-sm space-y-3 text-stone-900">
-          <div className="flex items-center justify-between text-xs font-extrabold">
-            <span className="flex items-center gap-1.5">
-              <Activity className="w-4 h-4 text-orange-600" /> Thermal Gradient Scale & Density Length
-            </span>
-            <span className="text-[11px] text-orange-800 bg-orange-100 px-2.5 py-0.5 rounded-full border border-orange-200">
-              GIS Density Calibrated
-            </span>
-          </div>
-
-          {/* Smooth Continuous Gradient Bar */}
-          <div className="w-full h-4 rounded-full bg-gradient-to-r from-blue-500 via-emerald-400 via-amber-400 via-orange-500 to-rose-600 shadow-inner" />
-          
-          <div className="grid grid-cols-4 text-center text-[11px] font-extrabold text-stone-700 pt-1">
-            <div className="text-left"><span className="text-blue-600">🔵 Low Density</span> (1–10 Complaints)</div>
-            <div><span className="text-emerald-600">🟢 Moderate Zone</span> (10–50 Complaints)</div>
-            <div><span className="text-amber-600">🟡 High Density</span> (50–200 Complaints)</div>
-            <div className="text-right"><span className="text-rose-600">🔴 Extreme Hotspot</span> (500+ Requests)</div>
-          </div>
-        </div>
-
-        {/* CARD 3: TOP WARD CRISIS & WATER/SANITATION HOTSPOTS GRID */}
+        {/* CARD 2: TOP 5 SEVERE MUNICIPAL HOTSPOTS RANKING */}
         <div className="bg-white border border-stone-200 rounded-3xl p-6 space-y-4 shadow-sm">
-          <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-            <h3 className="text-base font-extrabold text-stone-900 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-rose-600" /> Top Priority Ward Hotspots & Sector Density Ledger
-            </h3>
-            <span className="bg-rose-100 text-rose-800 text-xs font-extrabold px-3 py-1 rounded-full border border-rose-200">
-              {wardHotspots.length} Priority Sectors Listed
-            </span>
+          <div className="flex items-center justify-between pb-2 border-b border-stone-100">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="w-4.5 h-4.5 text-rose-600" />
+              <h3 className="text-sm font-extrabold text-stone-900">
+                Top 5 Severe Municipal Hotspots (Ranked by Grievance Density & PPI Priority)
+              </h3>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             {wardHotspots.map((wh) => (
               <div
                 key={wh.wardId}
                 onClick={() => setMapCenter([wh.lat, wh.lng])}
-                className="p-5 rounded-2xl border border-stone-200 bg-stone-50 hover:bg-orange-50/60 hover:border-orange-300 transition-all cursor-pointer space-y-3 shadow-xs"
+                className="p-4 rounded-2xl border border-stone-200 bg-stone-50/50 hover:bg-white hover:border-orange-300 hover:shadow-md transition-all cursor-pointer space-y-2 group"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] font-black text-orange-600 uppercase tracking-wider">RANK #{wh.rank}</span>
-                    <h4 className="text-sm font-extrabold text-stone-900 leading-snug">{wh.name}</h4>
-                  </div>
-                  <span className="bg-rose-600 text-white text-xs font-black px-2.5 py-1 rounded-xl shrink-0 shadow-xs">
-                    {wh.count} Requests
+                <div className="flex items-center justify-between">
+                  <span className="w-6 h-6 rounded-full bg-stone-900 text-white font-extrabold text-xs flex items-center justify-center">
+                    #{wh.rank}
+                  </span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-100 text-rose-700">
+                    PPI: {wh.ppi}
                   </span>
                 </div>
 
-                <div className="bg-white p-3 rounded-xl border border-stone-200 space-y-1">
-                  <p className="text-stone-600 text-[11px]">Primary Issue: <span className="font-bold text-stone-900">{wh.category}</span></p>
-                  <p className="text-orange-700 font-extrabold text-[11px]">PPI Priority Index: {wh.ppi} / 100</p>
+                <div>
+                  <p className="font-extrabold text-xs text-stone-900 group-hover:text-orange-600 transition-colors">
+                    {wh.name}
+                  </p>
+                  <p className="text-[11px] text-stone-500 line-clamp-1">{wh.category}</p>
+                </div>
+
+                <div className="pt-1 border-t border-stone-200/80 flex items-center justify-between text-[10px] font-bold">
+                  <span className="text-rose-600">{wh.count} Reports</span>
+                  <span className="text-stone-400 group-hover:text-stone-700">Fly to Pin →</span>
                 </div>
               </div>
             ))}

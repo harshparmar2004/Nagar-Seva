@@ -1,7 +1,42 @@
 import { API_BASE_URL } from '../config';
 import { FALLBACK_WARDS } from '../data/fallbackData';
 import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { Mic, MicOff, Send, MapPin, Sparkles, CheckCircle, FileText, ThumbsUp, Camera, ShieldCheck, UserCheck, Smartphone, Key, AlertTriangle, Layers, ArrowRight, ArrowLeft, Check, MessageSquare, Download, CheckCircle2, Volume2, Navigation, Compass, Crosshair, Eye, Shield, Image } from 'lucide-react';
+
+function CitizenMapFlyTo({ center }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1] && !isNaN(center[0]) && !isNaN(center[1])) {
+      map.flyTo(center, 15, { duration: 1.2 });
+    }
+  }, [center, map]);
+  return null;
+}
+
+function CitizenMapResizer() {
+  const map = useMap();
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [map]);
+  return null;
+}
+
+const citizenLivePinIcon = L.divIcon({
+  className: 'citizen-live-pin',
+  html: `
+    <div style="position: relative; display: flex; align-items: center; justify-content: center; cursor: grab;">
+      <div style="background-color: #ea580c; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px #ea580c;"></div>
+      <div style="position: absolute; width: 32px; height: 32px; border-radius: 50%; border: 2px solid #ea580c; opacity: 0.6; animation: ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+    </div>
+  `,
+  iconSize: [32, 32],
+  iconAnchor: [16, 16]
+});
 
 export default function CitizenPortal({ activeSubTab, onComplaintCreated, currentUser }) {
   const [step, setStep] = useState(1); // 1: Identity, 2: Location, 3: Evidence, 4: Preview & Verify, 5: Receipt Token
@@ -578,18 +613,84 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             </select>
           </div>
 
+          {/* INTERACTIVE PINPOINT LOCATION MAP */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-stone-800 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-orange-600" /> 
+                <span>Live GPS Map Pinpoint (लाइव लोकेशन मैप)</span>
+              </label>
+              <button
+                type="button"
+                onClick={handleDetectLiveLocation}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-1.5 px-3 rounded-xl shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                <Crosshair className={`w-3.5 h-3.5 ${isGeolocating ? 'animate-spin' : ''}`} />
+                <span>{isGeolocating ? 'Detecting...' : 'Detect Live Phone GPS'}</span>
+              </button>
+            </div>
+
+            <div className="w-full h-56 sm:h-72 rounded-2xl overflow-hidden border-2 border-stone-200 relative shadow-inner">
+              <MapContainer
+                center={[parseFloat(lat) || 22.7196, parseFloat(lng) || 75.8577]}
+                zoom={15}
+                scrollWheelZoom={true}
+                className="w-full h-full"
+              >
+                <CitizenMapResizer />
+                <CitizenMapFlyTo center={[parseFloat(lat) || 22.7196, parseFloat(lng) || 75.8577]} />
+
+                <TileLayer
+                  attribution='&copy; Google Maps'
+                  url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
+                  maxZoom={20}
+                />
+
+                <Marker
+                  position={[parseFloat(lat) || 22.7196, parseFloat(lng) || 75.8577]}
+                  draggable={true}
+                  eventHandlers={{
+                    dragend: async (e) => {
+                      const newLatLng = e.target.getLatLng();
+                      const newLat = newLatLng.lat.toFixed(6);
+                      const newLng = newLatLng.lng.toFixed(6);
+                      setLat(newLat);
+                      setLng(newLng);
+                      try {
+                        const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${newLat}&lng=${newLng}`);
+                        if (res.ok) {
+                          const data = await res.json();
+                          if (data.ward_id) setSelectedWard(data.ward_id);
+                          if (data.ward_name) setLandmark(data.ward_name);
+                          setLocationStatus(`Custom Pinpoint: ${data.ward_name || data.address} • [Lat: ${newLat}, Lng: ${newLng}]`);
+                        }
+                      } catch (err) {}
+                    }
+                  }}
+                  icon={citizenLivePinIcon}
+                >
+                  <Popup>
+                    <div className="p-1 text-xs space-y-1">
+                      <p className="font-extrabold text-stone-900">📍 Complaint Pinpoint</p>
+                      <p className="text-stone-600 text-[11px]">{landmark || getWardNameStr()}</p>
+                      <p className="text-[10px] text-stone-400 font-mono">[{lat}, {lng}]</p>
+                    </div>
+                  </Popup>
+                </Marker>
+              </MapContainer>
+            </div>
+            <p className="text-[11px] text-stone-500 font-medium flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+              <span>💡 Drag the orange pin or click "Detect Live Phone GPS" to place your complaint accurately.</span>
+              <span className="font-mono text-[10px] text-stone-500 bg-stone-100 px-2 py-0.5 rounded">Lat: {lat}, Lng: {lng}</span>
+            </p>
+          </div>
+
           {/* Auto-Detected GPS Location & Coordinate Tuning */}
           <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 sm:p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <span className="text-xs font-extrabold text-emerald-800 flex items-center gap-1.5">
                 <CheckCircle className="w-4 h-4 text-emerald-600" /> GPS GEOTAG VERIFIED
               </span>
-              <button
-                onClick={handleDetectLiveLocation}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-2 px-3.5 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-              >
-                <Crosshair className="w-3.5 h-3.5" /> Use Live Phone GPS
-              </button>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
