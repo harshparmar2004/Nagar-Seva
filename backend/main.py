@@ -4,8 +4,9 @@ import random
 import math
 import uuid
 import urllib.request
+import base64
 from typing import List, Optional, Dict, Any
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form, status, Query
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import SQLModel, Session, create_engine, select, func
@@ -536,37 +537,72 @@ def track_complaint(complaint_id: str):
 @app.post("/api/complaints")
 @app.post("/api/submit-complaint")
 async def create_complaint(
+    request: Request,
     text: Optional[str] = Form(None),
     language: Optional[str] = Form("Hindi"),
-    lat: Optional[float] = Form(22.7120),
-    lng: Optional[float] = Form(75.9080),
+    lat: Optional[str] = Form("22.7120"),
+    lng: Optional[str] = Form("75.9080"),
     user_email: Optional[str] = Form("citizen.indore@gmail.com"),
     citizen_name: Optional[str] = Form("Indore Citizen"),
     citizen_phone: Optional[str] = Form("+91 9826012345"),
     citizen_id_hash: Optional[str] = Form("VOTER-IND-4821"),
     landmark: Optional[str] = Form("Mayur Nagar, Musakhedi Sector"),
     photo_file: Optional[UploadFile] = File(None),
-    file: Optional[UploadFile] = File(None)
+    file: Optional[UploadFile] = File(None),
+    photo_base64: Optional[str] = Form(None)
 ):
+    base_url = str(request.base_url).rstrip('/')
     photo_url = None
     target_upload_file = photo_file or file
+
     if target_upload_file and target_upload_file.filename:
-        file_ext = os.path.splitext(target_upload_file.filename)[1] or ".jpg"
-        file_name = f"evidence_{uuid.uuid4().hex[:10]}{file_ext}"
-        file_path = os.path.join(uploads_dir, file_name)
-        
-        file_bytes = await target_upload_file.read()
-        with open(file_path, "wb") as f:
-            f.write(file_bytes)
+        try:
+            file_ext = os.path.splitext(target_upload_file.filename)[1] or ".jpg"
+            file_name = f"evidence_{uuid.uuid4().hex[:10]}{file_ext}"
+            file_path = os.path.join(uploads_dir, file_name)
             
-        photo_url = f"http://localhost:8000/static/uploads/{file_name}"
-    else:
+            file_bytes = await target_upload_file.read()
+            with open(file_path, "wb") as f:
+                f.write(file_bytes)
+                
+            photo_url = f"{base_url}/static/uploads/{file_name}"
+        except Exception as upload_err:
+            print(f"Error saving uploaded photo file: {upload_err}")
+
+    if not photo_url and photo_base64 and photo_base64.startswith("data:image"):
+        try:
+            header, encoded = photo_base64.split(",", 1)
+            file_ext = ".jpg"
+            if "png" in header:
+                file_ext = ".png"
+            file_name = f"evidence_{uuid.uuid4().hex[:10]}{file_ext}"
+            file_path = os.path.join(uploads_dir, file_name)
+            with open(file_path, "wb") as f:
+                f.write(base64.b64decode(encoded))
+            photo_url = f"{base_url}/static/uploads/{file_name}"
+        except Exception as b64_err:
+            print(f"Error decoding base64 photo: {b64_err}")
+            photo_url = photo_base64
+
+    if not photo_url:
         photo_url = "https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80"
         
     ai_result = process_voice_or_text_with_gemini(text_content=text, audio_bytes=None)
     
-    target_lat = lat if lat is not None else 22.7120
-    target_lng = lng if lng is not None else 75.9080
+    target_lat = 22.7120
+    try:
+        if lat is not None:
+            target_lat = float(lat)
+    except (ValueError, TypeError):
+        target_lat = 22.7120
+
+    target_lng = 75.9080
+    try:
+        if lng is not None:
+            target_lng = float(lng)
+    except (ValueError, TypeError):
+        target_lng = 75.9080
+
     spatial_info = resolve_indore_spatial_ward(target_lat, target_lng)
     
     ai_triage = analyze_complaint_text_with_ai(text or "Grievance registered")
