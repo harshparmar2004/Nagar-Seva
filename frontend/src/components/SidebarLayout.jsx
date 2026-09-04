@@ -46,18 +46,26 @@ export default function SidebarLayout({
             setLiveLocationStr(`📍 Indore • GPS [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
           }
 
-          // 2. OpenStreetMap Nominatim reverse geocode for exact neighborhood with zoom=15
+          // 2. OpenStreetMap Nominatim universal reverse geocode for exact neighborhood & city
           try {
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=15`);
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=16`);
             if (geoRes.ok) {
               const geoData = await geoRes.json();
               const addr = geoData.address || {};
-              const placeName = geoData.name || addr.square || addr.suburb || addr.neighbourhood || addr.residential;
-              if (placeName && !placeName.toLowerCase().includes('indore city') && !placeName.toLowerCase().includes('tahsil')) {
-                const cleanWardTitle = matchedWard ? matchedWard.name : 'Indore';
-                setLiveLocationStr(`📍 ${placeName} (${cleanWardTitle}) • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
-                return;
+              let place = geoData.name || addr.square || addr.suburb || addr.neighbourhood || addr.residential || addr.village;
+              const city = addr.city || addr.town || addr.county || 'Indore';
+              if (!place || place.toLowerCase().includes('indore city') || place.toLowerCase().includes('tahsil')) {
+                try {
+                  const r15 = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=15`);
+                  if (r15.ok) {
+                    const d15 = await r15.json();
+                    place = d15.name || d15.address?.square || d15.address?.suburb || d15.address?.neighbourhood || place;
+                  }
+                } catch (e) {}
               }
+              const displayPlace = (place && !place.toLowerCase().includes('tahsil')) ? place : city;
+              setLiveLocationStr(`📍 ${displayPlace}, ${city} • [${lat.toFixed(4)}, ${lng.toFixed(4)}]`);
+              return;
             }
           } catch (e) {}
 

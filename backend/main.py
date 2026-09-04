@@ -171,45 +171,81 @@ def read_root():
 @app.get("/api/geotag/resolve")
 def resolve_live_gps_geotag(lat: float = Query(...), lng: float = Query(...), ward_id: Optional[str] = Query(None)):
     """
-    Endpoint called dynamically when citizen enables GPS. Calculates exact spatial ward, zone, and address.
+    Universal real-time live GPS reverse geocoder for Indore and across India.
     """
-    spatial_info = resolve_indore_spatial_ward(lat, lng, preferred_ward_id=ward_id)
+    place_name = None
+    road_name = None
+    city_name = "Indore"
+    state_name = "Madhya Pradesh"
+    full_display = None
     
-    clean_short_name = spatial_info['ward_name'].split('—')[1].split('&')[0].strip() if '—' in spatial_info['ward_name'] else spatial_info['ward_name']
-    
-    # Attempt OpenStreetMap Nominatim Reverse Geocoding with zoom=15
-    address_str = f"{spatial_info['ward_name']}, Indore [Lat: {lat:.4f}, Lng: {lng:.4f}]"
     try:
-        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json&zoom=15"
+        url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json&zoom=16"
         req = urllib.request.Request(url, headers={'User-Agent': 'NagarSevaDPI/2.0'})
         with urllib.request.urlopen(req, timeout=3) as resp:
             data = json.loads(resp.read().decode())
             addr = data.get('address', {})
-            specific = data.get('name') or addr.get('square') or addr.get('suburb') or addr.get('neighbourhood') or addr.get('residential')
-            road = addr.get('road')
-            parts = []
-            if specific and 'indore city' not in specific.lower() and 'tahsil' not in specific.lower():
-                parts.append(specific)
-            if road and road not in parts:
-                parts.append(road)
-            parts.append(spatial_info['ward_name'])
-            address_str = ", ".join(parts)
-    except Exception as e:
-        address_str = f"{clean_short_name}, Indore [Lat: {lat:.4f}, Lng: {lng:.4f}]"
+            place_name = data.get('name') or addr.get('square') or addr.get('suburb') or addr.get('neighbourhood') or addr.get('residential') or addr.get('village')
+            road_name = addr.get('road')
+            city_name = addr.get('city') or addr.get('town') or addr.get('county') or addr.get('state_district') or 'Indore'
+            state_name = addr.get('state') or 'Madhya Pradesh'
+            full_display = data.get('display_name')
+            
+        if not place_name or 'indore city' in place_name.lower() or 'tahsil' in place_name.lower():
+            try:
+                url15 = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lng}&format=json&zoom=15"
+                req15 = urllib.request.Request(url15, headers={'User-Agent': 'NagarSevaDPI/2.0'})
+                with urllib.request.urlopen(req15, timeout=3) as resp15:
+                    d15 = json.loads(resp15.read().decode())
+                    a15 = d15.get('address', {})
+                    place_name = d15.get('name') or a15.get('square') or a15.get('suburb') or a15.get('neighbourhood') or place_name
+            except Exception:
+                pass
+    except Exception:
+        pass
+
+    locality = place_name if place_name and 'tahsil' not in place_name.lower() else (road_name or city_name)
+    
+    # Check spatial ward match
+    spatial_info = resolve_indore_spatial_ward(lat, lng, preferred_ward_id=ward_id)
+    is_indore = (22.5 <= lat <= 23.0 and 75.6 <= lng <= 76.1)
+    
+    if is_indore and spatial_info:
+        resolved_ward_id = spatial_info["ward_id"]
+        resolved_ward_name = spatial_info["ward_name"]
+        resolved_zone = spatial_info["zone_name"]
+    else:
+        resolved_ward_id = f"ward_{locality.lower().replace(' ', '_')}"
+        resolved_ward_name = f"{locality} Municipal Ward, {city_name}"
+        resolved_zone = f"{city_name} Central Zone"
+
+    parts = []
+    if locality:
+        parts.append(locality)
+    if road_name and road_name not in parts:
+        parts.append(road_name)
+    if resolved_ward_name and resolved_ward_name not in parts:
+        parts.append(resolved_ward_name)
+    if city_name and city_name not in parts:
+        parts.append(city_name)
+    address_str = ", ".join(parts) if parts else (full_display or f"{city_name} [Lat: {lat:.4f}, Lng: {lng:.4f}]")
 
     return {
         "status": "SUCCESS",
         "lat": lat,
         "lng": lng,
+        "locality": locality,
+        "city": city_name,
+        "state": state_name,
         "address": address_str,
-        "ward_id": spatial_info["ward_id"],
-        "ward_number": spatial_info["ward_number"],
-        "ward_name": spatial_info["ward_name"],
-        "zone_id": spatial_info["zone_id"],
-        "zone_name": spatial_info["zone_name"],
-        "zonal_office": spatial_info["zonal_office"],
-        "nodal_officer": spatial_info["nodal_officer"],
-        "badge_str": f"📍 Ward {spatial_info['ward_number']} ({clean_short_name}) • {lat:.2f}, {lng:.2f}"
+        "ward_id": resolved_ward_id,
+        "ward_number": spatial_info.get("ward_number", 1),
+        "ward_name": resolved_ward_name,
+        "zone_id": spatial_info.get("zone_id", "ZONE-1"),
+        "zone_name": resolved_zone,
+        "zonal_office": spatial_info.get("zonal_office", f"{city_name} Municipal Corporation"),
+        "nodal_officer": spatial_info.get("nodal_officer", "Municipal Nodal Officer"),
+        "badge_str": f"📍 {locality}, {city_name} • [{lat:.4f}, {lng:.4f}]"
     }
 
 @app.get("/api/wards")

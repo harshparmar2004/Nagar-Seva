@@ -70,8 +70,12 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
       .catch(err => console.warn('Using preloaded wards:', err));
   }, []);
 
-  // Step 2 State: Location & Geotagging
-  const [selectedWard, setSelectedWard] = useState('');
+  // Step 2 State: Universal Dynamic Location & Geotagging
+  const [selectedWard, setSelectedWard] = useState('ward_live');
+  const [wardTitle, setWardTitle] = useState('');
+  const [locality, setLocality] = useState('');
+  const [cityName, setCityName] = useState('Indore');
+  const [stateName, setStateName] = useState('Madhya Pradesh');
   const [landmark, setLandmark] = useState('');
   const [houseNo, setHouseNo] = useState('');
   const [lat, setLat] = useState('22.7196');
@@ -83,19 +87,9 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
     handleDetectLiveLocation();
   }, [indoreWardsList]);
 
-  const handleWardSelectChange = (wardId) => {
-    setSelectedWard(wardId);
-    const wardObj = indoreWardsList.find(w => w.id === wardId);
-    if (wardObj) {
-      setLat(wardObj.lat.toString());
-      setLng(wardObj.lng.toString());
-      setLandmark(wardObj.name);
-      setLocationStatus(`Selected Location: ${wardObj.name} • [Lat: ${wardObj.lat}, Lng: ${wardObj.lng}]`);
-    }
-  };
-
   const handleDetectLiveLocation = () => {
     setIsGeolocating(true);
+    setLocationStatus('Querying live GPS satellites & device telemetry...');
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         async (position) => {
@@ -107,75 +101,79 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           setLng(longitude);
           setIsGeolocating(false);
 
-          // 1. Calculate nearest ward among all 85 Indore municipal wards via Euclidean distance
-          let matchedWard = null;
-          if (indoreWardsList && indoreWardsList.length > 0) {
-            matchedWard = indoreWardsList.reduce((prev, curr) => {
-              const prevDist = Math.hypot(latNum - (prev.lat || 22.7196), lngNum - (prev.lng || 75.8577));
-              const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
-              return currDist < prevDist ? curr : prev;
-            }, indoreWardsList[0]);
-          }
-
-          if (matchedWard) {
-            setSelectedWard(matchedWard.id);
-            setLandmark(matchedWard.name);
-            setLocationStatus(`Live GPS: ${matchedWard.name} • [Lat: ${latitude}, Lng: ${longitude}]`);
-          }
-
-          // 2. Client-side reverse geocode to get actual neighborhood / street name
+          // Universal Dynamic Reverse Geocoding across ALL of Indore & India
           try {
-            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=15`);
+            const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=16`);
             if (geoRes.ok) {
               const geoData = await geoRes.json();
               const addr = geoData.address || {};
-              const specificPlace = geoData.name || addr.square || addr.suburb || addr.neighbourhood || addr.residential;
+              let specificPlace = geoData.name || addr.square || addr.suburb || addr.neighbourhood || addr.residential || addr.village;
               const road = addr.road;
+              const city = addr.city || addr.town || addr.county || addr.state_district || 'Indore';
+              const state = addr.state || 'Madhya Pradesh';
 
+              if (!specificPlace || specificPlace.toLowerCase().includes('indore city') || specificPlace.toLowerCase().includes('tahsil')) {
+                try {
+                  const r15 = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&zoom=15`);
+                  if (r15.ok) {
+                    const d15 = await r15.json();
+                    const a15 = d15.address || {};
+                    specificPlace = d15.name || a15.square || a15.suburb || a15.neighbourhood || specificPlace;
+                  }
+                } catch (e) {}
+              }
+
+              const resolvedLocality = (specificPlace && !specificPlace.toLowerCase().includes('tahsil')) ? specificPlace : (road || city);
+              setLocality(resolvedLocality);
+              setCityName(city);
+              setStateName(state);
+
+              // Auto-resolve municipal division
+              let divisionName = `${resolvedLocality} Municipal Sector, ${city}`;
+              let wardKey = `ward_${resolvedLocality.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+              if (indoreWardsList && indoreWardsList.length > 0) {
+                const nearestIndoreWard = indoreWardsList.reduce((prev, curr) => {
+                  const prevDist = Math.hypot(latNum - (prev.lat || 22.7196), lngNum - (prev.lng || 75.8577));
+                  const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
+                  return currDist < prevDist ? curr : prev;
+                }, indoreWardsList[0]);
+
+                if (nearestIndoreWard && Math.hypot(latNum - nearestIndoreWard.lat, lngNum - nearestIndoreWard.lng) < 0.04) {
+                  divisionName = nearestIndoreWard.name;
+                  wardKey = nearestIndoreWard.id;
+                }
+              }
+
+              setSelectedWard(wardKey);
+              setWardTitle(divisionName);
+
+              // Build clean full address / landmark
               let parts = [];
-              if (specificPlace && !specificPlace.toLowerCase().includes('indore city') && !specificPlace.toLowerCase().includes('tahsil')) {
-                parts.push(specificPlace);
-              }
-              if (road && !parts.includes(road)) {
-                parts.push(road);
-              }
-              if (matchedWard) {
-                parts.push(matchedWard.name);
-              }
-              const fullLoc = parts.length > 0 ? parts.join(', ') : (matchedWard ? matchedWard.name : 'Indore Municipal Corporation');
+              if (resolvedLocality) parts.push(resolvedLocality);
+              if (road && !parts.includes(road)) parts.push(road);
+              if (divisionName && !parts.includes(divisionName)) parts.push(divisionName);
+              if (city && !parts.includes(city)) parts.push(city);
+              const fullLoc = parts.length > 0 ? parts.join(', ') : `${city} Area`;
               setLandmark(fullLoc);
-              const badgeLabel = parts[0] || (matchedWard ? matchedWard.name.split('—')[1]?.trim() : 'Indore');
-              setLocationStatus(`Live GPS Geotagged: ${badgeLabel} • [Lat: ${latitude}, Lng: ${longitude}]`);
+
+              setLocationStatus(`Live GPS: ${resolvedLocality}, ${city} • [Lat: ${latitude}, Lng: ${longitude}]`);
               return;
             }
           } catch (geoErr) {
-            console.warn("Nominatim reverse geocode:", geoErr);
+            console.warn("Universal reverse geocode:", geoErr);
           }
 
-          // 3. Fallback to backend spatial resolver if online
-          try {
-            const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${latitude}&lng=${longitude}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (data.ward_id) setSelectedWard(data.ward_id);
-              if (data.ward_name) {
-                setLandmark(data.ward_name);
-                setLocationStatus(`Live GPS: ${data.ward_name} • [Lat: ${latitude}, Lng: ${longitude}]`);
-              }
-            }
-          } catch (e) {}
+          setLocality('Indore Municipal Area');
+          setWardTitle('Indore Municipal Ward');
+          setSelectedWard('ward_live');
+          setLandmark(`Indore Area • [Lat: ${latitude}, Lng: ${longitude}]`);
+          setLocationStatus(`Live GPS Tracked: [Lat: ${latitude}, Lng: ${longitude}]`);
         },
         (error) => {
           console.warn('Geolocation fallback:', error);
           setIsGeolocating(false);
-          const defaultWard = indoreWardsList.find(w => w.id === selectedWard) || indoreWardsList[0];
-          if (defaultWard) {
-            setSelectedWard(defaultWard.id);
-            setLat(defaultWard.lat?.toString() || '22.7196');
-            setLng(defaultWard.lng?.toString() || '75.8577');
-            setLandmark(defaultWard.name || 'Indore Municipal Corporation');
-            setLocationStatus(`Location: ${defaultWard.name} • [Lat: ${defaultWard.lat}, Lng: ${defaultWard.lng}]`);
-          }
+          setLocationStatus('GPS permission needed for live tracking');
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
@@ -435,9 +433,9 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   };
 
   const getWardNameStr = () => {
-    if (!selectedWard) return '';
-    const found = indoreWardsList.find(w => w.id === selectedWard);
-    return found ? found.name : 'Indore Municipal Area';
+    if (wardTitle) return wardTitle;
+    if (locality) return `${locality}, ${cityName}`;
+    return 'Live GPS Location';
   };
 
   return (
@@ -453,7 +451,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
           Citizen Complaint Registration Wizard
         </h1>
         <p className="text-stone-600 text-xs sm:text-sm max-w-xl mx-auto">
-          Logged in as: <span className="font-bold text-stone-900">{userEmail}</span> • {selectedWard ? `${getWardNameStr()} pinpoint geotagged.` : 'Detecting your live GPS location...'}
+          Logged in as: <span className="font-bold text-stone-900">{userEmail}</span> • {locality ? `📍 ${locality}, ${cityName} live GPS geotagged.` : 'Detecting your live GPS location...'}
         </p>
 
         {/* Live GPS Auto-Detection Pill */}
@@ -616,8 +614,8 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                 <Crosshair className="w-5 h-5 animate-pulse" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-stone-900">Step 2 of 4: Ward Selection & Pinpoint GPS Geotagging</h3>
-                <p className="text-xs text-stone-500">Accurately resolved: Ward 52 = Musakhedi / Mayur Nagar | Ward 40 = Khajrana Main</p>
+                <h3 className="text-base font-bold text-stone-900">Step 2 of 4: Live GPS Location & Administrative Jurisdiction</h3>
+                <p className="text-xs text-stone-500">Universal live location tracking active across Indore, Madhya Pradesh & India</p>
               </div>
             </div>
             <button onClick={() => setStep(1)} className="text-xs text-stone-500 hover:text-stone-900 flex items-center gap-1 font-semibold">
@@ -625,18 +623,44 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             </button>
           </div>
 
-          {/* Ward Selection Dropdown */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-stone-700">Select Your Municipal Ward (इंदौर वार्ड चुनें):</label>
-            <select
-              value={selectedWard}
-              onChange={(e) => handleWardSelectChange(e.target.value)}
-              className="w-full bg-stone-50 border border-stone-300 rounded-xl px-3 py-3 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500 cursor-pointer"
-            >
-              {indoreWardsList.map(w => (
-                <option key={w.id} value={w.id}>{w.name}</option>
-              ))}
-            </select>
+          {/* DYNAMIC LIVE LOCATION & ADMINISTRATIVE JURISDICTION */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-stone-700 flex items-center justify-between">
+                <span>Detected Area / Locality (लाइव इलाका / क्षेत्र):</span>
+                <span className="text-[10px] text-emerald-700 font-semibold flex items-center gap-1">
+                  <Compass className="w-3 h-3 text-emerald-600 animate-spin" style={{ animationDuration: '6s' }} />
+                  Live GPS
+                </span>
+              </label>
+              <input
+                type="text"
+                value={locality || ''}
+                onChange={(e) => {
+                  setLocality(e.target.value);
+                  setLandmark(`${e.target.value}, ${wardTitle || ''}, ${cityName}`);
+                }}
+                placeholder="e.g. Musakhedi, Vijay Nagar, Bhopal, Delhi"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-stone-700 flex items-center justify-between">
+                <span>Municipal Ward / Administrative Division:</span>
+                <span className="text-[10px] text-stone-500">Auto-Resolved</span>
+              </label>
+              <input
+                type="text"
+                value={wardTitle || ''}
+                onChange={(e) => {
+                  setWardTitle(e.target.value);
+                  setSelectedWard(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+                }}
+                placeholder="e.g. Ward 52 (Musakhedi), Zone 14, or Local Ward"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+              />
+            </div>
           </div>
 
           {/* INTERACTIVE PINPOINT LOCATION MAP */}
@@ -685,58 +709,66 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                       setLat(newLat);
                       setLng(newLng);
 
-                      // Dynamic client-side nearest ward calculation
-                      let matched = null;
-                      if (indoreWardsList && indoreWardsList.length > 0) {
-                        matched = indoreWardsList.reduce((prev, curr) => {
-                          const prevDist = Math.hypot(latNum - (prev.lat || 22.7196), lngNum - (prev.lng || 75.8577));
-                          const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
-                          return currDist < prevDist ? curr : prev;
-                        }, indoreWardsList[0]);
-                      }
-                      if (matched) {
-                        setSelectedWard(matched.id);
-                        setLandmark(matched.name);
-                        setLocationStatus(`Custom Pinpoint: ${matched.name} • [Lat: ${newLat}, Lng: ${newLng}]`);
-                      }
-
-                      // Reverse geocode street / locality via OpenStreetMap Nominatim with zoom=15
+                      // Universal Dynamic Reverse Geocoding for Custom Pinpoint anywhere across India
                       try {
-                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${newLat}&lon=${newLng}&format=json&zoom=15`);
+                        const geoRes = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${newLat}&lon=${newLng}&format=json&zoom=16`);
                         if (geoRes.ok) {
                           const geoData = await geoRes.json();
                           const addr = geoData.address || {};
-                          const specificPlace = geoData.name || addr.square || addr.suburb || addr.neighbourhood || addr.residential;
+                          let specificPlace = geoData.name || addr.square || addr.suburb || addr.neighbourhood || addr.residential || addr.village;
                           const road = addr.road;
+                          const city = addr.city || addr.town || addr.county || 'Indore';
+                          const state = addr.state || 'Madhya Pradesh';
+
+                          if (!specificPlace || specificPlace.toLowerCase().includes('indore city') || specificPlace.toLowerCase().includes('tahsil')) {
+                            try {
+                              const r15 = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${newLat}&lon=${newLng}&format=json&zoom=15`);
+                              if (r15.ok) {
+                                const d15 = await r15.json();
+                                const a15 = d15.address || {};
+                                specificPlace = d15.name || a15.square || a15.suburb || a15.neighbourhood || specificPlace;
+                              }
+                            } catch (e) {}
+                          }
+
+                          const resolvedLocality = (specificPlace && !specificPlace.toLowerCase().includes('tahsil')) ? specificPlace : (road || city);
+                          setLocality(resolvedLocality);
+                          setCityName(city);
+                          setStateName(state);
+
+                          let divisionName = `${resolvedLocality} Municipal Sector, ${city}`;
+                          let wardKey = `ward_${resolvedLocality.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+                          if (indoreWardsList && indoreWardsList.length > 0) {
+                            const nearestIndoreWard = indoreWardsList.reduce((prev, curr) => {
+                              const prevDist = Math.hypot(latNum - (prev.lat || 22.7196), lngNum - (prev.lng || 75.8577));
+                              const currDist = Math.hypot(latNum - (curr.lat || 22.7196), lngNum - (curr.lng || 75.8577));
+                              return currDist < prevDist ? curr : prev;
+                            }, indoreWardsList[0]);
+
+                            if (nearestIndoreWard && Math.hypot(latNum - nearestIndoreWard.lat, lngNum - nearestIndoreWard.lng) < 0.04) {
+                              divisionName = nearestIndoreWard.name;
+                              wardKey = nearestIndoreWard.id;
+                            }
+                          }
+
+                          setSelectedWard(wardKey);
+                          setWardTitle(divisionName);
 
                           let parts = [];
-                          if (specificPlace && !specificPlace.toLowerCase().includes('indore city') && !specificPlace.toLowerCase().includes('tahsil')) {
-                            parts.push(specificPlace);
-                          }
-                          if (road && !parts.includes(road)) {
-                            parts.push(road);
-                          }
-                          if (matched) {
-                            parts.push(matched.name);
-                          }
-                          const fullLoc = parts.length > 0 ? parts.join(', ') : (matched ? matched.name : 'Indore Municipal Corporation');
+                          if (resolvedLocality) parts.push(resolvedLocality);
+                          if (road && !parts.includes(road)) parts.push(road);
+                          if (divisionName && !parts.includes(divisionName)) parts.push(divisionName);
+                          if (city && !parts.includes(city)) parts.push(city);
+                          const fullLoc = parts.length > 0 ? parts.join(', ') : `${city} Area`;
                           setLandmark(fullLoc);
-                          const badgeLabel = parts[0] || (matched ? matched.name.split('—')[1]?.trim() : 'Indore');
-                          setLocationStatus(`Custom Pinpoint: ${badgeLabel} • [Lat: ${newLat}, Lng: ${newLng}]`);
+
+                          setLocationStatus(`Custom Pinpoint: ${resolvedLocality}, ${city} • [Lat: ${newLat}, Lng: ${newLng}]`);
                           return;
                         }
                       } catch (e) {}
 
-                      // Backend fallback
-                      try {
-                        const res = await fetch(`${API_BASE_URL}/api/geotag/resolve?lat=${newLat}&lng=${newLng}`);
-                        if (res.ok) {
-                          const data = await res.json();
-                          if (data.ward_id) setSelectedWard(data.ward_id);
-                          if (data.ward_name) setLandmark(data.ward_name);
-                          setLocationStatus(`Custom Pinpoint: ${data.ward_name || data.address} • [Lat: ${newLat}, Lng: ${newLng}]`);
-                        }
-                      } catch (err) {}
+                      setLocationStatus(`Custom Pinpoint: [Lat: ${newLat}, Lng: ${newLng}]`);
                     }
                   }}
                   icon={citizenLivePinIcon}
