@@ -1,13 +1,21 @@
 ﻿import React, { useState } from 'react';
-import { Shield, User, ArrowRight, AlertCircle, Compass } from 'lucide-react';
+import { Shield, User, ArrowRight, AlertCircle, Compass, CreditCard, Mail, CheckCircle2 } from 'lucide-react';
 import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider, isSuperAdminEmail, SUPER_ADMIN_EMAIL } from '../lib/firebase';
+import { auth, googleProvider, isSuperAdminEmail } from '../lib/firebase';
+import { API_BASE_URL } from '../config';
 
 export default function LoginPage({ onLoginSuccess }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [customName, setCustomName] = useState('');
-  const [customEmail, setCustomEmail] = useState('');
+  const [name, setName] = useState('');
+  const [aadhaar, setAadhaar] = useState('');
+  const [email, setEmail] = useState('');
+
+  const handleAadhaarChange = (e) => {
+    const raw = e.target.value.replace(/\D/g, '').slice(0, 12);
+    const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+    setAadhaar(formatted);
+  };
 
   const requestLiveGPS = () => {
     if ('geolocation' in navigator) {
@@ -23,47 +31,103 @@ export default function LoginPage({ onLoginSuccess }) {
     }
   };
 
+  const syncUserToBackend = async (userObj) => {
+    try {
+      await fetch(`${API_BASE_URL}/api/users/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: userObj.displayName,
+          email: userObj.email,
+          aadhaar_number: userObj.aadhaar || '',
+          role: userObj.role
+        })
+      });
+    } catch (err) {
+      console.warn("Backend sync notice:", err);
+    }
+  };
+
+  const validateAadhaar = () => {
+    const cleanAadhaar = aadhaar.replace(/\s/g, '');
+    if (!cleanAadhaar) {
+      setError("Please enter your 12-digit Aadhaar Card number.");
+      return false;
+    }
+    if (cleanAadhaar.length !== 12) {
+      setError("Aadhaar Card number must be exactly 12 digits.");
+      return false;
+    }
+    return cleanAadhaar;
+  };
+
   const handleGoogleSignIn = async () => {
+    const cleanAadhaar = validateAadhaar();
+    if (!cleanAadhaar) return;
+
+    if (!name.trim()) {
+      setError("Please enter your Full Name as on Aadhaar Card.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      const isAdmin = isSuperAdminEmail(user.email);
+      const verifiedEmail = user.email ? user.email.toLowerCase().trim() : email.toLowerCase().trim();
+      const isAdmin = isSuperAdminEmail(verifiedEmail);
 
       const userObj = {
         uid: user.uid,
-        email: user.email,
-        displayName: user.displayName || user.email.split('@')[0],
-        photoURL: user.photoURL || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
+        email: verifiedEmail,
+        displayName: name.trim() || user.displayName || verifiedEmail.split('@')[0],
+        aadhaar: cleanAadhaar,
+        photoURL: user.photoURL || (isAdmin 
+          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
+          : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100'),
         role: isAdmin ? 'SUPER_ADMIN' : 'CITIZEN'
       };
 
       try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
+      await syncUserToBackend(userObj);
       requestLiveGPS();
       onLoginSuccess(userObj);
     } catch (err) {
       console.warn("Google popup error:", err);
-      setError("Google Sign-In popup could not complete. You can sign in below with your Name & Email directly!");
+      setError("Google Sign-In popup could not complete. Please click 'Continue with Verified Credentials' below.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleCustomLogin = (e) => {
+  const handleDirectLogin = async (e) => {
     e?.preventDefault();
-    if (!customEmail.trim()) {
-      setError("Please enter your email address.");
+    const cleanAadhaar = validateAadhaar();
+    if (!cleanAadhaar) return;
+
+    if (!name.trim()) {
+      setError("Please enter your Full Name.");
       return;
     }
-    const cleanEmail = customEmail.trim().toLowerCase();
-    const cleanName = customName.trim() || cleanEmail.split('@')[0];
+
+    if (!email.trim() || !email.includes('@')) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
     const isAdmin = isSuperAdminEmail(cleanEmail);
 
     const userObj = {
       uid: `usr-${Date.now()}`,
       email: cleanEmail,
       displayName: cleanName,
+      aadhaar: cleanAadhaar,
       photoURL: isAdmin 
         ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'
         : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
@@ -71,28 +135,10 @@ export default function LoginPage({ onLoginSuccess }) {
     };
 
     try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
+    await syncUserToBackend(userObj);
     requestLiveGPS();
     onLoginSuccess(userObj);
-  };
-
-  const handleDemoLogin = (roleType) => {
-    const userObj = roleType === 'SUPER_ADMIN' ? {
-      uid: 'admin-primary',
-      email: SUPER_ADMIN_EMAIL,
-      displayName: 'Harsh Parmar (Super Admin)',
-      photoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-      role: 'SUPER_ADMIN'
-    } : {
-      uid: 'citizen-demo',
-      email: 'citizen.indore@gmail.com',
-      displayName: 'Indore Citizen',
-      photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
-      role: 'CITIZEN'
-    };
-
-    try { localStorage.setItem('nagarmitra_user', JSON.stringify(userObj)); } catch(e) {}
-    requestLiveGPS();
-    onLoginSuccess(userObj);
+    setLoading(false);
   };
 
   return (
@@ -116,12 +162,12 @@ export default function LoginPage({ onLoginSuccess }) {
       </div>
 
       {/* Main Login Card */}
-      <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-6 shadow-xl">
+      <div className="bg-white border border-stone-200 rounded-3xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-xl">
         
         <div className="text-center space-y-1">
-          <h2 className="text-xl font-extrabold text-stone-900">Sign In to Continue</h2>
+          <h2 className="text-xl font-extrabold text-stone-900">Citizen & Official Portal Sign In</h2>
           <p className="text-xs text-stone-500">
-            Authenticate with your Google Account to access city services.
+            Enter your Name, Aadhaar number, and Email to authenticate.
           </p>
         </div>
 
@@ -132,11 +178,61 @@ export default function LoginPage({ onLoginSuccess }) {
           </div>
         )}
 
-        {/* Primary Google Login Button */}
+        {/* Input Fields: Name, Aadhaar, Email */}
+        <div className="space-y-3.5">
+          <div>
+            <label className="block text-xs font-bold text-stone-700 mb-1 flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-orange-600" />
+              <span>Full Name (as per Aadhaar)</span>
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Rahul Sharma"
+              required
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-stone-700 mb-1 flex items-center gap-1.5">
+              <CreditCard className="w-3.5 h-3.5 text-orange-600" />
+              <span>12-Digit Aadhaar Card Number</span>
+            </label>
+            <input
+              type="text"
+              value={aadhaar}
+              onChange={handleAadhaarChange}
+              placeholder="e.g. 4821 5920 8312"
+              maxLength={14}
+              required
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all tracking-wider font-mono font-semibold"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-stone-700 mb-1 flex items-center gap-1.5">
+              <Mail className="w-3.5 h-3.5 text-orange-600" />
+              <span>Email Address</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="e.g. rahul.sharma@gmail.com"
+              required
+              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all font-medium"
+            />
+          </div>
+        </div>
+
+        {/* Primary Action 1: Sign in with Google (Firebase Auth) */}
         <button
+          type="button"
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm py-3.5 px-4 rounded-2xl flex items-center justify-center space-x-3 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50"
+          className="w-full bg-stone-900 hover:bg-stone-800 text-white font-bold text-sm py-3 px-4 rounded-2xl flex items-center justify-center space-x-3 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 mt-1"
         >
           <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -144,84 +240,30 @@ export default function LoginPage({ onLoginSuccess }) {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
           </svg>
-          <span>{loading ? 'Connecting to Google Firebase...' : 'Sign in with Google'}</span>
+          <span>{loading ? 'Authenticating with Google...' : 'Sign In with Google'}</span>
         </button>
 
         {/* Divider */}
-        <div className="relative flex items-center justify-center">
+        <div className="relative flex items-center justify-center py-0.5">
           <div className="border-t border-stone-200 w-full"></div>
-          <span className="bg-white px-3 text-[11px] font-bold text-stone-400 uppercase tracking-wider whitespace-nowrap">
-            Or Direct Email Login
+          <span className="bg-white px-3 text-[10px] font-bold text-stone-400 uppercase tracking-wider whitespace-nowrap">
+            Or Direct Authenticated Access
           </span>
           <div className="border-t border-stone-200 w-full"></div>
         </div>
 
-        {/* Name & Email Direct Sign-in */}
-        <form onSubmit={handleCustomLogin} className="space-y-3">
-          <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">Your Full Name</label>
-            <input
-              type="text"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              placeholder="e.g. Rahul Sharma"
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">Your Email Address</label>
-            <input
-              type="email"
-              value={customEmail}
-              onChange={(e) => setCustomEmail(e.target.value)}
-              placeholder="e.g. rahul.sharma@gmail.com"
-              required
-              className="w-full text-xs px-3.5 py-2.5 rounded-xl border border-stone-300 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs py-3 px-4 rounded-xl flex items-center justify-center space-x-2 shadow transition-all cursor-pointer"
-          >
-            <span>Continue to Portal</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </form>
+        {/* Primary Action 2: Direct Entry with Name, Aadhaar & Email */}
+        <button
+          type="button"
+          onClick={handleDirectLogin}
+          disabled={loading}
+          className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs py-2.5 px-4 rounded-xl flex items-center justify-center space-x-2 shadow transition-all cursor-pointer disabled:opacity-50"
+        >
+          <span>Continue with Verified Credentials</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
 
-        {/* Quick Demo Logins for Review */}
-        <div className="pt-3 border-t border-stone-100 space-y-2">
-          <p className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider text-center">
-            Instant 1-Click Verification Logins:
-          </p>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('CITIZEN')}
-              className="p-2.5 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl text-left transition-all cursor-pointer"
-            >
-              <div className="flex items-center space-x-1.5 text-xs font-bold text-stone-800">
-                <User className="w-3.5 h-3.5 text-blue-600" />
-                <span>Citizen Login</span>
-              </div>
-              <p className="text-[10px] text-stone-500 mt-0.5 truncate">Enters Citizen Portal</p>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('SUPER_ADMIN')}
-              className="p-2.5 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-xl text-left transition-all cursor-pointer"
-            >
-              <div className="flex items-center space-x-1.5 text-xs font-bold text-orange-700">
-                <Shield className="w-3.5 h-3.5 text-orange-600" />
-                <span>Super Admin</span>
-              </div>
-              <p className="text-[10px] text-orange-600/80 mt-0.5 truncate">{SUPER_ADMIN_EMAIL}</p>
-            </button>
-          </div>
-        </div>
-
-        {/* Geotag Notice */}
+        {/* Live GPS Notice */}
         <div className="flex items-center space-x-2 text-[11px] text-stone-500 bg-stone-50 p-2.5 rounded-xl border border-stone-200/80">
           <Compass className="w-4 h-4 text-emerald-600 shrink-0" />
           <span>Live GPS location will be automatically detected to map your ward.</span>

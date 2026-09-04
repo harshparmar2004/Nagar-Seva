@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlmodel import SQLModel, Session, create_engine, select, func
 from pydantic import BaseModel, Field
 
-from models import Ward, Complaint, Cluster, Project
+from models import Ward, Complaint, Cluster, Project, CitizenUser
 from services.gemini_service import process_voice_or_text_with_gemini, generate_dpr_with_gemini
 from services.whatsapp_service import send_whatsapp_status_notification
 
@@ -261,8 +261,57 @@ def get_complaints(limit: int = 100):
 @app.get("/api/complaints/user/{user_email}")
 def get_user_complaints(user_email: str):
     with Session(engine) as session:
-        complaints = session.exec(select(Complaint).where(Complaint.user_email == user_email)).all()
+        clean = user_email.strip().lower()
+        complaints = session.exec(select(Complaint).where(func.lower(Complaint.user_email) == clean)).all()
         return complaints
+
+class UserSyncRequest(BaseModel):
+    name: str
+    email: str
+    aadhaar_number: str
+    role: Optional[str] = "CITIZEN"
+
+@app.post("/api/users/sync")
+def sync_user(req: UserSyncRequest):
+    with Session(engine) as session:
+        clean_email = req.email.strip().lower()
+        user = session.exec(select(CitizenUser).where(func.lower(CitizenUser.email) == clean_email)).first()
+        now_str = datetime.now(timezone.utc).isoformat()
+        
+        final_role = "SUPER_ADMIN" if clean_email == "harshparmar686630@gmail.com" else (req.role or "CITIZEN")
+        
+        if user:
+            user.name = req.name.strip()
+            user.aadhaar_number = req.aadhaar_number.strip()
+            user.role = final_role
+            user.last_login_at = now_str
+            session.add(user)
+        else:
+            user = CitizenUser(
+                id=f"USR-{uuid.uuid4().hex[:8].upper()}",
+                email=clean_email,
+                name=req.name.strip(),
+                aadhaar_number=req.aadhaar_number.strip(),
+                role=final_role,
+                created_at=now_str,
+                last_login_at=now_str
+            )
+            session.add(user)
+        session.commit()
+        session.refresh(user)
+        return {"status": "SUCCESS", "user": user}
+
+@app.get("/api/users/{email}")
+def get_user_profile(email: str):
+    with Session(engine) as session:
+        clean_email = email.strip().lower()
+        user = session.exec(select(CitizenUser).where(func.lower(CitizenUser.email) == clean_email)).first()
+        complaints = session.exec(select(Complaint).where(func.lower(Complaint.user_email) == clean_email)).all()
+        return {
+            "user": user,
+            "complaints_count": len(complaints),
+            "complaints": complaints
+        }
 
 @app.post("/api/complaints/approve/{complaint_id}")
 def approve_complaint(complaint_id: str):

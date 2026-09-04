@@ -48,14 +48,18 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const [phone, setPhone] = useState('9826012345');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [idHash, setIdHash] = useState('VOTER-IND-4821');
+  const [otpVerified, setOtpVerified] = useState(Boolean(currentUser?.aadhaar));
+  const [idHash, setIdHash] = useState(currentUser?.aadhaar ? `AADHAAR-${currentUser.aadhaar.replace(/\s/g, '')}` : 'AADHAAR-IND-4821');
 
   const [indoreWardsList, setIndoreWardsList] = useState(FALLBACK_WARDS);
 
   useEffect(() => {
     if (currentUser?.displayName) {
       setCitizenName(currentUser.displayName);
+    }
+    if (currentUser?.aadhaar) {
+      setIdHash(`AADHAAR-${currentUser.aadhaar.replace(/\s/g, '')}`);
+      setOtpVerified(true);
     }
   }, [currentUser]);
 

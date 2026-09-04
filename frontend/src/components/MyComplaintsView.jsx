@@ -21,31 +21,16 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
       const data = await res.json();
       let local = [];
       try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(e) {}
-      const combined = [...local, ...(Array.isArray(data) ? data : [])];
+      const userLocal = local.filter(item => !item.user_email || item.user_email.toLowerCase() === activeEmail.toLowerCase());
+      const combined = [...userLocal, ...(Array.isArray(data) ? data : [])];
       const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
       setComplaints(unique);
     } catch (e) {
-      console.warn("Backend offline/sleeping, using local & sample complaints:", e);
+      console.warn("Backend offline/sleeping, using local complaints:", e);
       let local = [];
       try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(err) {}
-      const fallbackList = [
-        ...local,
-        {
-          id: 'NM-IND-2026-04821',
-          transcript: 'Bhaiyaji, humare ward 14 me paani ka nala beh raha hai, bacche bimar ho rahe hain, sadak poori toot gayi hai!',
-          category: 'Sanitation & Drainage',
-          urgency: 'Critical',
-          health_impact: true,
-          locality: 'Near Cat Road Square, Ward 14, Indore',
-          landmark: 'Cat Road Square',
-          responsible_department: 'Indore Municipal Corporation (IMC) — Drainage & Sewerage Department',
-          responsible_ministry: 'Ministry of Housing & Urban Affairs (MoHUA)',
-          nodal_officer: 'Er. Rajesh Sharma (Chief Engineer)',
-          current_status: 'APPROVED_BY_ADMIN',
-          created_at: '2026-08-25T20:30:00Z'
-        }
-      ];
-      setComplaints(fallbackList);
+      const userLocal = local.filter(item => !item.user_email || item.user_email.toLowerCase() === activeEmail.toLowerCase());
+      setComplaints(userLocal);
     } finally {
       setLoading(false);
     }
@@ -70,10 +55,20 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
             <div className="flex items-center space-x-2 text-xs font-bold text-orange-600 uppercase tracking-wider">
               <FolderCheck className="w-4 h-4" /> Personal Citizen Dashboard
             </div>
-            <h2 className="text-2xl font-extrabold text-stone-900">My Registered Complaints & Sector Status</h2>
-            <p className="text-xs text-stone-500">
-              Showing complaints registered by: <span className="font-extrabold text-stone-900">{activeEmail}</span>
-            </p>
+            <h2 className="text-2xl font-extrabold text-stone-900">My Registered Complaints & History</h2>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-stone-600">
+              <span>Citizen: <strong className="text-stone-900">{currentUser?.displayName || 'Verified Citizen'}</strong></span>
+              <span>•</span>
+              <span>Email: <strong className="text-stone-900">{activeEmail}</strong></span>
+              {currentUser?.aadhaar && (
+                <>
+                  <span>•</span>
+                  <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full text-[11px] font-bold">
+                    ✓ Aadhaar: XXXX-XXXX-{currentUser.aadhaar.slice(-4)}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center space-x-3 shrink-0">

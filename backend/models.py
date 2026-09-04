@@ -83,3 +83,12 @@ class Project(SQLModel, table=True):
     total_ratings: int = Field(default=0)
     rating_sum: float = Field(default=0.0)
     status: str = Field(default="APPROVED_FOR_DPR")
+
+class CitizenUser(SQLModel, table=True):
+    id: str = Field(primary_key=True)
+    email: str = Field(index=True, unique=True)
+    name: str
+    aadhaar_number: str
+    role: str = Field(default="CITIZEN")
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    last_login_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
