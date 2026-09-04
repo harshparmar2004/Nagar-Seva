@@ -14,9 +14,6 @@ import AuthModal from './components/AuthModal';
 import RoleManagement from './components/RoleManagement';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('citizen-voice');
-  const [activeCountry, setActiveCountry] = useState('IN');
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('nagarmitra_user');
@@ -31,23 +28,65 @@ export default function App() {
       role: 'CITIZEN'
     };
   });
+
+  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+
+  const [currentPortal, setCurrentPortal] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nagarmitra_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.role === 'SUPER_ADMIN') return 'SUPER_ADMIN';
+      }
+    } catch(e) {}
+    return 'CITIZEN';
+  });
+
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nagarmitra_user');
+      if (saved) {
+        const u = JSON.parse(saved);
+        if (u.role === 'SUPER_ADMIN') return 'admin-gis';
+      }
+    } catch(e) {}
+    return 'citizen-voice';
+  });
+
+  const [activeCountry, setActiveCountry] = useState('IN');
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [selectedClusterForDPR, setSelectedClusterForDPR] = useState(null);
   const [selectedTrackingId, setSelectedTrackingId] = useState('');
 
-  const isSuperAdmin = currentUser?.role === 'SUPER_ADMIN';
+  const handleSwitchPortal = (targetPortal) => {
+    if (targetPortal === 'SUPER_ADMIN') {
+      if (!isSuperAdmin) {
+        setIsAuthOpen(true);
+        return;
+      }
+      setCurrentPortal('SUPER_ADMIN');
+      if (!activeTab.startsWith('admin-')) {
+        setActiveTab('admin-gis');
+      }
+    } else {
+      setCurrentPortal('CITIZEN');
+      if (!activeTab.startsWith('citizen-')) {
+        setActiveTab('citizen-voice');
+      }
+    }
+  };
 
   const handleLogout = () => {
     try { localStorage.removeItem('nagarmitra_user'); } catch(e) {}
     setCurrentUser({
-      uid: 'citizen-demo',
+      uid: 'citizen-guest',
       email: 'citizen.indore@gmail.com',
       displayName: 'Indore Citizen',
       photoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100',
       role: 'CITIZEN'
     });
-    if (activeTab.startsWith('admin-')) {
-      setActiveTab('citizen-voice');
-    }
+    setCurrentPortal('CITIZEN');
+    setActiveTab('citizen-voice');
   };
 
   return (
@@ -61,6 +100,8 @@ export default function App() {
         activeCountry={activeCountry}
         setActiveCountry={setActiveCountry}
         isSuperAdmin={isSuperAdmin}
+        currentPortal={currentPortal}
+        onSwitchPortal={handleSwitchPortal}
       >
         {/* Render View Based on Active Tab */}
         {activeTab === 'citizen-voice' && (
@@ -155,11 +196,13 @@ export default function App() {
           }
 
           // Strict Role-Based Routing:
-          // Super Admin -> lands on Super Admin GIS Platform (admin-gis)
+          // Super Admin -> lands on Super Admin Portal (admin-gis)
           // Citizen -> lands on Citizen Governance Portal (citizen-voice) to lodge grievances from their live location
           if (user.role === 'SUPER_ADMIN') {
+            setCurrentPortal('SUPER_ADMIN');
             setActiveTab('admin-gis');
           } else {
+            setCurrentPortal('CITIZEN');
             setActiveTab('citizen-voice');
           }
         }}
