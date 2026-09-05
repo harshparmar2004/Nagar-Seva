@@ -140,29 +140,10 @@ export default function SidebarLayout({
           </div>
         </div>
 
-        {/* Center: Dedicated Portal Badge in a Crisp Rectangular Box (NOT circular/rounded, centered in middle) */}
-        <div className="flex items-center justify-center flex-1 mx-1 sm:mx-3 min-w-0">
-          {isSuperAdmin ? (
-            <div className="flex items-center space-x-1.5 sm:space-x-2 bg-stone-900 text-white border border-stone-800 rounded-md px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black shadow-2xs shrink-0">
-              <Shield className="w-3.5 h-3.5 text-orange-500 shrink-0" />
-              <span className="tracking-wide hidden md:inline">Super Admin Command Center</span>
-              <span className="tracking-wide md:hidden">Admin Suite</span>
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-none bg-orange-500 animate-pulse"></span>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-1.5 sm:space-x-2 bg-orange-50/90 text-orange-950 border border-orange-300/90 rounded-md px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black shadow-2xs shrink-0">
-              <User className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-              <span className="tracking-wide hidden md:inline">Citizen Governance Portal</span>
-              <span className="tracking-wide md:hidden">Citizen Portal</span>
-              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-none bg-emerald-600 animate-pulse"></span>
-            </div>
-          )}
-        </div>
-
         {/* Right: Live Location Badge on the right side at the end */}
         <div className="flex items-center justify-end shrink-0">
           <div
-            className="flex items-center space-x-1.5 text-[10px] sm:text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md px-2 sm:px-3 py-1 sm:py-1.5 font-bold max-w-[120px] sm:max-w-[200px] md:max-w-xs lg:max-w-sm truncate shadow-2xs"
+            className="flex items-center space-x-1.5 text-[10px] sm:text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md px-2.5 sm:px-3 py-1.5 font-bold max-w-[150px] sm:max-w-[260px] md:max-w-md lg:max-w-lg truncate shadow-2xs"
             title={liveLocationStr}
           >
             <Compass className="w-3.5 h-3.5 text-emerald-600 animate-spin shrink-0" style={{ animationDuration: '6s' }} />
