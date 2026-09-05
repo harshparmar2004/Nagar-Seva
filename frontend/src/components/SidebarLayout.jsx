@@ -118,77 +118,58 @@ export default function SidebarLayout({
     <div className="min-h-screen bg-gradient-to-br from-stone-50 via-orange-50/20 to-stone-100 flex flex-col font-sans text-stone-900">
       
       {/* TOP HEADER BAR */}
-      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2 shadow-xs">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-stone-200/80 px-2.5 sm:px-6 py-2.5 flex items-center justify-between gap-2 shadow-xs">
         
-        {/* Left: Mobile Menu Toggle & App Branding */}
+        {/* Left: Mobile Menu Toggle & Enlarge NagarSeva Branding */}
         <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
           <button
             onClick={() => setIsMobileOpen(!isMobileOpen)}
-            className="lg:hidden p-2 rounded-xl text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
+            className="lg:hidden p-1.5 sm:p-2 rounded-xl text-stone-600 hover:bg-stone-100 transition-colors cursor-pointer"
+            title="Toggle Navigation Menu"
           >
             {isMobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
 
-          <div className="flex items-center space-x-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-black shadow-md shadow-orange-600/20 shrink-0">
-              <Shield className="w-5 h-5" />
+          <div className="flex items-center space-x-2 sm:space-x-2.5">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center font-black shadow-md shadow-orange-600/20 shrink-0">
+              <Shield className="w-5 h-5 sm:w-5.5 sm:h-5.5" />
             </div>
-            <div>
-              <div className="flex items-center space-x-1.5">
-                <span className="font-extrabold text-stone-900 tracking-tight text-base sm:text-lg">NagarSeva</span>
-                <span className="bg-orange-100 text-orange-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-orange-200 hidden sm:inline-block">
-                  🏆 SWACHH INDORE
-                </span>
-              </div>
-            </div>
+            <span className="font-black text-stone-900 tracking-tight text-lg sm:text-xl md:text-2xl select-none">
+              NagarSeva
+            </span>
           </div>
         </div>
 
-        {/* Center: Dedicated Portal Badge (Strictly isolated by role, NO switch toggle) */}
-        {isSuperAdmin ? (
-          <div className="flex items-center space-x-2 bg-stone-900 text-white border border-stone-800 rounded-2xl px-3.5 py-1.5 text-xs font-extrabold shadow-sm">
-            <Shield className="w-3.5 h-3.5 text-orange-500" />
-            <span className="tracking-wide">Super Admin Command Center</span>
-            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
-          </div>
-        ) : (
-          <div className="flex items-center space-x-2 bg-orange-50 text-orange-900 border border-orange-200/80 rounded-2xl px-3.5 py-1.5 text-xs font-extrabold shadow-xs">
-            <User className="w-3.5 h-3.5 text-orange-600" />
-            <span className="tracking-wide">Citizen Governance Portal</span>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          </div>
-        )}
+        {/* Center: Dedicated Portal Badge in a Crisp Rectangular Box (NOT circular/rounded, centered in middle) */}
+        <div className="flex items-center justify-center flex-1 mx-1 sm:mx-3 min-w-0">
+          {isSuperAdmin ? (
+            <div className="flex items-center space-x-1.5 sm:space-x-2 bg-stone-900 text-white border border-stone-800 rounded-md px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black shadow-2xs shrink-0">
+              <Shield className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+              <span className="tracking-wide hidden md:inline">Super Admin Command Center</span>
+              <span className="tracking-wide md:hidden">Admin Suite</span>
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-none bg-orange-500 animate-pulse"></span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1.5 sm:space-x-2 bg-orange-50/90 text-orange-950 border border-orange-300/90 rounded-md px-2.5 sm:px-4 py-1 sm:py-1.5 text-[11px] sm:text-xs font-black shadow-2xs shrink-0">
+              <User className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+              <span className="tracking-wide hidden md:inline">Citizen Governance Portal</span>
+              <span className="tracking-wide md:hidden">Citizen Portal</span>
+              <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-none bg-emerald-600 animate-pulse"></span>
+            </div>
+          )}
+        </div>
 
-        {/* Right: Live GPS Badge & Auth Status / Logout */}
-        <div className="flex items-center space-x-2 sm:space-x-3 shrink-0">
-          
-          {/* Live GPS Location Badge */}
-          <div className="hidden xl:flex items-center space-x-1.5 text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl px-2.5 py-1.5 font-bold max-w-xs truncate">
+        {/* Right: Live Location Badge on the right side at the end */}
+        <div className="flex items-center justify-end shrink-0">
+          <div
+            className="flex items-center space-x-1.5 text-[10px] sm:text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-md px-2 sm:px-3 py-1 sm:py-1.5 font-bold max-w-[120px] sm:max-w-[200px] md:max-w-xs lg:max-w-sm truncate shadow-2xs"
+            title={liveLocationStr}
+          >
             <Compass className="w-3.5 h-3.5 text-emerald-600 animate-spin shrink-0" style={{ animationDuration: '6s' }} />
             <span className="truncate">{liveLocationStr}</span>
           </div>
-
-          {/* Top Right Quick Settings / Profile Action */}
-          {currentUser ? (
-            <button
-              type="button"
-              onClick={() => setActiveTab(isSuperAdmin ? 'admin-roles' : 'citizen-settings')}
-              className="flex items-center space-x-1.5 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl px-2.5 sm:px-3 py-1.5 shadow-2xs transition-all cursor-pointer group"
-              title="Civic Profile & Settings"
-            >
-              <Settings className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-900 group-hover:rotate-45 transition-transform" />
-              <span className="text-xs font-bold text-stone-700 hidden sm:inline-block">Profile & Settings</span>
-            </button>
-          ) : (
-            <button
-              onClick={onLogout}
-              className="bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs px-3 py-1.5 rounded-xl shadow-xs transition-all flex items-center space-x-1.5 cursor-pointer"
-            >
-              <LogIn className="w-3.5 h-3.5" />
-              <span>Log In</span>
-            </button>
-          )}
         </div>
+
       </header>
 
       <div className="flex-1 flex">
