@@ -168,23 +168,17 @@ export default function SidebarLayout({
             <span className="truncate">{liveLocationStr}</span>
           </div>
 
-          {/* User Auth Profile Pill (Clean, without clutter) */}
+          {/* Top Right Quick Settings / Profile Action */}
           {currentUser ? (
-            <div className="flex items-center space-x-2 bg-stone-50 border border-stone-200 rounded-xl p-1 pr-3 shadow-2xs">
-              <img
-                src={currentUser.photoURL}
-                alt="User Avatar"
-                className="w-7 h-7 rounded-lg object-cover border border-stone-200"
-              />
-              <div className="text-left hidden sm:block max-w-[140px] truncate">
-                <p className="text-xs font-bold text-stone-900 leading-none truncate">{currentUser.displayName}</p>
-                <span className={`text-[9px] font-extrabold uppercase px-1 py-0.2 rounded mt-0.5 inline-block ${
-                  isSuperAdmin ? 'bg-orange-100 text-orange-700 border border-orange-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                }`}>
-                  {isSuperAdmin ? 'SUPER ADMIN' : 'CITIZEN'}
-                </span>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab(isSuperAdmin ? 'admin-roles' : 'citizen-settings')}
+              className="flex items-center space-x-1.5 bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl px-2.5 sm:px-3 py-1.5 shadow-2xs transition-all cursor-pointer group"
+              title="Civic Profile & Settings"
+            >
+              <Settings className="w-3.5 h-3.5 text-stone-500 group-hover:text-stone-900 group-hover:rotate-45 transition-transform" />
+              <span className="text-xs font-bold text-stone-700 hidden sm:inline-block">Profile & Settings</span>
+            </button>
           ) : (
             <button
               onClick={onLogout}
@@ -345,21 +339,78 @@ export default function SidebarLayout({
 
           </div>
 
-          {/* SIDEBAR FOOTER: LOGOUT & CIVIC BRANDING */}
-          <div className="space-y-2.5 pt-3 border-t border-stone-100">
-            {currentUser && (
+          {/* SIDEBAR FOOTER: USER AUTHENTICATION & LOGOUT HUB */}
+          <div className="space-y-2.5 pt-3 border-t border-stone-200/90">
+            {currentUser ? (
+              <div className="bg-stone-50/90 hover:bg-stone-50 border border-stone-200/90 rounded-2xl p-2.5 space-y-2.5 shadow-2xs transition-all">
+                {/* User Identity Row (Avatar + Name + Citizen Badge) */}
+                <div className="flex items-center justify-between gap-2">
+                  <div
+                    onClick={() => {
+                      setActiveTab(isSuperAdmin ? 'admin-roles' : 'citizen-settings');
+                      setIsMobileOpen(false);
+                    }}
+                    className="flex items-center space-x-2.5 min-w-0 cursor-pointer flex-1 group"
+                    title="View Civic Profile & Settings"
+                  >
+                    <div className="relative shrink-0">
+                      <img
+                        src={currentUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120'}
+                        alt="User Avatar"
+                        className="w-9 h-9 rounded-xl object-cover border border-stone-200 shadow-2xs group-hover:ring-2 group-hover:ring-orange-500/30 transition-all"
+                      />
+                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" title="Active Online"></span>
+                    </div>
+                    <div className="text-left min-w-0">
+                      <p className="text-xs font-black text-stone-900 leading-tight truncate group-hover:text-orange-600 transition-colors">
+                        {currentUser.displayName || 'Citizen'}
+                      </p>
+                      <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.2 rounded mt-0.5 inline-block border ${
+                        isSuperAdmin
+                          ? 'bg-orange-100 text-orange-800 border-orange-200'
+                          : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                      }`}>
+                        {isSuperAdmin ? 'SUPER ADMIN' : 'CITIZEN'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab(isSuperAdmin ? 'admin-roles' : 'citizen-settings');
+                      setIsMobileOpen(false);
+                    }}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors cursor-pointer shrink-0"
+                    title="Civic Settings"
+                  >
+                    <Settings className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Integrated Logout of NagarSeva Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowLogoutConfirm(true)}
+                  className="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 transition-all cursor-pointer shadow-2xs group"
+                  title="Log Out of NagarSeva"
+                >
+                  <LogOut className="w-3.5 h-3.5 text-red-500 group-hover:scale-110 transition-transform" />
+                  <span>Log Out of NagarSeva</span>
+                </button>
+              </div>
+            ) : (
               <button
                 type="button"
-                onClick={() => setShowLogoutConfirm(true)}
-                className="w-full flex items-center justify-center space-x-2 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 transition-all cursor-pointer shadow-2xs group"
-                title="Log Out of Account"
+                onClick={onLogout}
+                className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 rounded-2xl text-xs font-bold text-stone-900 hover:text-white bg-stone-100 hover:bg-stone-900 border border-stone-200 transition-all cursor-pointer shadow-2xs"
               >
-                <LogOut className="w-4 h-4 text-red-500 group-hover:scale-110 transition-transform" />
-                <span>Log Out of NagarSeva</span>
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Log In to NagarSeva</span>
               </button>
             )}
 
-            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-3 text-center">
+            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-2.5 text-center">
               <p className="text-[11px] font-extrabold text-stone-800">
                 {isSuperAdmin ? 'NagarSeva Administrative Suite' : 'Swachh Survekshan #1 Indore'}
               </p>
