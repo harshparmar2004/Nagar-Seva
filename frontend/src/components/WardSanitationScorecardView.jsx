@@ -334,17 +334,6 @@ export default function WardSanitationScorecardView({ currentUser, isSuperAdmin 
         </div>
       </div>
 
-      {/* ADMIN NOTIFICATION TOAST */}
-      {adminActionMsg && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl p-4 text-xs font-extrabold flex items-center justify-between shadow-sm animate-fade-in">
-          <div className="flex items-center space-x-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-            <span>{adminActionMsg}</span>
-          </div>
-          <span className="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded font-bold uppercase">WhatsApp Sent</span>
-        </div>
-      )}
-
       {/* 5 STAT CARDS: TOTAL COMPLAINTS, SOLVED, WORK IN PROGRESS, APPROVED, PENDING */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         
