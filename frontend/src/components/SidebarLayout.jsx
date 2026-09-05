@@ -105,7 +105,7 @@ export default function SidebarLayout({
   ];
 
   const adminNavItems = [
-    { id: 'admin-gis', label: 'City GIS Map & Demand Overview', icon: MapPin },
+    { id: 'admin-gis', label: 'City GIS Pinpoints Map', icon: MapPin },
     { id: 'admin-heatmap', label: 'City Heatmap Analytics', icon: Flame },
     { id: 'admin-clusters', label: 'Master Complaints Approval', icon: Layers },
     { id: 'admin-analytics', label: 'Data Fusion Analytics', icon: TrendingUp },

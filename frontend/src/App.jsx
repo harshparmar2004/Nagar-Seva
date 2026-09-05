@@ -194,10 +194,21 @@ export default function App() {
             <EmergencyHotlineView currentUser={currentUser} />
           )}
 
-          {(activeTab === 'admin-gis' || activeTab === 'admin-heatmap') && (
+          {activeTab === 'admin-gis' && (
+            <AdminPortal
+              activeSubTab="admin-gis"
+              activeCountry={activeCountry}
+              isSuperAdmin={isSuperAdmin}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onOpenDPR={(cluster) => setSelectedClusterForDPR(cluster || { id: 'DC-IND-001' })}
+            />
+          )}
+
+          {activeTab === 'admin-heatmap' && (
             <CityHeatmapView
               isSuperAdmin={isSuperAdmin}
               onOpenAuth={() => setIsAuthOpen(true)}
+              onNavigateToGis={() => setActiveTab('admin-gis')}
             />
           )}
 

@@ -9,10 +9,23 @@ import {
   Building2, User, Landmark, Filter, Search, CheckCircle2, RefreshCw,
   SlidersHorizontal, Eye, Clock, Check, Camera, Image, X, Plus, PlusCircle,
   XCircle, CheckCheck, Loader2, DollarSign, Users, Megaphone, CheckSquare, MapPin,
-  Calendar, CheckSquare2, Info, Compass, AlertTriangle, ArrowRight, Activity, Map, Tag, LayoutGrid, List, ArrowUpDown, ChevronLeft, ChevronRight, Phone, CreditCard, Star, Construction, Bus, Sun, Trash2, Droplets, ArrowUpRight, BarChart3, ThumbsUp, PieChart as PieIcon, ChevronDown, ChevronUp
+  Calendar, CheckSquare2, Info, Compass, AlertTriangle, ArrowRight, Activity, Tag, LayoutGrid, List, ArrowUpDown, ChevronLeft, ChevronRight, Phone, CreditCard, Star, Construction, Bus, Sun, Trash2, Droplets, ArrowUpRight, BarChart3, ThumbsUp, PieChart as PieIcon, ChevronDown, ChevronUp
 } from 'lucide-react';
 
-const createCustomIcon = (color) => {
+const createCustomIcon = (color, isSelected = false) => {
+  if (isSelected) {
+    return L.divIcon({
+      className: 'custom-pin-selected',
+      html: `
+        <div style="position: relative; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1000;">
+          <div style="background-color: ${color}; width: 22px; height: 22px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 16px ${color}, 0 0 0 4px #ea580c; display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 11px;">★</div>
+          <div style="position: absolute; width: 44px; height: 44px; border-radius: 50%; border: 2.5px solid ${color}; opacity: 0.8; animation: ping 1.2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+        </div>
+      `,
+      iconSize: [44, 44],
+      iconAnchor: [22, 22]
+    });
+  }
   return L.divIcon({
     className: 'custom-pin',
     html: `<div style="background-color: ${color}; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 10px ${color}; cursor: pointer;"></div>`,
@@ -32,12 +45,42 @@ function MapResizer() {
   return null;
 }
 
+function AdminMapFlyTo({ center, zoom = 14 }) {
+  const map = useMap();
+  useEffect(() => {
+    if (center && center[0] && center[1]) {
+      map.flyTo(center, zoom, { duration: 1.2 });
+    }
+  }, [center, zoom, map]);
+  return null;
+}
+
+// Synchronous initialization helper to ensure 0ms instant paint time on Super Admin GIS map
+const getInitialAdminComplaints = () => {
+  let localSaved = [];
+  try {
+    localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+  } catch (err) {}
+  const allSources = [...localSaved, ...FALLBACK_COMPLAINTS];
+  const mergedMap = new Map();
+  allSources.forEach((c) => {
+    if (c && c.id) mergedMap.set(c.id, c);
+  });
+  const list = Array.from(mergedMap.values());
+  list.sort((a, b) => {
+    if (a.current_status === 'PENDING_ADMIN_REVIEW' && b.current_status !== 'PENDING_ADMIN_REVIEW') return -1;
+    if (b.current_status === 'PENDING_ADMIN_REVIEW' && a.current_status !== 'PENDING_ADMIN_REVIEW') return 1;
+    return (new Date(b.created_at || 0)).getTime() - (new Date(a.created_at || 0)).getTime();
+  });
+  return list;
+};
+
 export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, isSuperAdmin, onOpenAuth }) {
-  const [complaints, setComplaints] = useState([]);
-  const [clusters, setClusters] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [wardsList, setWardsList] = useState([]);
-  const [selectedCluster, setSelectedCluster] = useState(null);
+  const [complaints, setComplaints] = useState(getInitialAdminComplaints);
+  const [clusters, setClusters] = useState(FALLBACK_CLUSTERS);
+  const [projects, setProjects] = useState(FALLBACK_PROJECTS);
+  const [wardsList, setWardsList] = useState(FALLBACK_WARDS);
+  const [selectedCluster, setSelectedCluster] = useState(FALLBACK_CLUSTERS[0] || null);
   
   // Advanced Filter Controls for Super Admin GIS & Master Complaints Table
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -46,6 +89,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const [selectedUrgencyFilter, setSelectedUrgencyFilter] = useState('ALL');
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
   const [showResolvedOnMap, setShowResolvedOnMap] = useState(false);
+  const [selectedColorFilter, setSelectedColorFilter] = useState('ALL'); // 'ALL' | 'RED' | 'ORANGE' | 'YELLOW' | 'BLUE' | 'GREEN'
   
   // View Mode, AI Sorting & 50-Item Pagination
   const [viewMode, setViewMode] = useState('grid'); // 'grid' (Small Boxes) or 'table' (Row-wise)
@@ -54,6 +98,10 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const itemsPerPage = 50;
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedPinPerson, setSelectedPinPerson] = useState(null);
+  const [adminMapCenter, setAdminMapCenter] = useState([22.7196, 75.8577]);
+  const [adminMapZoom, setAdminMapZoom] = useState(13);
+  const [citizenSearchGis, setCitizenSearchGis] = useState('');
   const [inspectPhotoModal, setInspectPhotoModal] = useState(null);
   const [expandedProjectId, setExpandedProjectId] = useState(null); // IN-LINE expansion (NO DARK OVERLAY!)
   const [showPublishPortal, setShowPublishPortal] = useState(false);
@@ -77,6 +125,25 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
   useEffect(() => {
     fetchData();
+
+    // Instant in-app notification when a new complaint is filed (0ms cross-view sync)
+    const handleLocalNewComplaint = (e) => {
+      const newC = e.detail;
+      if (newC && newC.id) {
+        setComplaints((prev) => {
+          const map = new Map(prev.map((c) => [c.id, c]));
+          map.set(newC.id, { ...(map.get(newC.id) || {}), ...newC });
+          const list = Array.from(map.values());
+          list.sort((a, b) => {
+            if (a.current_status === 'PENDING_ADMIN_REVIEW' && b.current_status !== 'PENDING_ADMIN_REVIEW') return -1;
+            if (b.current_status === 'PENDING_ADMIN_REVIEW' && a.current_status !== 'PENDING_ADMIN_REVIEW') return 1;
+            return (new Date(b.created_at || 0)).getTime() - (new Date(a.created_at || 0)).getTime();
+          });
+          return list;
+        });
+      }
+    };
+    window.addEventListener('nagarmitra_new_complaint', handleLocalNewComplaint);
 
     // Real-time Firestore sync: updates instantly whenever any citizen files a complaint
     const unsubscribe = subscribeToAllFirestoreComplaints((liveFsComplaints) => {
@@ -140,6 +207,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
     }, 5000);
 
     return () => {
+      window.removeEventListener('nagarmitra_new_complaint', handleLocalNewComplaint);
       if (typeof unsubscribe === 'function') unsubscribe();
       clearInterval(interval);
     };
@@ -364,29 +432,70 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
     }
   };
 
-  const getCategoryColor = (cat) => {
-    if (cat?.includes('Sanitation') || cat?.includes('Drainage') || cat?.includes('Emergency')) return '#ef4444'; // Red
-    if (cat?.includes('Roads') || cat?.includes('Public Works')) return '#f97316'; // Orange
-    if (cat?.includes('Electricity')) return '#eab308'; // Yellow
-    if (cat?.includes('Water') || cat?.includes('Supply')) return '#3b82f6'; // Blue
-    if (cat?.includes('Health') || cat?.includes('Solid Waste') || cat?.includes('Environment')) return '#10b981'; // Green
-    return '#ef4444';
+  const getPinColor = (comp) => {
+    if (!comp) return '#ef4444';
+    if (comp.current_status === 'RESOLVED') return '#10b981'; // Green for Solved / Healthy
+    const cat = (comp.category || '').toLowerCase();
+    if (cat.includes('sanitation') || cat.includes('drainage') || cat.includes('sewer') || cat.includes('emergency')) return '#ef4444'; // Red
+    if (cat.includes('road') || cat.includes('public works') || cat.includes('pothole') || cat.includes('infrastructure') || cat.includes('traffic') || cat.includes('transport')) return '#f97316'; // Orange
+    if (cat.includes('electric') || cat.includes('light') || cat.includes('power') || cat.includes('wire')) return '#eab308'; // Yellow
+    if (cat.includes('water') || cat.includes('pipeline') || cat.includes('supply') || cat.includes('drinking')) return '#3b82f6'; // Blue
+    if (cat.includes('health') || cat.includes('waste') || cat.includes('garbage') || cat.includes('environment')) return '#10b981'; // Green
+    return '#ef4444'; // Default Red
   };
 
-  // Active Complaints for Map (filters out RESOLVED pins unless showResolvedOnMap is checked!)
+  const getCategoryColor = (cat, status = '') => {
+    return getPinColor({ category: cat, current_status: status });
+  };
+
+  // Active Complaints for Map (filters out RESOLVED pins unless showResolvedOnMap is checked or GREEN filter is active!)
   const activeMapComplaints = complaints.filter(c => {
-    if (!showResolvedOnMap && c.current_status === 'RESOLVED') return false;
-    const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
+    const pinColor = getPinColor(c);
+
+    // If filtering by GREEN (Solved / Healthy), ALWAYS show resolved complaints
+    if (selectedColorFilter === 'GREEN') {
+      if (pinColor !== '#10b981') return false;
+    } else {
+      // Otherwise respect showResolvedOnMap toggle
+      if (!showResolvedOnMap && c.current_status === 'RESOLVED') return false;
+    }
+
+    // Color button filter
+    if (selectedColorFilter === 'RED' && pinColor !== '#ef4444') return false;
+    if (selectedColorFilter === 'ORANGE' && pinColor !== '#f97316') return false;
+    if (selectedColorFilter === 'YELLOW' && pinColor !== '#eab308') return false;
+    if (selectedColorFilter === 'BLUE' && pinColor !== '#3b82f6') return false;
+
+    // Category dropdown filter (if selected)
+    if (selectedCategory !== 'ALL') {
+      const matchesDropdown = 
+        (selectedCategory === 'Sanitation & Drainage' && pinColor === '#ef4444') ||
+        (selectedCategory === 'Public Works' && pinColor === '#f97316') ||
+        (selectedCategory === 'Electricity' && pinColor === '#eab308') ||
+        (selectedCategory === 'Water Supply' && pinColor === '#3b82f6') ||
+        (selectedCategory === 'Solved' && pinColor === '#10b981') ||
+        c.category === selectedCategory;
+      if (!matchesDropdown) return false;
+    }
+
     const matchesUrgency = selectedUrgencyFilter === 'ALL' || c.urgency === selectedUrgencyFilter;
-    return matchesCat && matchesUrgency;
+    const matchesWard = selectedWardFilter === 'ALL' || c.ward_id === selectedWardFilter;
+    const matchesSearch = !citizenSearchGis.trim() || 
+      c.id.toLowerCase().includes(citizenSearchGis.toLowerCase()) ||
+      (c.citizen_name && c.citizen_name.toLowerCase().includes(citizenSearchGis.toLowerCase())) ||
+      (c.locality && c.locality.toLowerCase().includes(citizenSearchGis.toLowerCase())) ||
+      (c.citizen_phone && c.citizen_phone.includes(citizenSearchGis)) ||
+      (c.transcript && c.transcript.toLowerCase().includes(citizenSearchGis.toLowerCase()));
+
+    return matchesUrgency && matchesWard && matchesSearch;
   });
 
   // Calculate live pin color counts
-  const redCount = complaints.filter(c => (showResolvedOnMap || c.current_status !== 'RESOLVED') && getCategoryColor(c.category) === '#ef4444').length;
-  const orangeCount = complaints.filter(c => (showResolvedOnMap || c.current_status !== 'RESOLVED') && getCategoryColor(c.category) === '#f97316').length;
-  const yellowCount = complaints.filter(c => (showResolvedOnMap || c.current_status !== 'RESOLVED') && getCategoryColor(c.category) === '#eab308').length;
-  const blueCount = complaints.filter(c => (showResolvedOnMap || c.current_status !== 'RESOLVED') && getCategoryColor(c.category) === '#3b82f6').length;
-  const greenCount = complaints.filter(c => c.current_status === 'RESOLVED' || getCategoryColor(c.category) === '#10b981').length;
+  const redCount = complaints.filter(c => c.current_status !== 'RESOLVED' && getPinColor(c) === '#ef4444').length;
+  const orangeCount = complaints.filter(c => c.current_status !== 'RESOLVED' && getPinColor(c) === '#f97316').length;
+  const yellowCount = complaints.filter(c => c.current_status !== 'RESOLVED' && getPinColor(c) === '#eab308').length;
+  const blueCount = complaints.filter(c => c.current_status !== 'RESOLVED' && getPinColor(c) === '#3b82f6').length;
+  const greenCount = complaints.filter(c => c.current_status === 'RESOLVED' || getPinColor(c) === '#10b981').length;
   const todayCount = complaints.filter(c => c.created_at && c.created_at.includes('2026-08-26')).length || 18;
 
   const uniqueZones = Array.from(new Set(wardsList.map(w => w.zone))).filter(Boolean).sort((a, b) => {
@@ -397,7 +506,22 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
   // Master Complaints Table & Grid Filter Logic with AI Priority Sorting
   let filteredComplaints = complaints.filter(c => {
-    const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
+    const pinColor = getPinColor(c);
+    let matchesCat = true;
+    if (selectedColorFilter === 'RED') matchesCat = pinColor === '#ef4444';
+    else if (selectedColorFilter === 'ORANGE') matchesCat = pinColor === '#f97316';
+    else if (selectedColorFilter === 'YELLOW') matchesCat = pinColor === '#eab308';
+    else if (selectedColorFilter === 'BLUE') matchesCat = pinColor === '#3b82f6';
+    else if (selectedColorFilter === 'GREEN') matchesCat = pinColor === '#10b981';
+    else if (selectedCategory !== 'ALL') {
+      matchesCat = 
+        (selectedCategory === 'Sanitation & Drainage' && pinColor === '#ef4444') ||
+        (selectedCategory === 'Public Works' && pinColor === '#f97316') ||
+        (selectedCategory === 'Electricity' && pinColor === '#eab308') ||
+        (selectedCategory === 'Water Supply' && pinColor === '#3b82f6') ||
+        c.category === selectedCategory;
+    }
+
     const matchesStatus = selectedStatusFilter === 'ALL' || 
       (selectedStatusFilter === 'PENDING' && c.current_status === 'PENDING_ADMIN_REVIEW') ||
       (selectedStatusFilter === 'APPROVED' && (c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS')) ||
@@ -513,27 +637,82 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-stone-100">
               <div className="flex items-center space-x-2">
                 <Layers className="w-5 h-5 text-orange-600" />
-                <h3 className="text-base font-extrabold text-stone-900">GIS Spatial Demand Map — Indore City Overview</h3>
+                <h3 className="text-base font-extrabold text-stone-900">City GIS Pinpoints Map — Indore Citizen Grievances</h3>
                 <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-orange-200">
-                  {activeMapComplaints.length} Unresolved Pins Active
+                  📍 {activeMapComplaints.length} Citizen Grievance Pinpoints
                 </span>
               </div>
               
               {/* Advanced Filter Toolbar */}
               <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
                 <span className="text-stone-400">Map Filters:</span>
+
+                {/* Ward Filter */}
+                <select
+                  value={selectedWardFilter}
+                  onChange={(e) => {
+                    setSelectedWardFilter(e.target.value);
+                    if (e.target.value === 'ALL') {
+                      setAdminMapCenter([22.7196, 75.8577]);
+                      setAdminMapZoom(13);
+                    } else {
+                      const found = wardsList.find(w => w.id === e.target.value);
+                      if (found && found.lat && found.lng) {
+                        setAdminMapCenter([found.lat, found.lng]);
+                        setAdminMapZoom(14);
+                      }
+                    }
+                  }}
+                  className="bg-stone-50 border border-stone-300 text-stone-800 px-3 py-1.5 rounded-xl font-bold focus:outline-none cursor-pointer"
+                >
+                  <option value="ALL">All 85 Wards</option>
+                  {wardsList.map(w => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
                 
                 {/* Category Dropdown */}
                 <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  value={selectedColorFilter === 'ALL' ? selectedCategory : (
+                    selectedColorFilter === 'RED' ? 'Sanitation & Drainage' :
+                    selectedColorFilter === 'ORANGE' ? 'Public Works' :
+                    selectedColorFilter === 'YELLOW' ? 'Electricity' :
+                    selectedColorFilter === 'BLUE' ? 'Water Supply' :
+                    selectedColorFilter === 'GREEN' ? 'Solved' : 'ALL'
+                  )}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'ALL') {
+                      setSelectedCategory('ALL');
+                      setSelectedColorFilter('ALL');
+                    } else if (val === 'Sanitation & Drainage') {
+                      setSelectedCategory('Sanitation & Drainage');
+                      setSelectedColorFilter('RED');
+                    } else if (val === 'Public Works') {
+                      setSelectedCategory('Public Works');
+                      setSelectedColorFilter('ORANGE');
+                    } else if (val === 'Electricity') {
+                      setSelectedCategory('Electricity');
+                      setSelectedColorFilter('YELLOW');
+                    } else if (val === 'Water Supply') {
+                      setSelectedCategory('Water Supply');
+                      setSelectedColorFilter('BLUE');
+                    } else if (val === 'Solved') {
+                      setSelectedCategory('ALL');
+                      setSelectedColorFilter('GREEN');
+                      setShowResolvedOnMap(true);
+                    }
+                  }}
                   className="bg-stone-50 border border-stone-300 text-stone-800 px-3 py-1.5 rounded-xl font-bold focus:outline-none cursor-pointer"
                 >
-                  <option value="ALL">All Categories</option>
-                  <option value="Sanitation & Drainage">Sanitation & Drainage (Red)</option>
-                  <option value="Public Works">Roads & Potholes (Orange)</option>
-                  <option value="Electricity">Electricity & Lights (Yellow)</option>
-                  <option value="Water Supply">Water Supply (Blue)</option>
+                  <option value="ALL">All Categories & Pins</option>
+                  <option value="Sanitation & Drainage">Sanitation & Drainage (🔴 Red)</option>
+                  <option value="Public Works">Roads & Potholes (🟧 Orange)</option>
+                  <option value="Electricity">Electricity & Lights (🟨 Yellow)</option>
+                  <option value="Water Supply">Water Supply (🟦 Blue)</option>
+                  <option value="Solved">Solved Grievances (🟩 Green)</option>
                 </select>
 
                 {/* Urgency Filter */}
@@ -550,63 +729,137 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               </div>
             </div>
 
+            {/* Citizen Search & Pinpoint Selector */}
+            <div className="bg-stone-50 border border-stone-200 rounded-2xl p-3 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+              <div className="flex-1 flex items-center gap-2">
+                <Search className="w-4 h-4 text-stone-400 shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Search citizen name, phone, or token ID to pinpoint on map..."
+                  value={citizenSearchGis}
+                  onChange={(e) => setCitizenSearchGis(e.target.value)}
+                  className="bg-white border border-stone-300 text-stone-900 text-xs rounded-xl px-3 py-1.5 w-full font-medium focus:outline-none focus:border-orange-500 shadow-xs"
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-stone-600 shrink-0">Select Person:</span>
+                <select
+                  value={selectedPinPerson?.id || ''}
+                  onChange={(e) => {
+                    const found = complaints.find(c => c.id === e.target.value);
+                    if (found) {
+                      setSelectedPinPerson(found);
+                      setAdminMapCenter([found.lat, found.lng]);
+                      setAdminMapZoom(16);
+                    } else {
+                      setSelectedPinPerson(null);
+                    }
+                  }}
+                  className="bg-white border border-stone-300 text-stone-900 text-xs rounded-xl px-3 py-1.5 font-bold focus:outline-none focus:border-orange-500 cursor-pointer shadow-xs max-w-xs truncate"
+                >
+                  <option value="">-- Choose Citizen to Locate Pinpoint --</option>
+                  {complaints
+                    .filter(c => !citizenSearchGis.trim() || 
+                      (c.citizen_name && c.citizen_name.toLowerCase().includes(citizenSearchGis.toLowerCase())) ||
+                      c.id.toLowerCase().includes(citizenSearchGis.toLowerCase()) ||
+                      (c.citizen_phone && c.citizen_phone.includes(citizenSearchGis)) ||
+                      (c.locality && c.locality.toLowerCase().includes(citizenSearchGis.toLowerCase()))
+                    )
+                    .slice(0, 100)
+                    .map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.citizen_name || 'Citizen'} ({c.id}) — {c.locality?.split(',')[0]}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Selected Citizen Pinpoint Inspector Card */}
+            {selectedPinPerson && (
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-2xl p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-fade-in">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-orange-600 text-white flex items-center justify-center font-black text-xl shadow-md shrink-0">
+                    ★
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-extrabold text-stone-900 text-sm">{selectedPinPerson.citizen_name || 'Verified Resident'}</span>
+                      <span className="font-mono text-xs bg-orange-200/80 text-orange-900 font-bold px-2 py-0.5 rounded">{selectedPinPerson.id}</span>
+                      <span className="text-[10px] bg-rose-100 text-rose-800 font-bold px-2 py-0.5 rounded-full border border-rose-300">{selectedPinPerson.urgency}</span>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-full border border-emerald-300">{selectedPinPerson.current_status}</span>
+                    </div>
+                    <p className="text-xs text-stone-600 font-medium flex flex-wrap items-center gap-2">
+                      <span>📍 {selectedPinPerson.locality}</span>
+                      <span>•</span>
+                      <span>📞 {selectedPinPerson.citizen_phone || '+91 9826012345'}</span>
+                      <span>•</span>
+                      <span className="font-mono text-[11px] text-orange-700 font-bold">GPS: [{parseFloat(selectedPinPerson.lat).toFixed(4)}, {parseFloat(selectedPinPerson.lng).toFixed(4)}]</span>
+                    </p>
+                    <p className="text-xs text-stone-800 italic mt-0.5 font-sans">
+                      "{selectedPinPerson.transcript}"
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminMapCenter([selectedPinPerson.lat, selectedPinPerson.lng]);
+                      setAdminMapZoom(16);
+                    }}
+                    className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs px-3 py-2 rounded-xl shadow-xs transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>Focus Pinpoint</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPinPerson(null)}
+                    className="bg-stone-200 hover:bg-stone-300 text-stone-700 font-bold text-xs px-2.5 py-2 rounded-xl transition-all cursor-pointer"
+                    title="Unselect"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Map Container */}
             <div className="w-full h-[360px] sm:h-[480px] lg:h-[540px] rounded-2xl overflow-hidden border border-stone-200 relative shadow-inner">
               <MapContainer
-                center={[22.7000, 75.8350]}
+                center={adminMapCenter}
                 zoom={12}
                 scrollWheelZoom={true}
                 className="w-full h-full"
               >
                 <MapResizer />
+                <AdminMapFlyTo center={adminMapCenter} zoom={adminMapZoom} />
                 <TileLayer
                   attribution='&copy; Google Maps'
                   url="https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}"
                   maxZoom={20}
                 />
 
-                {/* Dynamic Geographic Hotspot Circles — grouped by ward so they appear exactly over pins */}
-                {(() => {
-                  // Group complaints by ward_id (geographic location, not category)
-                  const wardGroups = {};
-                  activeMapComplaints.forEach(c => {
-                    if (!wardGroups[c.ward_id]) wardGroups[c.ward_id] = [];
-                    wardGroups[c.ward_id].push(c);
-                  });
 
-                  return Object.entries(wardGroups).map(([wardId, list]) => {
-                    if (list.length < 3) return null;
 
-                    // Center = true average of actual pin coordinates in this ward
-                    const avgLat = list.reduce((acc, c) => acc + c.lat, 0) / list.length;
-                    const avgLng = list.reduce((acc, c) => acc + c.lng, 0) / list.length;
-
-                    // Color = dominant category in this ward
-                    const categoryCounts = {};
-                    list.forEach(c => { categoryCounts[c.category] = (categoryCounts[c.category] || 0) + 1; });
-                    const dominantCat = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0][0];
-                    const color = getCategoryColor(dominantCat);
-
-                    // Radius scales with number of complaints in the ward
-                    const radius = Math.min(1200, 300 + list.length * 8);
-
-                    return (
-                      <Circle
-                        key={wardId}
-                        center={[avgLat, avgLng]}
-                        radius={radius}
-                        pathOptions={{ color, fillColor: color, fillOpacity: 0.20, weight: 2 }}
-                      />
-                    );
-                  });
-                })()}
-
-                {activeMapComplaints.map((c) => (
-                  <Marker
-                    key={c.id}
-                    position={[c.lat, c.lng]}
-                    icon={createCustomIcon(getCategoryColor(c.category))}
-                  >
+                {activeMapComplaints.map((c) => {
+                  const isSelected = selectedPinPerson?.id === c.id;
+                  return (
+                    <Marker
+                      key={c.id}
+                      position={[c.lat, c.lng]}
+                      icon={createCustomIcon(getPinColor(c), isSelected)}
+                      eventHandlers={{
+                        click: () => {
+                          setSelectedPinPerson(c);
+                          setAdminMapCenter([c.lat, c.lng]);
+                          setAdminMapZoom(16);
+                        }
+                      }}
+                    >
                     <Popup>
                       <div className="p-2 space-y-2 max-w-xs text-xs font-sans">
                         <div className="flex items-center justify-between pb-1 border-b border-stone-200">
@@ -645,7 +898,8 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                       </div>
                     </Popup>
                   </Marker>
-                ))}
+                );
+              })}
               </MapContainer>
             </div>
           </div>
@@ -668,7 +922,13 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   <input
                     type="checkbox"
                     checked={showResolvedOnMap}
-                    onChange={(e) => setShowResolvedOnMap(e.target.checked)}
+                    onChange={(e) => {
+                      setShowResolvedOnMap(e.target.checked);
+                      if (!e.target.checked && selectedColorFilter === 'GREEN') {
+                        setSelectedColorFilter('ALL');
+                        setSelectedCategory('ALL');
+                      }
+                    }}
                     className="rounded text-orange-600 focus:ring-0 cursor-pointer"
                   />
                   <span>Show Solved Pins ({greenCount})</span>
@@ -681,9 +941,17 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               
               {/* Red Dots */}
               <button
-                onClick={() => setSelectedCategory('Sanitation & Drainage')}
+                onClick={() => {
+                  if (selectedColorFilter === 'RED') {
+                    setSelectedColorFilter('ALL');
+                    setSelectedCategory('ALL');
+                  } else {
+                    setSelectedColorFilter('RED');
+                    setSelectedCategory('Sanitation & Drainage');
+                  }
+                }}
                 className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Sanitation & Drainage' ? 'bg-rose-100 border-rose-400 ring-2 ring-rose-400/20' : 'bg-white border-stone-200 hover:border-rose-300'
+                  selectedColorFilter === 'RED' ? 'bg-rose-100 border-rose-400 ring-2 ring-rose-400/30 shadow-xs' : 'bg-white border-stone-200 hover:border-rose-300'
                 }`}
               >
                 <div className="flex items-center space-x-2.5">
@@ -698,9 +966,17 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
               {/* Orange Dots */}
               <button
-                onClick={() => setSelectedCategory('Public Works')}
+                onClick={() => {
+                  if (selectedColorFilter === 'ORANGE') {
+                    setSelectedColorFilter('ALL');
+                    setSelectedCategory('ALL');
+                  } else {
+                    setSelectedColorFilter('ORANGE');
+                    setSelectedCategory('Public Works');
+                  }
+                }}
                 className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Public Works' ? 'bg-orange-100 border-orange-400 ring-2 ring-orange-400/20' : 'bg-white border-stone-200 hover:border-orange-300'
+                  selectedColorFilter === 'ORANGE' ? 'bg-orange-100 border-orange-400 ring-2 ring-orange-400/30 shadow-xs' : 'bg-white border-stone-200 hover:border-orange-300'
                 }`}
               >
                 <div className="flex items-center space-x-2.5">
@@ -715,9 +991,17 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
               {/* Yellow Dots */}
               <button
-                onClick={() => setSelectedCategory('Electricity')}
+                onClick={() => {
+                  if (selectedColorFilter === 'YELLOW') {
+                    setSelectedColorFilter('ALL');
+                    setSelectedCategory('ALL');
+                  } else {
+                    setSelectedColorFilter('YELLOW');
+                    setSelectedCategory('Electricity');
+                  }
+                }}
                 className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Electricity' ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-400/20' : 'bg-white border-stone-200 hover:border-amber-300'
+                  selectedColorFilter === 'YELLOW' ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-400/30 shadow-xs' : 'bg-white border-stone-200 hover:border-amber-300'
                 }`}
               >
                 <div className="flex items-center space-x-2.5">
@@ -732,9 +1016,17 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
               {/* Blue Dots */}
               <button
-                onClick={() => setSelectedCategory('Water Supply')}
+                onClick={() => {
+                  if (selectedColorFilter === 'BLUE') {
+                    setSelectedColorFilter('ALL');
+                    setSelectedCategory('ALL');
+                  } else {
+                    setSelectedColorFilter('BLUE');
+                    setSelectedCategory('Water Supply');
+                  }
+                }}
                 className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
-                  selectedCategory === 'Water Supply' ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400/20' : 'bg-white border-stone-200 hover:border-blue-300'
+                  selectedColorFilter === 'BLUE' ? 'bg-blue-100 border-blue-400 ring-2 ring-blue-400/30 shadow-xs' : 'bg-white border-stone-200 hover:border-blue-300'
                 }`}
               >
                 <div className="flex items-center space-x-2.5">
@@ -749,8 +1041,20 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
               {/* Green Dots */}
               <button
-                onClick={() => setSelectedCategory('ALL')}
-                className="p-3 rounded-2xl border bg-white border-stone-200 hover:border-emerald-300 transition-all text-left flex items-center justify-between cursor-pointer"
+                onClick={() => {
+                  if (selectedColorFilter === 'GREEN') {
+                    setSelectedColorFilter('ALL');
+                    setSelectedCategory('ALL');
+                    setShowResolvedOnMap(false);
+                  } else {
+                    setSelectedColorFilter('GREEN');
+                    setSelectedCategory('ALL');
+                    setShowResolvedOnMap(true);
+                  }
+                }}
+                className={`p-3 rounded-2xl border transition-all text-left flex items-center justify-between cursor-pointer ${
+                  selectedColorFilter === 'GREEN' ? 'bg-emerald-100 border-emerald-400 ring-2 ring-emerald-400/30 shadow-xs' : 'bg-white border-stone-200 hover:border-emerald-300'
+                }`}
               >
                 <div className="flex items-center space-x-2.5">
                   <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shadow-md shadow-emerald-500/30 shrink-0" />

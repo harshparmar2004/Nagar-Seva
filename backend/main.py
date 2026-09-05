@@ -317,9 +317,13 @@ def get_ward_analytics(ward_id: str):
         }
 
 @app.get("/api/complaints")
-def get_complaints(limit: int = 100):
+def get_complaints(limit: int = 1000, ward_id: Optional[str] = None):
     with Session(engine) as session:
-        return session.exec(select(Complaint).limit(limit)).all()
+        query = select(Complaint)
+        if ward_id and ward_id != "ALL":
+            query = query.where(Complaint.ward_id == ward_id)
+        query = query.order_by(Complaint.created_at.desc())
+        return session.exec(query.limit(limit)).all()
 
 @app.get("/api/complaints/user/{user_email}")
 def get_user_complaints(user_email: str):

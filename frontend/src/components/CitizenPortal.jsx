@@ -602,8 +602,13 @@ export default function CitizenPortal({ activeSubTab, onNavigateToMyComplaints, 
       console.warn("localStorage note:", e);
     }
 
-    // 2. Real-time broadcast to Firebase Firestore
+    // 2. Real-time broadcast to Firebase Firestore & instant in-memory window event
     saveComplaintToFirestore(newComplaint);
+    if (typeof window !== 'undefined') {
+      try {
+        window.dispatchEvent(new CustomEvent('nagarmitra_new_complaint', { detail: newComplaint }));
+      } catch (_) {}
+    }
 
     // 3. Asynchronous non-blocking sync to backend
     try {

@@ -50,6 +50,11 @@
   background: #FFFFFF !important;
 }
 
+.leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
 /* Warm Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
