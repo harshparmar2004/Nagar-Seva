@@ -131,25 +131,29 @@ def resolve_indore_spatial_ward(lat: float, lon: float, preferred_ward_id: Optio
     }
 
 def analyze_complaint_text_with_ai(text: str) -> Dict[str, Any]:
-    text_lower = text.lower()
-    if any(k in text_lower for k in ["drain", "sewer", "nala", "overflow", "leak"]):
-        domain = "Sanitation & Drainage"
-        severity = 4 if any(k in text_lower for k in ["overflow", "dirty", "health", "school", "emergency"]) else 3
-    elif any(k in text_lower for k in ["water", "peene", "pipeline", "tap", "supply"]):
-        domain = "Water Supply"
-        severity = 4
-    elif any(k in text_lower for k in ["light", "wire", "pole", "current", "spark", "discom", "power", "electricity"]):
+    text_lower = text.lower() if text else ""
+    
+    if any(k in text_lower for k in ["bijli", "light", "batti", "andhera", "dark", "wire", "taar", "pole", "khamba", "transformer", "current", "spark", "discom", "power", "electricity", "shock"]):
         domain = "Electricity & Streetlights"
-        severity = 5 if any(k in text_lower for k in ["snapped", "live", "current", "spark", "fallen"]) else 3
-    elif any(k in text_lower for k in ["garbage", "trash", "kachra", "waste", "cleaning", "dump"]):
-        domain = "Sanitation & Environment"
-        severity = 2 if "smell" in text_lower else 3
-    elif any(k in text_lower for k in ["road", "pothole", "asphalt", "gadda", "tar", "bridge", "footpath"]):
+        severity = 5 if any(k in text_lower for k in ["snapped", "live", "current", "spark", "fallen", "shock", "khamba gir"]) else 3
+    elif any(k in text_lower for k in ["sadak", "gaddhe", "gadda", "khadda", "khadde", "road", "pothole", "potholes", "asphalt", "tar", "damar", "bridge", "pul", "pulia", "flyover", "footpath", "divider", "toot", "tuti"]):
         domain = "Roads & Infrastructure"
-        severity = 4 if "accident" in text_lower or "deep" in text_lower else 2
-    elif any(k in text_lower for k in ["fogging", "dengue", "mosquito", "spray", "hospital", "illness"]):
+        severity = 4 if any(k in text_lower for k in ["accident", "deep", "dangerous", "fatal", "bike", "traffic"]) else 3
+    elif any(k in text_lower for k in ["kachra", "kooda", "garbage", "trash", "waste", "dump", "dustbin", "safai", "cleaning", "dher", "litter", "dead animal"]):
+        domain = "Solid Waste Management"
+        severity = 4 if any(k in text_lower for k in ["dead animal", "hospital", "rotting", "stink", "smell", "badboo"]) else 3
+    elif any(k in text_lower for k in ["peene", "drinking water", "pipeline", "pipe", "tap", "nal", "supply", "tanker", "borewell"]) or ("paani" in text_lower and "nala" not in text_lower and "gutter" not in text_lower and "sewer" not in text_lower):
+        domain = "Water Supply"
+        severity = 4 if any(k in text_lower for k in ["burst", "dirty", "peela", "contamination", "leak", "dry"]) else 3
+    elif any(k in text_lower for k in ["machhar", "mosquito", "fogging", "dengue", "malaria", "hospital", "illness", "spray", "chhidkaw", "fever", "dawa"]):
         domain = "Healthcare"
         severity = 4
+    elif any(k in text_lower for k in ["ped", "tree", "branch", "park", "garden", "grass", "encroachment"]):
+        domain = "Parks & Horticulture"
+        severity = 4 if "gir gaya" in text_lower or "fallen" in text_lower else 2
+    elif any(k in text_lower for k in ["drain", "sewer", "sewar", "nala", "naala", "nali", "naali", "gutter", "overflow", "leak", "keechad", "manhole", "septic"]):
+        domain = "Sanitation & Drainage"
+        severity = 4 if any(k in text_lower for k in ["overflow", "dirty", "health", "school", "emergency", "keechad"]) else 3
     else:
         domain = "Sanitation & Drainage"
         severity = 3

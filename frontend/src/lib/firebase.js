@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
 
 // Firebase configuration for project 'nagar-seva' (nagar-seva-fbae2)
 // Uses environment variable VITE_FIREBASE_API_KEY when provided, with fallback
@@ -93,6 +93,84 @@ export const getFirestoreUserComplaints = async (userEmail) => {
   } catch (err) {
     console.warn("Firestore user complaints fetch note:", err.message);
     return [];
+  }
+};
+
+/**
+ * Fetch ALL complaints directly from Firebase Firestore (for Super Admin & GIS)
+ */
+export const getAllFirestoreComplaints = async () => {
+  try {
+    const q = collection(db, 'complaints');
+    const snapshot = await getDocs(q);
+    const list = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data && data.id) list.push(data);
+    });
+    return list;
+  } catch (err) {
+    console.warn("Firestore all complaints fetch note:", err.message);
+    return [];
+  }
+};
+
+/**
+ * Fetch a single complaint directly from Firebase Firestore by ID
+ */
+export const getFirestoreComplaintById = async (complaintId) => {
+  if (!complaintId) return null;
+  try {
+    const complaintRef = doc(db, 'complaints', complaintId);
+    const snap = await getDoc(complaintRef);
+    if (snap.exists()) {
+      return snap.data();
+    }
+    return null;
+  } catch (err) {
+    console.warn("Firestore single complaint fetch note:", err.message);
+    return null;
+  }
+};
+
+/**
+ * Update complaint status or details directly in Firebase Firestore
+ */
+export const updateComplaintInFirestore = async (complaintId, updates) => {
+  if (!complaintId) return;
+  try {
+    const complaintRef = doc(db, 'complaints', complaintId);
+    await setDoc(complaintRef, {
+      ...updates,
+      updatedAt: new Date().toISOString()
+    }, { merge: true });
+    console.log(`✓ Complaint ${complaintId} updated in Firebase Firestore:`, updates);
+  } catch (err) {
+    console.warn("Firestore complaint update note:", err.message);
+  }
+};
+
+/**
+ * Real-time listener for ALL complaints (instant sync to Super Admin without reload)
+ */
+export const subscribeToAllFirestoreComplaints = (onUpdate) => {
+  if (typeof onUpdate !== 'function') return () => {};
+  try {
+    const q = collection(db, 'complaints');
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const list = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data && data.id) list.push(data);
+      });
+      onUpdate(list);
+    }, (err) => {
+      console.warn("Firestore real-time subscription note:", err.message);
+    });
+    return unsubscribe;
+  } catch (err) {
+    console.warn("Firestore real-time subscription init note:", err.message);
+    return () => {};
   }
 };
 

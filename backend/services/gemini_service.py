@@ -33,6 +33,16 @@ DEPARTMENT_MAPPING = {
         "ministry": "Ministry of Health & Family Welfare (MoHFW)",
         "nodal_officer": "Dr. B.S. Saitya (Chief Medical & Health Officer)"
     },
+    "Solid Waste Management": {
+        "dept": "Swachh Indore Solid Waste Management Division, IMC",
+        "ministry": "Ministry of Housing & Urban Affairs (Swachh Bharat Urban)",
+        "nodal_officer": "Shri Mahesh Sharma (Additional Commissioner, Swachhata)"
+    },
+    "Parks & Horticulture": {
+        "dept": "IMC Horticulture & Urban Greenery Department",
+        "ministry": "Ministry of Housing & Urban Affairs (MoHUA)",
+        "nodal_officer": "Shri Kailash Joshi (Superintendent of Gardens, IMC)"
+    },
     "Education": {
         "dept": "District Education Office (DEO) Indore",
         "ministry": "Ministry of Education",
@@ -45,23 +55,29 @@ def process_voice_or_text_with_gemini(text_content: Optional[str] = None, audio_
     Process citizen voice note or text using Google Gemini AI NLU.
     Auto-detects Category, Urgency, Health Risk, and Responsible Department/Ministry.
     """
-    input_text = text_content or "Hamare ward 14 me paani ka nala overflow ho gaya hai, sadak tut gayi hai, bacche bimar ho rahe hain!"
+    input_text = text_content or "Hamare ward me sadak par nala overflow ho gaya hai aur paani bhar gaya hai!"
     lower_txt = input_text.lower()
     
     cat = "Sanitation & Drainage"
     urgency = "High"
-    health = "bimar" in lower_txt or "hospital" in lower_txt or "dengue" in lower_txt
+    health = any(k in lower_txt for k in ["bimar", "hospital", "dengue", "malaria", "health", "ill", "doctor"])
     
-    if "paani" in lower_txt and "nala" not in lower_txt and "pipe" not in lower_txt:
-        cat = "Water Supply"
-    elif "sadak" in lower_txt or "gaddhe" in lower_txt or "road" in lower_txt or "bridge" in lower_txt:
-        cat = "Roads & Infrastructure"
-    elif "bijli" in lower_txt or "light" in lower_txt or "pole" in lower_txt or "wire" in lower_txt or "electricity" in lower_txt:
+    if any(k in lower_txt for k in ["bijli", "light", "batti", "andhera", "dark", "wire", "taar", "pole", "khamba", "transformer", "current", "spark", "discom", "power", "shock"]):
         cat = "Electricity & Streetlights"
-    elif "doctor" in lower_txt or "dawayi" in lower_txt or "hospital" in lower_txt:
+    elif any(k in lower_txt for k in ["sadak", "gaddhe", "gadda", "khadda", "khadde", "road", "pothole", "asphalt", "tar", "bridge", "pul", "divider", "footpath"]):
+        cat = "Roads & Infrastructure"
+    elif any(k in lower_txt for k in ["kachra", "kooda", "garbage", "trash", "waste", "dump", "dustbin", "safai", "dher", "litter"]):
+        cat = "Solid Waste Management"
+    elif any(k in lower_txt for k in ["peene", "drinking water", "pipeline", "tap", "nal", "supply", "tanker", "borewell"]) or ("paani" in lower_txt and "nala" not in lower_txt and "gutter" not in lower_txt):
+        cat = "Water Supply"
+    elif any(k in lower_txt for k in ["machhar", "mosquito", "fogging", "dengue", "malaria", "hospital", "spray", "chhidkaw"]):
         cat = "Healthcare"
+    elif any(k in lower_txt for k in ["ped", "tree", "branch", "park", "garden", "grass"]):
+        cat = "Parks & Horticulture"
+    elif any(k in lower_txt for k in ["nala", "naala", "nali", "drain", "sewer", "gutter", "overflow", "keechad", "manhole", "septic"]):
+        cat = "Sanitation & Drainage"
 
-    if "overflow" in lower_txt or "tut" in lower_txt or "khatra" in lower_txt or "critical" in lower_txt or "accident" in lower_txt:
+    if any(k in lower_txt for k in ["overflow", "snapped", "live wire", "spark", "tut", "accident", "khatra", "danger", "critical", "emergency", "fatal", "deep"]):
         urgency = "Critical"
 
     dept_info = DEPARTMENT_MAPPING.get(cat, DEPARTMENT_MAPPING["Sanitation & Drainage"])

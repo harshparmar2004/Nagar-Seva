@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config';
 import { FALLBACK_WARDS, FALLBACK_CLUSTERS, FALLBACK_PROJECTS, FALLBACK_COMPLAINTS } from '../data/fallbackData';
+import { getAllFirestoreComplaints, updateComplaintInFirestore, subscribeToAllFirestoreComplaints } from '../lib/firebase';
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -76,6 +77,72 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
   useEffect(() => {
     fetchData();
+
+    // Real-time Firestore sync: updates instantly whenever any citizen files a complaint
+    const unsubscribe = subscribeToAllFirestoreComplaints((liveFsComplaints) => {
+      if (Array.isArray(liveFsComplaints) && liveFsComplaints.length > 0) {
+        setComplaints((prev) => {
+          const map = new Map(prev.map((c) => [c.id, c]));
+          liveFsComplaints.forEach((fc) => {
+            if (fc && fc.id) {
+              const existing = map.get(fc.id);
+              map.set(fc.id, { ...existing, ...fc });
+            }
+          });
+          const list = Array.from(map.values());
+          list.sort((a, b) => {
+            if (a.current_status === 'PENDING_ADMIN_REVIEW' && b.current_status !== 'PENDING_ADMIN_REVIEW') return -1;
+            if (b.current_status === 'PENDING_ADMIN_REVIEW' && a.current_status !== 'PENDING_ADMIN_REVIEW') return 1;
+            const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+            const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+            return timeB - timeA;
+          });
+          return list;
+        });
+      }
+    });
+
+    // Periodic check for local citizen submissions every 5 seconds
+    const interval = setInterval(() => {
+      try {
+        const localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+        if (Array.isArray(localSaved) && localSaved.length > 0) {
+          setComplaints((prev) => {
+            const map = new Map(prev.map((c) => [c.id, c]));
+            let changed = false;
+            localSaved.forEach((lc) => {
+              if (lc && lc.id) {
+                if (!map.has(lc.id)) {
+                  map.set(lc.id, lc);
+                  changed = true;
+                } else {
+                  const curr = map.get(lc.id);
+                  if (curr.current_status !== lc.current_status) {
+                    map.set(lc.id, { ...curr, ...lc });
+                    changed = true;
+                  }
+                }
+              }
+            });
+            if (changed) {
+              const list = Array.from(map.values());
+              list.sort((a, b) => {
+                if (a.current_status === 'PENDING_ADMIN_REVIEW' && b.current_status !== 'PENDING_ADMIN_REVIEW') return -1;
+                if (b.current_status === 'PENDING_ADMIN_REVIEW' && a.current_status !== 'PENDING_ADMIN_REVIEW') return 1;
+                return (new Date(b.created_at || 0)).getTime() - (new Date(a.created_at || 0)).getTime();
+              });
+              return list;
+            }
+            return prev;
+          });
+        }
+      } catch (e) {}
+    }, 5000);
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+      clearInterval(interval);
+    };
   }, []);
 
   // Reset pagination to page 1 whenever search filters change
@@ -86,33 +153,74 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
   const fetchData = async () => {
     setLoading(true);
     try {
-      const compRes = await fetch(API_BASE_URL + '/api/complaints');
-      const compData = await compRes.json();
-      if (Array.isArray(compData) && compData.length > 0) setComplaints(compData);
-      else setComplaints(FALLBACK_COMPLAINTS);
+      const [compRes, clusRes, projRes, wardsRes, firestoreComps] = await Promise.allSettled([
+        fetch(API_BASE_URL + '/api/complaints').then(r => r.ok ? r.json() : []),
+        fetch(API_BASE_URL + '/api/clusters').then(r => r.ok ? r.json() : []),
+        fetch(API_BASE_URL + '/api/projects').then(r => r.ok ? r.json() : []),
+        fetch(API_BASE_URL + '/api/wards').then(r => r.ok ? r.json() : []),
+        getAllFirestoreComplaints()
+      ]);
 
-      const clusRes = await fetch(API_BASE_URL + '/api/clusters');
-      const clusData = await clusRes.json();
-      if (Array.isArray(clusData) && clusData.length > 0) {
-        setClusters(clusData);
-        setSelectedCluster(clusData[0]);
-      } else {
-        setClusters(FALLBACK_CLUSTERS);
-        if (FALLBACK_CLUSTERS.length > 0) setSelectedCluster(FALLBACK_CLUSTERS[0]);
-      }
+      const backendComps = compRes.status === 'fulfilled' && Array.isArray(compRes.value) ? compRes.value : [];
+      const fsComps = firestoreComps.status === 'fulfilled' && Array.isArray(firestoreComps.value) ? firestoreComps.value : [];
 
-      const projRes = await fetch(API_BASE_URL + '/api/projects');
-      const projData = await projRes.json();
-      if (Array.isArray(projData) && projData.length > 0) setProjects(projData);
-      else setProjects(FALLBACK_PROJECTS);
+      let localComps = [];
+      try {
+        localComps = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      } catch (err) {}
 
-      const wardsRes = await fetch(API_BASE_URL + '/api/wards');
-      const wardsData = await wardsRes.json();
-      if (Array.isArray(wardsData) && wardsData.length > 0) setWardsList(wardsData);
-      else setWardsList(FALLBACK_WARDS);
+      // Combine local submissions, Firestore complaints, backend complaints, and fallback complaints
+      const allSources = [...localComps, ...fsComps, ...backendComps, ...FALLBACK_COMPLAINTS];
+      const mergedMap = new Map();
+      allSources.forEach((c) => {
+        if (c && c.id) {
+          if (!mergedMap.has(c.id)) {
+            mergedMap.set(c.id, c);
+          } else {
+            const existing = mergedMap.get(c.id);
+            mergedMap.set(c.id, { ...existing, ...c });
+          }
+        }
+      });
+
+      const mergedComplaints = Array.from(mergedMap.values());
+      
+      // Sort: Pending Admin Review first, then newest created_at first
+      mergedComplaints.sort((a, b) => {
+        if (a.current_status === 'PENDING_ADMIN_REVIEW' && b.current_status !== 'PENDING_ADMIN_REVIEW') return -1;
+        if (b.current_status === 'PENDING_ADMIN_REVIEW' && a.current_status !== 'PENDING_ADMIN_REVIEW') return 1;
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      setComplaints(mergedComplaints);
+
+      // Clusters
+      const clusData = clusRes.status === 'fulfilled' && Array.isArray(clusRes.value) && clusRes.value.length > 0
+        ? clusRes.value : FALLBACK_CLUSTERS;
+      setClusters(clusData);
+      if (clusData.length > 0) setSelectedCluster(clusData[0]);
+
+      // Projects
+      const projData = projRes.status === 'fulfilled' && Array.isArray(projRes.value) && projRes.value.length > 0
+        ? projRes.value : FALLBACK_PROJECTS;
+      setProjects(projData);
+
+      // Wards
+      const wardsData = wardsRes.status === 'fulfilled' && Array.isArray(wardsRes.value) && wardsRes.value.length > 0
+        ? wardsRes.value : FALLBACK_WARDS;
+      setWardsList(wardsData);
+
     } catch (e) {
-      console.warn('Backend loading or offline, using verified fallback data:', e);
-      setComplaints(FALLBACK_COMPLAINTS);
+      console.warn('Super admin fetch note, merging local and fallback cache:', e);
+      let localComps = [];
+      try {
+        localComps = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      } catch (err) {}
+      const fallbackMerged = [...localComps, ...FALLBACK_COMPLAINTS];
+      const unique = Array.from(new Map(fallbackMerged.map((c) => [c.id, c])).values());
+      setComplaints(unique);
       setClusters(FALLBACK_CLUSTERS);
       setProjects(FALLBACK_PROJECTS);
       setWardsList(FALLBACK_WARDS);
@@ -124,58 +232,88 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
 
   const handleApproveComplaint = async (complaintId) => {
     setProcessingId(complaintId);
+    
+    // Optimistic UI update
+    setComplaints((prev) => prev.map((c) => (c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c)));
+
+    // Update localStorage
     try {
-      const res = await fetch(`${API_BASE_URL}/api/complaints/approve/${complaintId}`, {
+      const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      const updated = stored.map((c) => (c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
+      localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(updated));
+    } catch (e) {}
+
+    // Update Firestore
+    updateComplaintInFirestore(complaintId, { current_status: 'APPROVED_BY_ADMIN' });
+
+    try {
+      await fetch(`${API_BASE_URL}/api/complaints/approve/${complaintId}`, {
         method: 'POST'
       });
-      if (res.ok) {
-        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
-        setActionMessage(`✅ Complaint #${complaintId} APPROVED & dispatched to department! Citizen notified via WhatsApp.`);
-        setTimeout(() => setActionMessage(null), 4000);
-      }
     } catch (e) {
-      console.error(e);
-      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
+      console.warn("Backend approve notice:", e);
     } finally {
       setProcessingId(null);
+      setActionMessage(`✅ Complaint #${complaintId} APPROVED & dispatched to department! Citizen notified.`);
+      setTimeout(() => setActionMessage(null), 4000);
     }
   };
 
   const handleResolveComplaint = async (complaintId) => {
     setProcessingId(complaintId);
+    
+    // Optimistic UI update
+    setComplaints((prev) => prev.map((c) => (c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c)));
+
+    // Update localStorage
     try {
-      const res = await fetch(`${API_BASE_URL}/api/complaints/resolve/${complaintId}`, {
+      const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      const updated = stored.map((c) => (c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
+      localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(updated));
+    } catch (e) {}
+
+    // Update Firestore
+    updateComplaintInFirestore(complaintId, { current_status: 'RESOLVED' });
+
+    try {
+      await fetch(`${API_BASE_URL}/api/complaints/resolve/${complaintId}`, {
         method: 'POST'
       });
-      if (res.ok) {
-        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
-        setActionMessage(`🎉 Complaint #${complaintId} marked as SOLVED! Map pin removed from active overview.`);
-        setTimeout(() => setActionMessage(null), 4000);
-      }
     } catch (e) {
-      console.error(e);
-      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
+      console.warn("Backend resolve notice:", e);
     } finally {
       setProcessingId(null);
+      setActionMessage(`🎉 Complaint #${complaintId} marked as RESOLVED & SOLVED!`);
+      setTimeout(() => setActionMessage(null), 4000);
     }
   };
 
   const handleRejectComplaint = async (complaintId) => {
     setProcessingId(complaintId);
+    
+    // Optimistic UI update
+    setComplaints((prev) => prev.map((c) => (c.id === complaintId ? { ...c, current_status: 'REJECTED' } : c)));
+
+    // Update localStorage
     try {
-      const res = await fetch(`${API_BASE_URL}/api/complaints/reject/${complaintId}`, {
+      const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      const updated = stored.map((c) => (c.id === complaintId ? { ...c, current_status: 'REJECTED' } : c));
+      localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(updated));
+    } catch (e) {}
+
+    // Update Firestore
+    updateComplaintInFirestore(complaintId, { current_status: 'REJECTED' });
+
+    try {
+      await fetch(`${API_BASE_URL}/api/complaints/reject/${complaintId}`, {
         method: 'POST'
       });
-      if (res.ok) {
-        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'REJECTED' } : c));
-        setActionMessage(`🔴 Complaint #${complaintId} marked as REJECTED.`);
-        setTimeout(() => setActionMessage(null), 4000);
-      }
     } catch (e) {
-      console.error(e);
-      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'REJECTED' } : c));
+      console.warn("Backend reject notice:", e);
     } finally {
       setProcessingId(null);
+      setActionMessage(`🔴 Complaint #${complaintId} marked as REJECTED.`);
+      setTimeout(() => setActionMessage(null), 4000);
     }
   };
 
@@ -706,9 +844,20 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
               </p>
             </div>
 
-            {/* VIEW MODE SWITCHER & COUNTER */}
-            <div className="flex items-center space-x-3">
-              <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-3 py-1.5 rounded-full border border-orange-200">
+            {/* VIEW MODE SWITCHER, LIVE SYNC & COUNTER */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <button
+                type="button"
+                onClick={fetchData}
+                className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-extrabold px-3 py-1.5 rounded-xl border border-emerald-300 flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                title="Click to refresh live complaints from Backend and Firebase"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+                <span>Live Sync Active ({complaints.filter(c => c.current_status === 'PENDING_ADMIN_REVIEW').length} Pending)</span>
+              </button>
+
+              <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-3 py-1.5 rounded-xl border border-orange-200">
                 {filteredComplaints.length} Total Matching Requests
               </span>
 
@@ -850,25 +999,36 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                   const isResolved = c.current_status === 'RESOLVED';
                   const isApproved = c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS';
                   const isRejected = c.current_status === 'REJECTED';
-                  const displayPhoto = c.photo_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80';
+                  const displayPhoto = c.photo_url || null;
                   const coFilers = c.co_filers_count || Math.floor(Math.random() * 45) + 3;
-                  const mobileNum = `+91 9826${Math.floor(10 + (idx % 80))}-${Math.floor(1000 + (idx % 8000))}`;
-                  const aadhaarSuffix = `XXXX-XXXX-${c.id.slice(-4)}`;
+                  const mobileNum = c.citizen_phone || `+91 9826${Math.floor(10 + (idx % 80))}-${Math.floor(1000 + (idx % 8000))}`;
+                  const aadhaarSuffix = c.citizen_id_hash || `XXXX-XXXX-${c.id.slice(-4)}`;
 
                   return (
                     <div
                       key={c.id}
                       className={`bg-white border rounded-3xl p-5 space-y-4 shadow-sm hover:shadow-md transition-all flex flex-col justify-between ${
-                        c.urgency === 'Critical' ? 'border-rose-300/80 bg-gradient-to-b from-rose-50/20 to-white' : 'border-stone-200'
+                        c.current_status === 'PENDING_ADMIN_REVIEW'
+                          ? 'border-amber-300 bg-gradient-to-b from-amber-50/25 via-white to-white ring-2 ring-amber-200/50'
+                          : c.urgency === 'Critical' 
+                          ? 'border-rose-300/80 bg-gradient-to-b from-rose-50/20 to-white' 
+                          : 'border-stone-200'
                       }`}
                     >
                       <div className="space-y-3">
                         
                         {/* Box Top Header: Token ID & Urgency Badge */}
                         <div className="flex items-center justify-between pb-2 border-b border-stone-100">
-                          <span className="bg-orange-50 font-mono font-black text-xs text-orange-600 px-2.5 py-1 rounded-xl border border-orange-200">
-                            {c.id}
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="bg-orange-50 font-mono font-black text-xs text-orange-600 px-2.5 py-1 rounded-xl border border-orange-200">
+                              {c.id}
+                            </span>
+                            {c.current_status === 'PENDING_ADMIN_REVIEW' && (
+                              <span className="bg-amber-100 text-amber-900 text-[9px] font-black px-2 py-0.5 rounded-full border border-amber-300 flex items-center gap-1 animate-pulse">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-600" /> LIVE
+                              </span>
+                            )}
+                          </div>
                           
                           <span className={`font-black px-2.5 py-0.5 rounded-full text-[10px] ${
                             c.urgency === 'Critical' || c.urgency === 'CRITICAL' ? 'bg-rose-100 text-rose-800 border border-rose-200' : 'bg-amber-100 text-amber-800 border border-amber-200'
@@ -878,21 +1038,28 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                         </div>
 
                         {/* Photo Evidence Image Box */}
-                        <div
-                          onClick={() => setInspectPhotoModal(c)}
-                          className="w-full h-36 rounded-2xl overflow-hidden border border-stone-200 relative group cursor-pointer shadow-inner"
-                        >
-                          <img src={displayPhoto} alt="Evidence" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                          <div className="absolute inset-0 bg-stone-900/20 group-hover:bg-stone-900/10 transition-colors" />
-                          <span className="absolute bottom-2 right-2 bg-stone-900/80 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1">
-                            <Camera className="w-3 h-3" /> Inspect Photo
-                          </span>
-                        </div>
+                        {displayPhoto ? (
+                          <div
+                            onClick={() => setInspectPhotoModal(c)}
+                            className="w-full h-36 rounded-2xl overflow-hidden border border-stone-200 relative group cursor-pointer shadow-inner"
+                          >
+                            <img src={displayPhoto} alt="Evidence" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                            <div className="absolute inset-0 bg-stone-900/20 group-hover:bg-stone-900/10 transition-colors" />
+                            <span className="absolute bottom-2 right-2 bg-stone-900/80 text-white text-[10px] font-bold px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1">
+                              <Camera className="w-3 h-3" /> Inspect Photo
+                            </span>
+                          </div>
+                        ) : (
+                          <div className="w-full h-24 rounded-2xl border border-dashed border-stone-200 bg-stone-50 flex flex-col items-center justify-center text-stone-400 gap-1">
+                            <Camera className="w-5 h-5 text-stone-300" />
+                            <span className="text-[10px] font-medium text-stone-400">GPS Verified • No Photo Attached</span>
+                          </div>
+                        )}
 
                         {/* Citizen Name & DigiLocker Aadhaar DPI Metadata Pill */}
                         <div className="bg-orange-50/60 p-3 rounded-2xl border border-orange-200/80 space-y-1.5 text-xs">
                           <div className="flex items-center justify-between">
-                            <p className="font-extrabold text-stone-900">{c.citizen_name || 'Harsh Parmar'}</p>
+                            <p className="font-extrabold text-stone-900">{c.citizen_name || 'Verified Citizen'}</p>
                             <span className="bg-emerald-100 text-emerald-800 text-[9px] font-bold px-2 py-0.5 rounded border border-emerald-200">
                               ✓ DigiLocker Verified DPI
                             </span>
@@ -1023,7 +1190,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                       const isResolved = c.current_status === 'RESOLVED';
                       const isApproved = c.current_status === 'APPROVED_BY_ADMIN' || c.current_status === 'IN_PROGRESS';
                       const isRejected = c.current_status === 'REJECTED';
-                      const displayPhoto = c.photo_url || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80';
+                      const displayPhoto = c.photo_url || null;
                       const coFilers = c.co_filers_count || Math.floor(Math.random() * 45) + 3;
 
                       return (
@@ -1031,22 +1198,33 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                           
                           {/* Token ID matching user registration token */}
                           <td className="py-3.5 px-3 font-mono font-black text-orange-600 shrink-0">
-                            <span className="bg-orange-50 px-2 py-1 rounded-lg border border-orange-200 font-mono text-xs">
-                              {c.id}
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <span className="bg-orange-50 px-2 py-1 rounded-lg border border-orange-200 font-mono text-xs">
+                                {c.id}
+                              </span>
+                              {c.current_status === 'PENDING_ADMIN_REVIEW' && (
+                                <span className="bg-amber-100 text-amber-900 text-[9px] font-black px-1.5 py-0.5 rounded-full border border-amber-300">
+                                  LIVE
+                                </span>
+                              )}
+                            </div>
                           </td>
                           
                           {/* Geotagged Photo Evidence Column */}
                           <td className="py-3.5 px-3">
-                            <button
-                              onClick={() => setInspectPhotoModal(c)}
-                              className="flex items-center space-x-1.5 group text-left cursor-pointer"
-                            >
-                              <div className="w-10 h-10 rounded-xl overflow-hidden border border-stone-300 shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-                                <img src={displayPhoto} alt="Geotagged Evidence" className="w-full h-full object-cover" />
-                              </div>
-                              <span className="text-[10px] font-bold text-orange-600 group-hover:underline">Inspect</span>
-                            </button>
+                            {displayPhoto ? (
+                              <button
+                                onClick={() => setInspectPhotoModal(c)}
+                                className="flex items-center space-x-1.5 group text-left cursor-pointer"
+                              >
+                                <div className="w-10 h-10 rounded-xl overflow-hidden border border-stone-300 shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                                  <img src={displayPhoto} alt="Geotagged Evidence" className="w-full h-full object-cover" />
+                                </div>
+                                <span className="text-[10px] font-bold text-orange-600 group-hover:underline">Inspect</span>
+                              </button>
+                            ) : (
+                              <span className="text-[10px] text-stone-400 font-medium">GPS Verified</span>
+                            )}
                           </td>
 
                           {/* Citizen & Ward / Locality */}

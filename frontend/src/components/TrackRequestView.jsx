@@ -9,6 +9,7 @@ import {
   CircleDot, CircleCheck, CircleDashed, Timer, Megaphone
 } from 'lucide-react';
 import { FALLBACK_COMPLAINTS, FALLBACK_WARDS } from '../data/fallbackData';
+import { getFirestoreComplaintById } from '../lib/firebase';
 
 const STATUS_CONFIG = {
   PENDING_ADMIN_REVIEW: {
@@ -101,11 +102,17 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
       console.warn("Live API track error, checking local/fallback registry:", e);
     }
 
-    // Local Storage and Verified Fallback Lookup
+    // Local Storage, Firestore, and Verified Fallback Lookup
     let localList = [];
     try { localList = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(err) {}
     const combined = [...localList, ...FALLBACK_COMPLAINTS];
-    const match = combined.find(c => c.id && c.id.toLowerCase() === cleanId.toLowerCase());
+    let match = combined.find(c => c.id && c.id.toLowerCase() === cleanId.toLowerCase());
+
+    if (!match) {
+      try {
+        match = await getFirestoreComplaintById(cleanId);
+      } catch (err) {}
+    }
 
     if (match) {
       const statusMap = {

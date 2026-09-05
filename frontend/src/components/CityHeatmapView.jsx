@@ -1,5 +1,6 @@
 import { API_BASE_URL } from '../config';
 import { FALLBACK_WARDS, FALLBACK_COMPLAINTS } from '../data/fallbackData';
+import { getAllFirestoreComplaints, updateComplaintInFirestore, subscribeToAllFirestoreComplaints } from '../lib/firebase';
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
@@ -137,37 +138,72 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
 
   useEffect(() => {
     fetchData();
+
+    // Real-time Firestore sync for incoming citizen complaints
+    const unsubscribe = subscribeToAllFirestoreComplaints((fsComps) => {
+      if (Array.isArray(fsComps) && fsComps.length > 0) {
+        setComplaints((prev) => {
+          const map = new Map(prev.map(c => [c.id, c]));
+          fsComps.forEach((fc) => {
+            if (fc && fc.id) {
+              map.set(fc.id, { ...(map.get(fc.id) || {}), ...fc });
+            }
+          });
+          return Array.from(map.values());
+        });
+      }
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [compRes, wardRes] = await Promise.all([
-        fetch(API_BASE_URL + '/api/complaints'),
-        fetch(API_BASE_URL + '/api/wards')
+      const [compRes, wardRes, firestoreComps] = await Promise.allSettled([
+        fetch(API_BASE_URL + '/api/complaints').then(r => r.ok ? r.json() : []),
+        fetch(API_BASE_URL + '/api/wards').then(r => r.ok ? r.json() : []),
+        getAllFirestoreComplaints()
       ]);
-      const compData = await compRes.json();
-      const wardData = await wardRes.json();
 
-      let allComps = Array.isArray(compData) && compData.length > 0 ? compData : FALLBACK_COMPLAINTS;
+      const backendComps = compRes.status === 'fulfilled' && Array.isArray(compRes.value) ? compRes.value : [];
+      const fsComps = firestoreComps.status === 'fulfilled' && Array.isArray(firestoreComps.value) ? firestoreComps.value : [];
 
-      // Merge local offline complaints from citizen submissions
+      let localSaved = [];
       try {
-        const localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
-        if (Array.isArray(localSaved) && localSaved.length > 0) {
-          const ids = new Set(allComps.map(c => c.id));
-          const uniqueLocal = localSaved.filter(c => !ids.has(c.id));
-          allComps = [...uniqueLocal, ...allComps];
-        }
+        localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
       } catch (err) {}
 
+      // Merge all sources: local citizen submissions, Firestore real-time DB, backend DB, and fallback seed
+      const allSources = [...localSaved, ...fsComps, ...backendComps, ...FALLBACK_COMPLAINTS];
+      const mergedMap = new Map();
+      allSources.forEach(c => {
+        if (c && c.id) {
+          if (!mergedMap.has(c.id)) {
+            mergedMap.set(c.id, c);
+          } else {
+            mergedMap.set(c.id, { ...mergedMap.get(c.id), ...c });
+          }
+        }
+      });
+
+      const allComps = Array.from(mergedMap.values());
       setComplaints(allComps);
 
-      if (Array.isArray(wardData) && wardData.length > 0) setWards(wardData);
-      else setWards(FALLBACK_WARDS);
+      const wardData = wardRes.status === 'fulfilled' && Array.isArray(wardRes.value) && wardRes.value.length > 0
+        ? wardRes.value : FALLBACK_WARDS;
+      setWards(wardData);
     } catch (e) {
       console.warn("Backend loading or offline, using fallback heatmap data:", e);
-      setComplaints(FALLBACK_COMPLAINTS);
+      let localSaved = [];
+      try {
+        localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      } catch (err) {}
+      const fallbackMerged = [...localSaved, ...FALLBACK_COMPLAINTS];
+      const unique = Array.from(new Map(fallbackMerged.map(c => [c.id, c])).values());
+      setComplaints(unique);
       setWards(FALLBACK_WARDS);
     } finally {
       setLoading(false);
@@ -175,26 +211,34 @@ export default function CityHeatmapView({ isSuperAdmin, onOpenAuth }) {
   };
 
   const handleApproveComplaint = async (complaintId) => {
+    // Optimistic UI update
+    setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
     try {
-      const res = await fetch(`${API_BASE_URL}/api/complaints/approve/${complaintId}`, { method: 'POST' });
-      if (res.ok) {
-        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
-      }
+      const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      const updated = stored.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c);
+      localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(updated));
+    } catch (e) {}
+    updateComplaintInFirestore(complaintId, { current_status: 'APPROVED_BY_ADMIN' });
+    try {
+      await fetch(`${API_BASE_URL}/api/complaints/approve/${complaintId}`, { method: 'POST' });
     } catch (e) {
       console.warn('Approve error:', e);
-      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'APPROVED_BY_ADMIN' } : c));
     }
   };
 
   const handleResolveComplaint = async (complaintId) => {
+    // Optimistic UI update
+    setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
     try {
-      const res = await fetch(`${API_BASE_URL}/api/complaints/resolve/${complaintId}`, { method: 'POST' });
-      if (res.ok) {
-        setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
-      }
+      const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      const updated = stored.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c);
+      localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(updated));
+    } catch (e) {}
+    updateComplaintInFirestore(complaintId, { current_status: 'RESOLVED' });
+    try {
+      await fetch(`${API_BASE_URL}/api/complaints/resolve/${complaintId}`, { method: 'POST' });
     } catch (e) {
       console.warn('Resolve error:', e);
-      setComplaints(prev => prev.map(c => c.id === complaintId ? { ...c, current_status: 'RESOLVED' } : c));
     }
   };
 

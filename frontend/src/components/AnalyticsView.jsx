@@ -1,4 +1,6 @@
 import { API_BASE_URL } from '../config';
+import { FALLBACK_COMPLAINTS } from '../data/fallbackData';
+import { getAllFirestoreComplaints } from '../lib/firebase';
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend, AreaChart, Area } from 'recharts';
 import { BarChart2, PieChart as PieIcon, TrendingUp, AlertTriangle, Activity, Database, CheckCircle2, Clock, AlertOctagon, Layers, Loader2, Calendar, ShieldCheck, CheckCheck, Filter, ChevronDown } from 'lucide-react';
@@ -37,18 +39,45 @@ export default function AnalyticsView() {
   const fetchAnalytics = async () => {
     setLoading(true);
     try {
-      const [analyticsRes, compRes] = await Promise.all([
-        fetch(API_BASE_URL + '/api/analytics'),
-        fetch(API_BASE_URL + '/api/complaints')
+      const [analyticsRes, compRes, firestoreComps] = await Promise.allSettled([
+        fetch(API_BASE_URL + '/api/analytics').then(r => r.ok ? r.json() : null),
+        fetch(API_BASE_URL + '/api/complaints').then(r => r.ok ? r.json() : []),
+        getAllFirestoreComplaints()
       ]);
 
-      const analytics = await analyticsRes.json();
-      const complaints = await compRes.json();
+      const analytics = analyticsRes.status === 'fulfilled' ? analyticsRes.value : null;
+      const backendComps = compRes.status === 'fulfilled' && Array.isArray(compRes.value) ? compRes.value : [];
+      const fsComps = firestoreComps.status === 'fulfilled' && Array.isArray(firestoreComps.value) ? firestoreComps.value : [];
+
+      let localSaved = [];
+      try {
+        localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      } catch (err) {}
+
+      const allSources = [...localSaved, ...fsComps, ...backendComps, ...FALLBACK_COMPLAINTS];
+      const mergedMap = new Map();
+      allSources.forEach(c => {
+        if (c && c.id) {
+          if (!mergedMap.has(c.id)) {
+            mergedMap.set(c.id, c);
+          } else {
+            mergedMap.set(c.id, { ...mergedMap.get(c.id), ...c });
+          }
+        }
+      });
+      const mergedComps = Array.from(mergedMap.values());
 
       setAnalyticsData(analytics);
-      setAllComplaints(complaints);
+      setAllComplaints(mergedComps);
     } catch (e) {
-      console.error("Error fetching analytics:", e);
+      console.warn("Analytics fetch note:", e);
+      let localSaved = [];
+      try {
+        localSaved = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      } catch (err) {}
+      const fallbackMerged = [...localSaved, ...FALLBACK_COMPLAINTS];
+      const unique = Array.from(new Map(fallbackMerged.map(c => [c.id, c])).values());
+      setAllComplaints(unique);
     } finally {
       setLoading(false);
     }
