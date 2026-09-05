@@ -232,10 +232,10 @@ export default function MyComplaintsView({ currentUser, onSelectComplaintForTrac
 
                   <div className="space-y-0.5">
                     <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                      <User className="w-3.5 h-3.5 text-emerald-600" /> Designated Nodal Officer
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600" /> Ward Jurisdiction
                     </span>
                     <p className="font-extrabold text-stone-900 text-xs">
-                      {c.nodal_officer || 'Er. Rajesh Sharma (Chief Engineer)'}
+                      {c.locality || `Ward ${c.ward_id || '52'}`}
                     </p>
                   </div>
                 </div>

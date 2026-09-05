@@ -116,8 +116,8 @@ export default function MunicipalTendersView() {
               </div>
 
               <div className="bg-stone-50 p-3.5 rounded-2xl border border-stone-200 space-y-1">
-                <span className="text-stone-500 font-semibold">Supervising Nodal Officer</span>
-                <p className="font-bold text-stone-900">{t.nodalOfficer}</p>
+                <span className="text-stone-500 font-semibold">Supervising Department</span>
+                <p className="font-bold text-stone-900">{t.department || 'IMC Works & Engineering'}</p>
               </div>
 
               {/* Interactive Citizen Audit Rating Box */}

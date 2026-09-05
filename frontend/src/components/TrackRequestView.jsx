@@ -158,7 +158,7 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
         timeline: [
           { step: 1, title: 'Grievance Registered & Token Issued', status: 'COMPLETED', detail: 'Grievance legally registered under IT Act & DPDP Act 2023. Official tracking token issued.' },
           { step: 2, title: 'Administrative Review', status: step2, detail: 'Your complaint has been formally accepted at the government level and submitted for inter-departmental evaluation.' },
-          { step: 3, title: `Dispatched to ${match.responsible_department || 'IMC Drainage Dept'}`, status: step3, detail: `Assigned to Nodal Officer ${match.nodal_officer || 'Er. Rajesh Sharma'} for technical ground inspection.` },
+          { step: 3, title: `Dispatched to ${match.responsible_department || 'IMC Drainage Dept'}`, status: step3, detail: `Dispatched to ${match.responsible_department || 'Municipal Department'} for technical ground inspection and work order allocation.` },
           { step: 4, title: 'Demand Cluster Merging & Priority Indexing', status: step4, detail: 'Merged into Demand Cluster with co-filers.' },
           { step: 5, title: 'Resolution & Work Order', status: step5, detail: 'Final on-ground municipal work order.' }
         ]
@@ -498,12 +498,12 @@ export default function TrackRequestView({ initialTrackingId, currentUser }) {
                 <p className="font-extrabold text-stone-900 text-xs">{trackingData.responsible_ministry}</p>
               </div>
 
-              {/* Officer */}
+              {/* Administrative Ward */}
               <div className="bg-stone-50 rounded-2xl p-3.5 border border-stone-200 space-y-1">
                 <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                  <User className="w-3 h-3 text-emerald-500" /> Nodal Officer
+                  <MapPin className="w-3 h-3 text-emerald-500" /> Administrative Ward
                 </span>
-                <p className="font-extrabold text-stone-900 text-xs">{trackingData.nodal_officer}</p>
+                <p className="font-extrabold text-stone-900 text-xs">{trackingData.ward_name || trackingData.locality}</p>
               </div>
             </div>
 

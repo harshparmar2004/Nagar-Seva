@@ -178,8 +178,8 @@ export default function EmergencyHotlineView({ currentUser }) {
               </div>
 
               <div className="bg-white p-3 rounded-xl border border-red-200 space-y-0.5">
-                <span className="text-[10px] text-stone-400 font-bold uppercase">Commanding Nodal Officer</span>
-                <p className="font-extrabold text-stone-900 text-xs">{aiClassification.nodal_officer}</p>
+                <span className="text-[10px] text-stone-400 font-bold uppercase">Sector Jurisdiction</span>
+                <p className="font-extrabold text-stone-900 text-xs">{selectedWard}</p>
               </div>
             </div>
 

@@ -1360,31 +1360,24 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               </div>
             </div>
 
-            {/* 4-Box Telemetry Matrix */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2.5 text-xs">
-              <div className="bg-white p-3 rounded-xl border border-stone-200 space-y-1 shadow-xs">
+            {/* 3-Box Telemetry Matrix */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="bg-white p-3.5 rounded-xl border border-stone-200 space-y-1 shadow-xs">
                 <span className="text-[10px] text-stone-400 font-bold uppercase">Detected Category</span>
-                <p className="font-extrabold text-stone-900 flex items-center gap-1 text-xs">
+                <p className="font-extrabold text-stone-900 flex items-center gap-1.5 text-xs">
                   <span>{currentAITriage.icon}</span>
                   <span>{currentAITriage.domain}</span>
                 </p>
               </div>
 
-              <div className="bg-white p-3 rounded-xl border border-stone-200 space-y-1 shadow-xs">
+              <div className="bg-white p-3.5 rounded-xl border border-stone-200 space-y-1 shadow-xs">
                 <span className="text-[10px] text-stone-400 font-bold uppercase">Auto-Routed Department</span>
                 <p className="font-bold text-stone-800 text-[11px] leading-tight">
                   {currentAITriage.department}
                 </p>
               </div>
 
-              <div className="bg-white p-3 rounded-xl border border-stone-200 space-y-1 shadow-xs">
-                <span className="text-[10px] text-stone-400 font-bold uppercase">Assigned Nodal Officer</span>
-                <p className="font-bold text-stone-800 text-[11px] leading-tight">
-                  {currentAITriage.nodalOfficer}
-                </p>
-              </div>
-
-              <div className="bg-white p-3 rounded-xl border border-stone-200 space-y-1 shadow-xs">
+              <div className="bg-white p-3.5 rounded-xl border border-stone-200 space-y-1 shadow-xs">
                 <span className="text-[10px] text-stone-400 font-bold uppercase">Administrative Ward</span>
                 <p className="font-bold text-stone-800 text-[11px] leading-tight truncate">
                   {getWardNameStr()}
@@ -1533,7 +1526,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
                       </span>
                     </div>
                     <p className="text-[10px] text-stone-600">
-                      Responsible: <strong>{currentAITriage.department}</strong> • Nodal: <strong>{currentAITriage.nodalOfficer}</strong>
+                      Responsible: <strong>{currentAITriage.department}</strong> • Ward: <strong>{getWardNameStr()}</strong>
                     </p>
                     {photoPreview && (
                       <p className="text-[10px] font-bold text-emerald-700 flex items-center gap-1">
@@ -1629,8 +1622,8 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               <p className="font-extrabold text-stone-900">{aiResult.complaint?.responsible_department || 'IMC Zonal Secretariat'}</p>
             </div>
             <div className="bg-emerald-50/50 p-3.5 rounded-2xl border border-emerald-200 space-y-1">
-              <span className="text-[11px] text-emerald-700 font-bold">✓ Nodal Officer</span>
-              <p className="font-extrabold text-stone-900">{aiResult.complaint?.nodal_officer || 'Municipal Nodal Officer'}</p>
+              <span className="text-[11px] text-emerald-700 font-bold">✓ Administrative Ward</span>
+              <p className="font-extrabold text-stone-900">{getWardNameStr()}</p>
             </div>
           </div>
 
@@ -1643,7 +1636,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
               className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
             >
               <MessageSquare className="w-4 h-4" />
-              <span>Connect via WhatsApp with Ward Nodal Officer</span>
+              <span>Connect via WhatsApp with IMC Grievance Cell</span>
             </a>
 
             <button

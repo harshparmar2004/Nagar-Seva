@@ -1282,7 +1282,7 @@ export default function AdminPortal({ activeSubTab, onOpenDPR, activeCountry, is
                                   onClick={() => handleApproveComplaint(c.id)}
                                   disabled={processingId === c.id}
                                   className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] px-2.5 py-1.5 rounded-xl transition-all flex items-center gap-1 cursor-pointer shadow-sm"
-                                  title="Approve complaint and dispatch to nodal officer"
+                                  title="Approve complaint and dispatch to department"
                                 >
                                   {processingId === c.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
                                   <span>Approve</span>

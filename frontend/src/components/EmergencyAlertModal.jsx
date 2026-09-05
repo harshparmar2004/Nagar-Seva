@@ -42,7 +42,7 @@ export default function EmergencyAlertModal({ isOpen, onClose }) {
         {!isSent ? (
           <div className="space-y-4 text-xs">
             <p className="text-stone-600">
-              This red alert bypasses normal municipal queues and immediately broadcasts to the **Indore Municipal Control Room (181)** and assigned Ward Nodal Officer.
+              This red alert bypasses normal municipal queues and immediately broadcasts to the **Indore Municipal Control Room (181)** and IMC Quick Response Team (QRT).
             </p>
 
             <div className="space-y-1.5">
@@ -75,7 +75,7 @@ export default function EmergencyAlertModal({ isOpen, onClose }) {
                 <PhoneCall className="w-4 h-4" />
                 <span>Immediate Toll-Free Helpline: 181 / 155304 (IMC)</span>
               </div>
-              <p className="text-[10px] text-rose-800">Nodal Officer: Er. Rajesh Sharma (Chief Engineer) will be dispatched instantly.</p>
+              <p className="text-[10px] text-rose-800">IMC Quick Response Emergency Flying Squad will be dispatched instantly.</p>
             </div>
 
             <button
