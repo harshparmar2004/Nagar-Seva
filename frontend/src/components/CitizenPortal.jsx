@@ -4,7 +4,7 @@ import { FALLBACK_WARDS } from '../data/fallbackData';
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Mic, MicOff, Send, MapPin, Sparkles, CheckCircle, FileText, ThumbsUp, Camera, ShieldCheck, UserCheck, Smartphone, Key, AlertTriangle, Layers, ArrowRight, ArrowLeft, Check, MessageSquare, Download, CheckCircle2, Volume2, Navigation, Compass, Crosshair, Eye, Shield, Image, User, Phone, Radio, X, AlertCircle, Trash2 } from 'lucide-react';
+import { Mic, MicOff, Send, MapPin, Sparkles, CheckCircle, FileText, ThumbsUp, Camera, ShieldCheck, UserCheck, Smartphone, Key, AlertTriangle, Layers, ArrowRight, ArrowLeft, Check, MessageSquare, Download, CheckCircle2, Volume2, Navigation, Compass, Crosshair, Eye, Shield, Image, User, Phone, Radio, X, AlertCircle, Trash2, FolderCheck } from 'lucide-react';
 
 function CitizenMapFlyTo({ center }) {
   const map = useMap();
@@ -181,7 +181,7 @@ export const classifyGrievanceAI = (text, hasPhoto = false) => {
   };
 };
 
-export default function CitizenPortal({ activeSubTab, onComplaintCreated, currentUser }) {
+export default function CitizenPortal({ activeSubTab, onNavigateToMyComplaints, onNavigateToTrack, onComplaintCreated, currentUser }) {
   const [step, setStep] = useState(1); // 1: Identity, 2: Location, 3: Evidence, 4: Preview & Verify, 5: Receipt Token
   
   const userEmail = currentUser?.email || 'citizen.indore@gmail.com';
@@ -564,11 +564,48 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
     setIsAnalyzing(true);
     const wardObj = indoreWardsList.find(w => w.id === selectedWard);
     const wardNumber = wardObj ? wardObj.number : '52';
-    const fallbackToken = `IMC-IND-2026-W${wardNumber}-${Math.floor(Math.random() * 9000 + 1000)}`;
+    const complaintToken = `IMC-IND-2026-W${wardNumber}-${Math.floor(Math.random() * 9000 + 1000)}`;
 
     const detected = classifyGrievanceAI(inputText, !!photoPreview);
     const grievanceText = inputText.trim() || 'Civic infrastructure and sanitation grievance registered with GPS geotag.';
 
+    const newComplaint = {
+      id: complaintToken,
+      user_email: (userEmail || 'citizen.indore@gmail.com').toLowerCase().trim(),
+      category: detected.domain,
+      urgency: detected.urgency,
+      health_impact: detected.urgency === 'Critical',
+      locality: `${landmark || 'Mayur Nagar'}, ${getWardNameStr()}`,
+      ward_id: selectedWard || 'ward_52',
+      lat: parseFloat(lat) || 22.712015,
+      lng: parseFloat(lng) || 75.908045,
+      citizen_name: citizenName || 'Indore Citizen',
+      citizen_phone: `+91 ${phone || '9826012345'}`,
+      alternate_contact: alternateContact ? `+91 ${alternateContact}` : null,
+      citizen_id_hash: idHash || 'AADHAAR-IND-4821',
+      landmark: landmark || 'Mayur Nagar, Musakhedi',
+      photo_url: photoPreview || null,
+      responsible_department: detected.department,
+      responsible_ministry: detected.ministry,
+      current_status: 'PENDING_ADMIN_REVIEW',
+      created_at: new Date().toISOString(),
+      transcript: grievanceText
+    };
+
+    // 1. Immediately save to local storage (0ms)
+    try {
+      const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      const filtered = stored.filter(c => c.id !== newComplaint.id);
+      filtered.unshift(newComplaint);
+      localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(filtered.slice(0, 30)));
+    } catch (e) {
+      console.warn("localStorage note:", e);
+    }
+
+    // 2. Real-time broadcast to Firebase Firestore
+    saveComplaintToFirestore(newComplaint);
+
+    // 3. Asynchronous non-blocking sync to backend
     try {
       const formData = new FormData();
       formData.append('text', grievanceText);
@@ -576,111 +613,41 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
       formData.append('lat', String(lat || '22.712015'));
       formData.append('lng', String(lng || '75.908045'));
       formData.append('ward_id', selectedWard || 'ward_52');
-      formData.append('user_email', userEmail || 'citizen.indore@gmail.com');
+      formData.append('user_email', newComplaint.user_email);
       formData.append('citizen_name', citizenName || 'Indore Citizen');
       formData.append('citizen_phone', phone || '9826012345');
-      if (alternateContact) {
-        formData.append('alternate_contact', alternateContact);
-      }
+      if (alternateContact) formData.append('alternate_contact', alternateContact);
       formData.append('citizen_id_hash', idHash || 'AADHAAR-IND-4821');
       formData.append('landmark', landmark || getWardNameStr());
       formData.append('category', detected.domain);
       formData.append('urgency', detected.urgency);
       formData.append('responsible_department', detected.department);
-      formData.append('nodal_officer', detected.nodalOfficer);
+      if (rawPhotoFile) formData.append('photo_file', rawPhotoFile);
 
-      if (rawPhotoFile) {
-        formData.append('photo_file', rawPhotoFile);
-      }
-      if (photoPreview && photoPreview.startsWith('data:image')) {
-        formData.append('photo_base64', photoPreview);
-      }
-
-      // Add timeout controller so mobile won't hang if backend is spinning up
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000);
-
-      const response = await fetch(API_BASE_URL + '/api/complaints', {
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
+      fetch(API_BASE_URL + '/api/complaints', {
         method: 'POST',
         body: formData,
         signal: controller.signal
-      });
-      clearTimeout(timeoutId);
+      }).then(r => {
+        clearTimeout(timeoutId);
+        return r.ok ? r.json() : null;
+      }).catch(() => {});
+    } catch (bgErr) {}
 
-      if (!response.ok) {
-        throw new Error(`Server returned status ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (!data || !data.complaint || !data.complaint.id) {
-        throw new Error("Server returned response without complaint ID");
-      }
-
+    // 4. Ultra-fast completion transition (under 250ms)
+    setTimeout(() => {
       setIsAnalyzing(false);
-
-      // Save to local storage for multi-tab sync
-      try {
-        const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
-        const filtered = stored.filter(c => c.id !== data.complaint.id);
-        filtered.unshift(data.complaint);
-        localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(filtered.slice(0, 30)));
-      } catch (err) {}
-
-      // Save to Firestore
-      saveComplaintToFirestore(data.complaint);
-
-      setAiResult(data);
-      setStep(5);
-      if (onComplaintCreated) onComplaintCreated(data.complaint);
-    } catch (err) {
-      console.warn("Backend request failed or offline, registering complaint with dynamic Gemini AI:", err);
-      setIsAnalyzing(false);
-
-      const fallbackComplaint = {
-        id: fallbackToken,
-        user_email: userEmail || 'citizen.indore@gmail.com',
-        category: detected.domain,
-        urgency: detected.urgency,
-        health_impact: detected.urgency === 'Critical',
-        locality: `${landmark || 'Mayur Nagar'}, ${getWardNameStr()}`,
-        ward_id: selectedWard || 'ward_52',
-        lat: parseFloat(lat) || 22.712015,
-        lng: parseFloat(lng) || 75.908045,
-        citizen_name: citizenName || 'Indore Citizen',
-        citizen_phone: `+91 ${phone || '9826012345'}`,
-        alternate_contact: alternateContact ? `+91 ${alternateContact}` : null,
-        citizen_id_hash: idHash || 'AADHAAR-IND-4821',
-        landmark: landmark || 'Mayur Nagar, Musakhedi',
-        photo_url: photoPreview || null,
-        responsible_department: detected.department,
-        responsible_ministry: detected.ministry,
-        nodal_officer: detected.nodalOfficer,
-        current_status: 'PENDING_ADMIN_REVIEW',
-        created_at: new Date().toISOString(),
-        transcript: grievanceText
-      };
-
-      try {
-        const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
-        const filtered = stored.filter(c => c.id !== fallbackComplaint.id);
-        filtered.unshift(fallbackComplaint);
-        // Keep up to 30 items
-        localStorage.setItem('nagarmitra_local_complaints', JSON.stringify(filtered.slice(0, 30)));
-      } catch(e) {
-        console.warn("localStorage quota exceeded, skipping local storage:", e);
-      }
-
-      saveComplaintToFirestore(fallbackComplaint);
-
       setAiResult({
         status: 'SUCCESS',
-        receipt_token: fallbackComplaint.id,
-        complaint: fallbackComplaint,
+        receipt_token: newComplaint.id,
+        complaint: newComplaint,
         ai_triage_metadata: {
           assigned_domain: detected.domain,
           severity_rating: detected.severityRating,
           urgency_badge: detected.urgency,
-          photo_url: fallbackComplaint.photo_url,
+          photo_url: newComplaint.photo_url,
           has_photo_attachment: !!photoPreview
         },
         ai_analysis: {
@@ -693,8 +660,8 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
         }
       });
       setStep(5);
-      if (onComplaintCreated) onComplaintCreated(fallbackComplaint);
-    }
+      if (onComplaintCreated) onComplaintCreated(newComplaint);
+    }, 250);
   };
 
   const getWardNameStr = () => {
@@ -1627,24 +1594,44 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
             </div>
           </div>
 
-          {/* Action Buttons: WhatsApp Direct Bridge & Download PDF */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-2">
+          {/* Action Buttons: WhatsApp Direct Bridge, View Complaints & Download PDF */}
+          <div className="flex flex-wrap gap-2.5 pt-2">
             <a
               href={`https://wa.me/919826012345?text=Hello%20Officer,%20I%20registered%20complaint%20token%20${aiResult.complaint?.id || ''}%20for%20${encodeURIComponent(landmark || getWardNameStr())}`}
               target="_blank"
               rel="noreferrer"
-              className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              className="flex-1 min-w-[200px] bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
             >
               <MessageSquare className="w-4 h-4" />
               <span>Connect via WhatsApp with IMC Grievance Cell</span>
             </a>
 
+            {onNavigateToMyComplaints && (
+              <button
+                onClick={onNavigateToMyComplaints}
+                className="bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+              >
+                <FolderCheck className="w-4 h-4" />
+                <span>View My Complaints</span>
+              </button>
+            )}
+
+            {onNavigateToTrack && (
+              <button
+                onClick={() => onNavigateToTrack(aiResult.complaint?.id)}
+                className="bg-stone-800 hover:bg-stone-700 text-white font-bold text-xs py-3 px-4 rounded-xl shadow-sm flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+              >
+                <Eye className="w-4 h-4" />
+                <span>Track This Token</span>
+              </button>
+            )}
+
             <button
               onClick={() => alert(`Downloading Official Government Grievance Receipt Token PDF with Evidence Photo for ${aiResult.complaint?.id}...`)}
-              className="bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-sm flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              className="bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs py-3 px-4 rounded-xl border border-stone-300 shadow-xs flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
             >
               <Download className="w-4 h-4" />
-              <span>Download Signed Receipt PDF</span>
+              <span>Download PDF</span>
             </button>
           </div>
 

@@ -95,8 +95,12 @@ export default function App() {
           <CitizenPortal
             activeSubTab={activeTab}
             currentUser={currentUser}
-            onComplaintCreated={() => {
+            onNavigateToMyComplaints={() => {
               setActiveTab('citizen-my-complaints');
+            }}
+            onNavigateToTrack={(id) => {
+              setSelectedTrackingId(id);
+              setActiveTab('citizen-track');
             }}
           />
         )}

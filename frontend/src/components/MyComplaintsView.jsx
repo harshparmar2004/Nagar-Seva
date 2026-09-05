@@ -4,40 +4,74 @@ import React, { useState, useEffect } from 'react';
 import { FolderCheck, Search, Building2, Landmark, User, Clock, CheckCircle2, AlertTriangle, Filter, MapPin, ExternalLink, ShieldCheck, Plus, Sparkles } from 'lucide-react';
 
 export default function MyComplaintsView({ currentUser, onSelectComplaintForTracking, onNavigateToCreate }) {
-  const [complaints, setComplaints] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const activeEmail = (currentUser?.email || 'citizen.indore@gmail.com').toLowerCase().trim();
+
+  // Instant local cache load (0ms) so user never sees an endless spinner
+  const [complaints, setComplaints] = useState(() => {
+    try {
+      const local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      return local.filter(item => !item.user_email || item.user_email.toLowerCase() === activeEmail);
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [loading, setLoading] = useState(complaints.length === 0);
   const [filterCategory, setFilterCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const activeEmail = currentUser?.email || 'citizen.indore@gmail.com';
 
   useEffect(() => {
     fetchUserComplaints();
   }, [activeEmail]);
 
   const fetchUserComplaints = async () => {
-    setLoading(true);
+    const cleanEmail = activeEmail.toLowerCase().trim();
+
+    // 1. Instantly populate from localStorage if available
+    let userLocal = [];
     try {
+      const local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+      userLocal = local.filter(item => !item.user_email || item.user_email.toLowerCase() === cleanEmail);
+      if (userLocal.length > 0) {
+        setComplaints(userLocal);
+        setLoading(false);
+      }
+    } catch (e) {}
+
+    // 2. Fetch Firestore and Backend in parallel with strict 2.5-second timeout
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
       const [backendPromise, firestorePromise] = await Promise.allSettled([
-        fetch(`${API_BASE_URL}/api/complaints/user/${activeEmail}`).then(r => r.ok ? r.json() : []),
-        getFirestoreUserComplaints(activeEmail)
+        fetch(`${API_BASE_URL}/api/complaints/user/${cleanEmail}`, { signal: controller.signal })
+          .then(r => r.ok ? r.json() : [])
+          .catch(() => []),
+        getFirestoreUserComplaints(cleanEmail)
       ]);
+      clearTimeout(timeoutId);
+
       const backendData = backendPromise.status === 'fulfilled' && Array.isArray(backendPromise.value) ? backendPromise.value : [];
       const firestoreData = firestorePromise.status === 'fulfilled' && Array.isArray(firestorePromise.value) ? firestorePromise.value : [];
 
-      let local = [];
-      try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(e) {}
-      const userLocal = local.filter(item => !item.user_email || item.user_email.toLowerCase() === activeEmail.toLowerCase());
+      let freshLocal = [];
+      try {
+        const stored = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]');
+        freshLocal = stored.filter(item => !item.user_email || item.user_email.toLowerCase() === cleanEmail);
+      } catch (err) {}
 
-      const combined = [...firestoreData, ...backendData, ...userLocal];
+      const combined = [...freshLocal, ...firestoreData, ...backendData];
       const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+      
+      unique.sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return timeB - timeA;
+      });
+
       setComplaints(unique);
     } catch (e) {
-      console.warn("Backend or Firestore offline, using local complaints:", e);
-      let local = [];
-      try { local = JSON.parse(localStorage.getItem('nagarmitra_local_complaints') || '[]'); } catch(err) {}
-      const userLocal = local.filter(item => !item.user_email || item.user_email.toLowerCase() === activeEmail.toLowerCase());
-      setComplaints(userLocal);
+      console.warn("Background complaints fetch note:", e);
     } finally {
       setLoading(false);
     }
