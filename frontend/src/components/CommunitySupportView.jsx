@@ -2,7 +2,7 @@ import { API_BASE_URL } from '../config';
 import React, { useState, useEffect } from 'react';
 import {
   Star, CheckCircle2, Loader2, MapPin, Landmark, Droplets, Bus, Sun,
-  Trash2, Construction, FileText, Send, Sparkles, TrendingUp, Users, Award
+  Trash2, Construction, Send, Users, RefreshCw
 } from 'lucide-react';
 import { FALLBACK_PROJECTS } from '../data/fallbackData';
 
@@ -102,9 +102,19 @@ export default function CommunitySupportView({ onOpenDPR }) {
     });
   };
 
+  const handleEditRating = (projectId) => {
+    setSubmitted(prev => {
+      const updated = { ...prev, [projectId]: false };
+      try { localStorage.setItem('nagarmitra_project_submitted', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
   const handleSubmitRating = async (projectId) => {
     const stars = userRatings[projectId];
     if (!stars) return;
+
+    const previouslySubmitted = submitted[projectId];
 
     setSubmitted(prev => {
       const updated = { ...prev, [projectId]: true };
@@ -112,34 +122,67 @@ export default function CommunitySupportView({ onOpenDPR }) {
       return updated;
     });
 
-    setProjects(prevProjects =>
-      prevProjects.map(p => {
-        if (p.id === projectId) {
-          const currentUpvotes = p.community_upvotes || p.total_ratings || 0;
-          return {
-            ...p,
-            community_upvotes: currentUpvotes + 1,
-            total_ratings: (p.total_ratings || 0) + 1,
-            user_has_rated: true
-          };
-        }
-        return p;
-      })
-    );
+    const targetProject = projects.find(p => p.id === projectId);
+    const projectTitle = targetProject?.title || `Project ${projectId}`;
 
-    setToast(`Thank you! Your ${stars}-star rating for project ${projectId} has been recorded.`);
-    setTimeout(() => setToast(null), 4000);
+    // Optimistically update upvotes if it's the citizen's first time rating
+    if (!previouslySubmitted) {
+      setProjects(prevProjects =>
+        prevProjects.map(p => {
+          if (p.id === projectId) {
+            const currentUpvotes = p.community_upvotes || p.total_ratings || 0;
+            return {
+              ...p,
+              community_upvotes: currentUpvotes + 1,
+              total_ratings: (p.total_ratings || 0) + 1,
+              user_has_rated: true
+            };
+          }
+          return p;
+        })
+      );
+    }
+
+    setToast(`✓ Thank you! Your ${stars}-star rating for "${projectTitle}" has been recorded.`);
+    setTimeout(() => setToast(null), 5000);
 
     try {
-      await fetch(`${API_BASE_URL}/api/projects/${projectId}/rate?stars=${stars}`, { method: 'POST' });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}/rate?stars=${stars}`, {
+        method: 'POST',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && typeof data.new_upvote_count === 'number') {
+          setProjects(prevProjects =>
+            prevProjects.map(p =>
+              p.id === projectId
+                ? {
+                    ...p,
+                    community_upvotes: data.new_upvote_count,
+                    total_ratings: data.total_ratings || p.total_ratings,
+                    average_rating: data.average_rating || p.average_rating
+                  }
+                : p
+            )
+          );
+        }
+      }
     } catch (e) {
-      // Offline fallback already updated locally
+      // Offline/cold start handled via local state
     }
   };
 
   // Aggregated Stats
   const totalVotes = projects.reduce((acc, p) => acc + (p.community_upvotes || p.total_ratings || 0), 0);
   const totalBeneficiaries = projects.reduce((acc, p) => acc + (p.target_beneficiaries || 0), 0);
+  const avgOverallRating = projects.length > 0
+    ? (projects.reduce((acc, p) => acc + (p.average_rating || 4.5), 0) / projects.length).toFixed(1)
+    : '4.6';
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in pb-16 text-stone-900">
@@ -162,16 +205,17 @@ export default function CommunitySupportView({ onOpenDPR }) {
 
           <button
             onClick={fetchProjects}
-            className="self-start sm:self-center bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 border border-stone-200"
+            className="self-start sm:self-center bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs px-3.5 py-2.5 rounded-xl transition-all cursor-pointer shrink-0 border border-stone-200 flex items-center gap-1.5"
           >
-            ↻ Refresh Projects
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-orange-600' : 'text-stone-500'}`} />
+            <span>Refresh Projects</span>
           </button>
         </div>
 
         {/* Top Stats Overview Row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-stone-100">
           <div className="bg-orange-50/60 border border-orange-200/80 p-3 rounded-2xl">
-            <span className="text-[10px] font-extrabold text-orange-700 uppercase">Active DPR Projects</span>
+            <span className="text-[10px] font-extrabold text-orange-700 uppercase">Active City Projects</span>
             <p className="text-lg font-black text-stone-900 mt-0.5">{projects.length}</p>
           </div>
           <div className="bg-purple-50/60 border border-purple-200/80 p-3 rounded-2xl">
@@ -185,17 +229,26 @@ export default function CommunitySupportView({ onOpenDPR }) {
           <div className="bg-blue-50/60 border border-blue-200/80 p-3 rounded-2xl">
             <span className="text-[10px] font-extrabold text-blue-700 uppercase">Avg Public Rating</span>
             <p className="text-lg font-black text-stone-900 mt-0.5 flex items-center gap-1">
-              4.6 <Star className="w-4 h-4 fill-amber-400 text-amber-400 inline" />
+              {avgOverallRating} <Star className="w-4 h-4 fill-amber-400 text-amber-400 inline" />
             </p>
           </div>
         </div>
       </div>
 
-      {/* Toast Message */}
+      {/* Floating Sticky Toast Notification */}
       {toast && (
-        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl px-5 py-3.5 text-xs font-extrabold flex items-center gap-2 shadow-sm animate-fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>{toast}</span>
+        <div className="sticky top-4 z-40 bg-emerald-600 text-white rounded-2xl px-5 py-3.5 text-xs font-extrabold flex items-center justify-between gap-3 shadow-lg shadow-emerald-700/20 border border-emerald-500 animate-fade-in">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
+            <span className="leading-snug">{toast}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToast(null)}
+            className="text-emerald-200 hover:text-white text-sm font-black p-1 hover:bg-emerald-700/50 rounded-lg cursor-pointer transition-colors"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -274,54 +327,63 @@ export default function CommunitySupportView({ onOpenDPR }) {
                 </div>
               )}
 
-              {/* Bottom Row: Rating + Upvotes + DPR Trigger */}
+              {/* Bottom Row: Rating + Citizen Endorsement */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3.5 border-t border-stone-100 pl-0 sm:pl-[58px]">
 
                 {/* Rating Input / Confirmed Status */}
                 <div className="flex flex-wrap items-center gap-3">
                   {isSubmitted ? (
-                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-xl text-emerald-800">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      <span className="text-xs font-extrabold">Your Rating: {userRating}/5 Stars Recorded</span>
+                    <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 px-3.5 py-2 rounded-2xl text-emerald-900 shadow-sm">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-black">Your Rating:</span>
+                        <div className="flex items-center gap-0.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              className={`w-3.5 h-3.5 ${
+                                s <= userRating ? 'fill-amber-400 text-amber-400' : 'text-stone-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs font-bold text-stone-600">({userRating}/5 Stars)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleEditRating(project.id)}
+                        className="ml-2 text-xs font-extrabold text-orange-600 hover:text-orange-700 underline cursor-pointer"
+                        title="Change your rating"
+                      >
+                        Change
+                      </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2.5 bg-stone-50 border border-stone-200/80 px-3 py-1.5 rounded-2xl">
-                      <span className="text-xs font-bold text-stone-600">Rate Project:</span>
+                    <div className="flex items-center gap-2.5 bg-stone-50 border border-stone-200 px-3.5 py-2 rounded-2xl shadow-inner">
+                      <span className="text-xs font-bold text-stone-700">Rate Project:</span>
                       <StarRating rating={userRating} onRate={(s) => handleRate(project.id, s)} size="lg" />
-                      {userRating > 0 && (
+                      {userRating > 0 ? (
                         <button
                           type="button"
                           onClick={() => handleSubmitRating(project.id)}
-                          className="bg-orange-600 hover:bg-orange-500 text-white text-xs font-extrabold px-3.5 py-1.5 rounded-xl flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                          className="bg-orange-600 hover:bg-orange-500 text-white text-xs font-black px-4 py-1.5 rounded-xl flex items-center gap-1.5 shadow-sm transition-all cursor-pointer transform active:scale-95"
                         >
                           <Send className="w-3 h-3" />
-                          <span>Submit</span>
+                          <span>Submit ({userRating}★)</span>
                         </button>
+                      ) : (
+                        <span className="text-[10px] font-bold text-stone-400 italic hidden sm:inline">
+                          Select 1–5 stars
+                        </span>
                       )}
                     </div>
                   )}
 
-                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-stone-600 bg-stone-100 px-3 py-1.5 rounded-xl border border-stone-200">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-stone-700 bg-stone-100 px-3 py-2 rounded-xl border border-stone-200">
                     <Users className="w-3.5 h-3.5 text-orange-600" />
                     <span>{upvotesCount.toLocaleString()} Citizens Endorsed</span>
                   </span>
                 </div>
-
-                {/* View Full DPR Button */}
-                <button
-                  type="button"
-                  onClick={() => onOpenDPR && onOpenDPR({
-                    id: project.cluster_id || project.id,
-                    label: project.title,
-                    locality: project.locality,
-                    category: project.category,
-                    ppi_score: project.roi_score || 95,
-                  })}
-                  className="w-full sm:w-auto bg-stone-900 hover:bg-stone-800 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                >
-                  <FileText className="w-3.5 h-3.5 text-orange-400" />
-                  <span>Inspect Official Gemini DPR</span>
-                </button>
               </div>
 
             </div>
