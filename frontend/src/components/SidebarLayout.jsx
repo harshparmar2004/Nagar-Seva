@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Shield, Mic, ListChecks, Search, ThumbsUp, Layers, MapPin, Flame,
   TrendingUp, Sparkles, BarChart3, Database, LogIn, LogOut, CheckCircle2,
-  Lock, Globe, AlertOctagon, HelpCircle, ArrowRight, UserCheck, ChevronRight, Menu, X, Trophy, AlertTriangle, ShieldAlert, Compass, User, Settings
+  Lock, Globe, AlertOctagon, HelpCircle, ArrowRight, UserCheck, ChevronRight, Menu, X, Trophy, AlertTriangle, ShieldAlert, Compass, User, Settings, Building2
 } from 'lucide-react';
 
 export default function SidebarLayout({
@@ -106,7 +106,7 @@ export default function SidebarLayout({
 
   const adminNavItems = [
     { id: 'admin-gis', label: 'City GIS Pinpoints Map', icon: MapPin },
-    { id: 'admin-heatmap', label: 'City Heatmap Analytics', icon: Flame },
+    { id: 'admin-heatmap', label: 'Ward Spatial Analytics & Grievances', icon: Building2 },
     { id: 'admin-clusters', label: 'Master Complaints Approval', icon: Layers },
     { id: 'admin-analytics', label: 'Data Fusion Analytics', icon: TrendingUp },
     { id: 'admin-dpr', label: 'AI DPR & Priority Rankings', icon: Sparkles },
@@ -447,8 +447,8 @@ export default function SidebarLayout({
                 activeTab === 'admin-heatmap' ? 'text-orange-600 font-extrabold' : 'text-stone-500 font-semibold'
               }`}
             >
-              <Flame className={`w-5 h-5 ${activeTab === 'admin-heatmap' ? 'text-orange-600 scale-110' : 'text-stone-400'}`} />
-              <span className="text-[10px] mt-0.5">Heatmap</span>
+              <Building2 className={`w-5 h-5 ${activeTab === 'admin-heatmap' ? 'text-orange-600 scale-110' : 'text-stone-400'}`} />
+              <span className="text-[10px] mt-0.5">Ward Map</span>
             </button>
 
             <button
