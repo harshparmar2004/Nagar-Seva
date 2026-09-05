@@ -4,7 +4,7 @@ import { FALLBACK_WARDS } from '../data/fallbackData';
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Mic, MicOff, Send, MapPin, Sparkles, CheckCircle, FileText, ThumbsUp, Camera, ShieldCheck, UserCheck, Smartphone, Key, AlertTriangle, Layers, ArrowRight, ArrowLeft, Check, MessageSquare, Download, CheckCircle2, Volume2, Navigation, Compass, Crosshair, Eye, Shield, Image } from 'lucide-react';
+import { Mic, MicOff, Send, MapPin, Sparkles, CheckCircle, FileText, ThumbsUp, Camera, ShieldCheck, UserCheck, Smartphone, Key, AlertTriangle, Layers, ArrowRight, ArrowLeft, Check, MessageSquare, Download, CheckCircle2, Volume2, Navigation, Compass, Crosshair, Eye, Shield, Image, User, Phone } from 'lucide-react';
 
 function CitizenMapFlyTo({ center }) {
   const map = useMap();
@@ -46,10 +46,11 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
 
   // Step 1 State: Identity
   const [citizenName, setCitizenName] = useState(currentUser?.displayName || 'Indore Citizen');
-  const [phone, setPhone] = useState(currentUser?.phone || '9826012345');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [alternateContact, setAlternateContact] = useState('');
   const [otp, setOtp] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(Boolean(currentUser?.aadhaar));
+  const [otpVerified, setOtpVerified] = useState(true);
   const [idHash, setIdHash] = useState(currentUser?.aadhaar ? `AADHAAR-${currentUser.aadhaar.replace(/\s/g, '')}` : 'AADHAAR-IND-4821');
 
   const [indoreWardsList, setIndoreWardsList] = useState(FALLBACK_WARDS);
@@ -63,7 +64,6 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
     }
     if (currentUser?.aadhaar) {
       setIdHash(`AADHAAR-${currentUser.aadhaar.replace(/\s/g, '')}`);
-      setOtpVerified(true);
     }
   }, [currentUser]);
 
@@ -209,7 +209,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
   const [aiResult, setAiResult] = useState(null);
 
   const stepsInfo = [
-    { num: 1, title: 'Identity', desc: 'Mobile OTP & ID' },
+    { num: 1, title: 'Identity', desc: 'Verified Contact' },
     { num: 2, title: 'Location', desc: 'Ward & GPS Pin' },
     { num: 3, title: 'Evidence', desc: 'Voice & Camera' },
     { num: 4, title: 'Submit', desc: 'Verify & Lodge' },
@@ -345,6 +345,9 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
       formData.append('user_email', userEmail || 'citizen.indore@gmail.com');
       formData.append('citizen_name', citizenName || 'Indore Citizen');
       formData.append('citizen_phone', phone || '9826012345');
+      if (alternateContact) {
+        formData.append('alternate_contact', alternateContact);
+      }
       formData.append('citizen_id_hash', idHash || 'VOTER-IND-4821');
       formData.append('landmark', landmark || getWardNameStr());
       if (rawPhotoFile) {
@@ -395,6 +398,7 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
         lng: parseFloat(lng) || 75.908045,
         citizen_name: citizenName || 'Indore Citizen',
         citizen_phone: `+91 ${phone || '9826012345'}`,
+        alternate_contact: alternateContact ? `+91 ${alternateContact}` : null,
         citizen_id_hash: idHash || 'VOTER-IND-4821',
         landmark: landmark || 'Mayur Nagar, Musakhedi',
         photo_url: photoPreview || 'https://images.unsplash.com/photo-1541888946425-d0fbb186a5b7?auto=format&fit=crop&w=800&q=80',
@@ -511,106 +515,114 @@ export default function CitizenPortal({ activeSubTab, onComplaintCreated, curren
         </div>
       </div>
 
-      {/* STEP 1: CITIZEN IDENTITY & MOBILE OTP VERIFICATION */}
+      {/* STEP 1: CITIZEN IDENTITY & CONTACT DETAILS */}
       {step === 1 && (
         <div className="bg-white border border-stone-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm animate-fade-in">
-          <div className="flex items-center space-x-3 pb-4 border-b border-stone-100">
-            <div className="w-10 h-10 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
-              <UserCheck className="w-5 h-5" />
+          <div className="flex items-center justify-between pb-4 border-b border-stone-100 flex-wrap gap-2">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 font-bold">
+                <UserCheck className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-stone-900">Step 1 of 4: Citizen Identity & Contact Details</h3>
+                <p className="text-xs text-stone-500 font-semibold">Registered Account: <span className="font-bold text-stone-900">{userEmail}</span></p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-base font-bold text-stone-900">Step 1 of 4: Citizen Identity & Mobile Verification</h3>
-              <p className="text-xs text-stone-500 font-semibold">Registered to: <span className="font-bold text-stone-900">{userEmail}</span></p>
-            </div>
+            <span className="bg-emerald-50 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full border border-emerald-200 flex items-center gap-1.5 shadow-2xs">
+              <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+              <span>DPI Verified Citizen</span>
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Full Name */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-stone-700">Full Name (जैसा पहचान पत्र में है):</label>
+              <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5 text-orange-600" />
+                <span>Full Name (पहचान पत्र अनुसार):</span>
+              </label>
               <input
                 type="text"
                 value={citizenName}
                 onChange={(e) => setCitizenName(e.target.value)}
                 placeholder="Enter Full Name"
-                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500 focus:bg-white transition-all"
               />
             </div>
 
+            {/* Government ID */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-stone-700">Government ID / Voter ID Hash:</label>
+              <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                <Shield className="w-3.5 h-3.5 text-orange-600" />
+                <span>Government ID / Aadhaar Hash:</span>
+              </label>
               <input
                 type="text"
                 value={idHash}
                 onChange={(e) => setIdHash(e.target.value)}
-                placeholder="e.g. VOTER-IND-4821"
-                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                placeholder="e.g. AADHAAR-1234-5678-9662"
+                className="w-full bg-stone-50 border border-stone-300 rounded-xl px-4 py-3 sm:py-2.5 text-sm sm:text-xs font-mono font-bold text-stone-900 focus:outline-none focus:border-orange-500 focus:bg-white transition-all tracking-wide"
               />
             </div>
-          </div>
 
-          {/* Mobile OTP Box */}
-          <div className="bg-stone-50 border border-stone-200 rounded-2xl p-4 sm:p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
-                <Smartphone className="w-4 h-4 text-orange-600" /> Mobile Number & SMS OTP
-              </span>
-              {otpVerified && (
-                <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" /> Verified ✓
+            {/* Registered Mobile Number (Pre-filled from login, verified) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                  <Smartphone className="w-3.5 h-3.5 text-orange-600" />
+                  <span>Registered Mobile Number:</span>
+                </label>
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                  <CheckCircle className="w-3 h-3 text-emerald-600" /> Verified on Login
                 </span>
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <span className="absolute left-3.5 top-3 sm:top-2.5 text-xs font-bold text-stone-400">+91</span>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3.5 top-3 sm:top-2.5 text-xs font-bold text-stone-400 select-none">+91</span>
                 <input
                   type="tel"
                   inputMode="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Enter 10-digit mobile number"
-                  className="w-full pl-12 pr-4 py-3 sm:py-2.5 bg-white border border-stone-300 rounded-xl text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
+                  className="w-full pl-12 pr-4 py-3 sm:py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm sm:text-xs font-mono font-bold text-stone-900 focus:outline-none focus:border-orange-500 focus:bg-white transition-all tracking-wider"
                 />
               </div>
+              <p className="text-[10px] text-stone-400">Pre-filled from your verified Google & DPI account for official SMS/WhatsApp alerts.</p>
+            </div>
 
-              {!otpSent ? (
-                <button
-                  onClick={handleSendOtp}
-                  className="bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs py-3 sm:py-2.5 px-5 rounded-xl transition-all shadow-sm shrink-0 cursor-pointer"
-                >
-                  Send Verification OTP
-                </button>
-              ) : (
-                <div className="flex items-center space-x-2 flex-1">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="Enter OTP (1234)"
-                    className="w-full px-3 py-3 sm:py-2.5 bg-white border border-stone-300 rounded-xl text-sm sm:text-xs font-bold text-stone-900 focus:outline-none focus:border-orange-500"
-                  />
-                  <button
-                    onClick={handleVerifyOtp}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs py-3 sm:py-2.5 px-4 rounded-xl transition-all shadow-sm shrink-0 cursor-pointer"
-                  >
-                    Verify
-                  </button>
-                </div>
-              )}
+            {/* Optional Additional Detail: Alternate Contact / WhatsApp */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-stone-500" />
+                  <span>Alternate Contact / WhatsApp:</span>
+                </label>
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider bg-stone-100 px-2 py-0.5 rounded">
+                  Optional
+                </span>
+              </div>
+              <div className="relative">
+                <span className="absolute left-3.5 top-3 sm:top-2.5 text-xs font-bold text-stone-400 select-none">+91</span>
+                <input
+                  type="tel"
+                  inputMode="tel"
+                  value={alternateContact}
+                  onChange={(e) => setAlternateContact(e.target.value)}
+                  placeholder="Secondary phone or WhatsApp (Optional)"
+                  className="w-full pl-12 pr-4 py-3 sm:py-2.5 bg-stone-50 border border-stone-300 rounded-xl text-sm sm:text-xs font-mono font-medium text-stone-900 focus:outline-none focus:border-orange-500 focus:bg-white transition-all tracking-wider"
+                />
+              </div>
+              <p className="text-[10px] text-stone-400">Optional secondary contact for municipal engineers if primary is unreachable.</p>
             </div>
           </div>
 
+          {/* Action Button */}
           <button
-            onClick={() => {
-              setOtpVerified(true);
-              setStep(2);
-            }}
-            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm py-4 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer"
+            type="button"
+            onClick={() => setStep(2)}
+            className="w-full bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-sm py-3.5 sm:py-4 rounded-2xl shadow-md shadow-orange-600/20 flex items-center justify-center space-x-2 transition-all cursor-pointer hover:shadow-lg active:scale-[0.99]"
           >
-            <span>Verify & Proceed to Step 2: Ward & GPS</span>
+            <span>Proceed to Step 2: Ward & GPS Pin</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
