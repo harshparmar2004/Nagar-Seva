@@ -188,25 +188,56 @@ export default function CitizenSettings({ currentUser }) {
       {/* VERIFIED CIVIC PROFILE CARD */}
       <div className="bg-white border border-stone-200/90 rounded-3xl p-6 sm:p-7 shadow-sm space-y-6 relative overflow-hidden">
         
-        {/* Top Tri-Color National & Civic Accent Line */}
+        {/* Top Civic National Accent Line */}
         <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-orange-500 via-amber-500 to-emerald-500" />
 
-        {/* Top Header Row */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-100">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-xs font-extrabold shadow-2xs">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span>VERIFIED CIVIC IDENTITY</span>
-            </span>
-            <span className="font-mono text-xs font-black text-stone-600 bg-stone-100 px-2.5 py-0.5 rounded-lg border border-stone-200 shadow-2xs">
-              #IND-{currentUser?.aadhaar ? currentUser.aadhaar.slice(-4) : '8855'}
-            </span>
-            <span className="text-xs text-stone-400 font-medium hidden md:inline">
-              • Digital Public Infrastructure (DPI)
-            </span>
+        {/* 1. TOP HEADER ROW: Name, Avatar, Email & Account Status */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 pb-6 border-b border-stone-100">
+          
+          {/* Avatar + Name + Email */}
+          <div className="flex items-center gap-4 sm:gap-5 min-w-0">
+            <div className="relative shrink-0">
+              <img
+                src={currentUser?.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120'}
+                alt="Citizen Avatar"
+                className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-white shadow-md ring-4 ring-orange-500/15"
+              />
+              <span className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-xs" title="Verified Resident">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+              </span>
+            </div>
+
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2 className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight truncate">
+                  {currentUser?.displayName || 'Citizen'}
+                </h2>
+                <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-md border ${
+                  currentUser?.role === 'SUPER_ADMIN'
+                    ? 'bg-stone-900 text-white border-stone-900'
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                }`}>
+                  {currentUser?.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : 'CITIZEN'}
+                </span>
+                <span className="text-[10px] font-mono font-bold text-stone-500 bg-stone-100 px-2 py-0.5 rounded border border-stone-200">
+                  #IND-{currentUser?.aadhaar ? currentUser.aadhaar.slice(-4) : '8855'}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-stone-600 truncate">
+                <Mail className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                <span className="truncate font-medium">{currentUser?.email || 'citizen@indore.gov.in'}</span>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs text-stone-600 pt-0.5">
+                <Building2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
+                <span className="truncate font-medium">Indore Municipal Corporation (IMC)</span>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* Right Status Badges */}
+          <div className="flex flex-wrap md:flex-col md:items-end items-center gap-2 shrink-0">
             <span className="text-xs font-bold px-3 py-1 rounded-xl bg-orange-50 text-orange-900 border border-orange-200/80 flex items-center gap-1.5 shadow-2xs">
               <Award className="w-3.5 h-3.5 text-orange-600" />
               <span>Indore Citizen</span>
@@ -216,155 +247,97 @@ export default function CitizenSettings({ currentUser }) {
               <span>Google Authenticated</span>
             </span>
           </div>
+
         </div>
 
-        {/* Main Content: Systematic 2-Panel Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+        {/* 2. THREE STRUCTURED DATA TILES: WARD NUMBER, GOVERNMENT ID, REGISTERED MOBILE */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           
-          {/* Left Panel: Citizen Identity Card (5 cols) */}
-          <div className="lg:col-span-5 bg-gradient-to-br from-[#FAF7F2] to-stone-50 border border-[#EBE4D8] rounded-2xl p-5 flex flex-col justify-between space-y-4 shadow-2xs">
-            <div className="flex items-start gap-4">
-              <div className="relative shrink-0">
-                <img
-                  src={currentUser?.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120'}
-                  alt="Citizen Profile"
-                  className="w-18 h-18 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-white shadow-md ring-4 ring-orange-500/15"
-                />
-                <span className="absolute -bottom-1 -right-1 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center border-2 border-white shadow-xs" title="Biometrically Verified Identity">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+          {/* Card 1: Ward Number */}
+          <div className="bg-stone-50/80 hover:bg-white border border-stone-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-all shadow-2xs hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+                  <MapPin className="w-4 h-4" />
+                </div>
+                <span className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">
+                  Municipal Ward
                 </span>
               </div>
-
-              <div className="min-w-0 space-y-1 pt-0.5">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight truncate">
-                    {currentUser?.displayName || 'Citizen'}
-                  </h2>
-                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md border ${
-                    currentUser?.role === 'SUPER_ADMIN'
-                      ? 'bg-stone-900 text-white border-stone-900'
-                      : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                  }`}>
-                    {currentUser?.role === 'SUPER_ADMIN' ? 'SUPER ADMIN' : 'CITIZEN'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs text-stone-600 truncate">
-                  <Mail className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-                  <span className="truncate font-medium">{currentUser?.email || 'citizen@indore.gov.in'}</span>
-                </div>
-
-                <div className="flex items-center gap-1.5 text-xs text-stone-700 font-semibold pt-0.5">
-                  <Building2 className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                  <span className="truncate">Indore Municipal Corporation</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Live Ward Status Pill */}
-            <div className="pt-3 border-t border-stone-200/70 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 text-stone-600">
-                <MapPin className="w-3.5 h-3.5 text-orange-600 shrink-0" />
-                <span className="font-semibold truncate">
-                  {detectedWard?.name ? detectedWard.name.split('—')[0].trim() : 'Ward 52 • Musakhedi Sector'}
-                </span>
-              </div>
-              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/70 border border-emerald-200 px-2 py-0.5 rounded-md shrink-0">
-                ● Active Status
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-orange-100 text-orange-800 border border-orange-200">
+                GPS Live
               </span>
             </div>
+
+            <div>
+              <p className="text-base sm:text-lg font-black text-stone-900 truncate">
+                {detectedWard?.name ? detectedWard.name.split('—')[0].trim() : 'Ward 52'}
+              </p>
+              <p className="text-xs text-stone-500 font-medium truncate mt-0.5">
+                {detectedWard?.name ? (detectedWard.name.split('—')[1]?.trim() || 'Musakhedi Sector') : 'Musakhedi & Mayur Nagar (Zone 14)'}
+              </p>
+            </div>
           </div>
 
-          {/* Right Panel: Systematic Verified DPI Credentials Grid (7 cols) */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            
-            {/* 1. Government Aadhaar ID Tile */}
-            <div className="bg-stone-50 hover:bg-white border border-stone-200/90 rounded-2xl p-4 transition-all duration-200 space-y-2.5 shadow-2xs hover:shadow-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
-                    <CreditCard className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">Government ID</span>
+          {/* Card 2: Government ID (Aadhaar) */}
+          <div className="bg-stone-50/80 hover:bg-white border border-stone-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-all shadow-2xs hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                  <CreditCard className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Linked
+                <span className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">
+                  Government ID
                 </span>
               </div>
-              <div>
-                <span className="font-mono font-black text-sm text-stone-900 tracking-wider block">
-                  {currentUser?.aadhaar && currentUser.aadhaar !== 'GOVT-ADMIN-01'
-                    ? currentUser.aadhaar.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3')
-                    : '1234 5678 8855'}
-                </span>
-                <span className="text-[10px] text-stone-400 font-medium mt-0.5 block">
-                  UIDAI Verified Biometric Hash
-                </span>
-              </div>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Linked
+              </span>
             </div>
 
-            {/* 2. Registered Mobile Contact Tile */}
-            <div className="bg-stone-50 hover:bg-white border border-stone-200/90 rounded-2xl p-4 transition-all duration-200 space-y-2.5 shadow-2xs hover:shadow-xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                    <Phone className="w-3.5 h-3.5" />
-                  </div>
-                  <span className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">Registered Mobile</span>
+            <div>
+              <p className="font-mono text-base sm:text-lg font-black text-stone-900 tracking-wider truncate">
+                {currentUser?.aadhaar && currentUser.aadhaar !== 'GOVT-ADMIN-01'
+                  ? currentUser.aadhaar.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3')
+                  : '1234 5678 8855'}
+              </p>
+              <p className="text-xs text-stone-500 font-medium mt-0.5">
+                UIDAI Biometric Aadhaar Hash
+              </p>
+            </div>
+          </div>
+
+          {/* Card 3: Registered Mobile Number */}
+          <div className="bg-stone-50/80 hover:bg-white border border-stone-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-all shadow-2xs hover:shadow-xs">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+                  <Phone className="w-4 h-4" />
                 </div>
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Active
+                <span className="text-[10px] font-extrabold text-stone-500 uppercase tracking-wider">
+                  Registered Mobile
                 </span>
               </div>
-              <div>
-                <span className="font-mono font-black text-sm text-stone-900 tracking-wider block">
-                  {currentUser?.phone
-                    ? `+91 ${currentUser.phone.replace(/(\d{5})(\d{5})/, '$1 $2')}`
-                    : '+91 78694 95690'}
-                </span>
-                <span className="text-[10px] text-stone-400 font-medium mt-0.5 block">
-                  OTP & WhatsApp DPI Bot Enabled
-                </span>
-              </div>
+              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Active
+              </span>
             </div>
 
-            {/* 3. Civic Trust Level & AI Priority Triage (Spans both cols on sm) */}
-            <div className="sm:col-span-2 bg-gradient-to-r from-emerald-50/70 via-stone-50 to-teal-50/50 border border-emerald-200/90 rounded-2xl p-4 space-y-2.5 shadow-2xs">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
-                    <ShieldCheck className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] font-extrabold text-emerald-900 uppercase tracking-wider block">
-                      Civic Trust Level & DPI Priority
-                    </span>
-                    <span className="text-xs font-black text-emerald-950">
-                      Tier 1: 100% Verified Citizen
-                    </span>
-                  </div>
-                </div>
-                <span className="text-[10px] font-extrabold bg-emerald-200 text-emerald-900 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                  AI Fast-Track
-                </span>
-              </div>
-
-              <div className="space-y-1">
-                <div className="w-full bg-emerald-200/70 h-2 rounded-full overflow-hidden">
-                  <div className="bg-emerald-600 h-full rounded-full w-full"></div>
-                </div>
-                <div className="flex items-center justify-between text-[10px] text-emerald-800 font-bold pt-0.5">
-                  <span>Priority grievance routing & automated municipal triage enabled</span>
-                  <span className="font-mono font-black text-emerald-900">Score: 100/100</span>
-                </div>
-              </div>
+            <div>
+              <p className="font-mono text-base sm:text-lg font-black text-stone-900 tracking-wider truncate">
+                {currentUser?.phone
+                  ? `+91 ${currentUser.phone.replace(/(\d{5})(\d{5})/, '$1 $2')}`
+                  : '+91 78694 95690'}
+              </p>
+              <p className="text-xs text-stone-500 font-medium mt-0.5">
+                SMS Alerts & WhatsApp Updates
+              </p>
             </div>
-
           </div>
 
         </div>
 
-        {/* Bottom Digital Governance Ribbon */}
+        {/* 3. BOTTOM DIGITAL GOVERNANCE & SECURITY RIBBON */}
         <div className="pt-4 border-t border-stone-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
           <div className="bg-stone-50/80 border border-stone-200/70 rounded-xl p-2.5 flex items-center gap-2 text-stone-700 shadow-2xs">
             <Shield className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -376,11 +349,11 @@ export default function CitizenSettings({ currentUser }) {
           </div>
           <div className="bg-stone-50/80 border border-stone-200/70 rounded-xl p-2.5 flex items-center gap-2 text-stone-700 shadow-2xs">
             <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
-            <span className="text-[11px] font-bold truncate">AI Fast-Track Eligible</span>
+            <span className="text-[11px] font-bold truncate">DPI Verified Identity</span>
           </div>
           <div className="bg-stone-50/80 border border-stone-200/70 rounded-xl p-2.5 flex items-center gap-2 text-stone-700 shadow-2xs">
             <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
-            <span className="text-[11px] font-bold truncate">Official IMC DPI Record</span>
+            <span className="text-[11px] font-bold truncate">Official IMC Record</span>
           </div>
         </div>
 
