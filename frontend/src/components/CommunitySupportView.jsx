@@ -48,8 +48,8 @@ function StarRating({ rating, onRate, size = 'md' }) {
 }
 
 export default function CommunitySupportView({ onOpenDPR }) {
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [projects, setProjects] = useState(FALLBACK_PROJECTS);
+  const [loading, setLoading] = useState(false);
   const [userRatings, setUserRatings] = useState(() => {
     try {
       const saved = localStorage.getItem('nagarmitra_project_ratings');
@@ -71,10 +71,9 @@ export default function CommunitySupportView({ onOpenDPR }) {
   useEffect(() => { fetchProjects(); }, []);
 
   const fetchProjects = async () => {
-    setLoading(true);
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
       const res = await fetch(API_BASE_URL + '/api/projects', { signal: controller.signal });
       clearTimeout(timeoutId);
 
@@ -82,7 +81,6 @@ export default function CommunitySupportView({ onOpenDPR }) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setProjects(data);
-          setLoading(false);
           return;
         }
       }
@@ -91,7 +89,6 @@ export default function CommunitySupportView({ onOpenDPR }) {
     }
     // Fallback to FALLBACK_PROJECTS
     setProjects(FALLBACK_PROJECTS);
-    setLoading(false);
   };
 
   const handleRate = (projectId, stars) => {

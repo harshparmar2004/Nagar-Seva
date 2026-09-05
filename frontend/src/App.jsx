@@ -130,7 +130,10 @@ export default function App() {
         )}
 
         {activeTab === 'citizen-scorecard' && (
-          <WardSanitationScorecardView />
+          <WardSanitationScorecardView
+            currentUser={currentUser}
+            isSuperAdmin={isSuperAdmin}
+          />
         )}
 
         {activeTab === 'citizen-settings' && (
