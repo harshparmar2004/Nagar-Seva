@@ -95,23 +95,23 @@ export default function SidebarLayout({
   }, []);
 
   const citizenNavItems = [
-    { id: 'citizen-voice', label: 'Submit Citizen Request', icon: Mic, badge: 'Lodge' },
-    { id: 'citizen-my-complaints', label: 'My Registered Complaints', icon: ListChecks, badge: 'My Tokens' },
-    { id: 'citizen-track', label: 'Track Any Token Status', icon: Search, badge: 'Track' },
-    { id: 'citizen-upvote', label: 'Community Project Support', icon: ThumbsUp, badge: 'Support' },
-    { id: 'citizen-scorecard', label: 'Ward Swachhata Scorecard', icon: Trophy, badge: 'Ward #1' },
-    { id: 'citizen-settings', label: 'Settings & Live Location', icon: Settings, badge: 'GPS/Mic' },
-    { id: 'citizen-emergency', label: '24/7 Red Alert Hotline', icon: AlertOctagon, isEmergency: true, badge: '181' },
+    { id: 'citizen-voice', label: 'Submit Citizen Request', icon: Mic },
+    { id: 'citizen-my-complaints', label: 'My Registered Complaints', icon: ListChecks },
+    { id: 'citizen-track', label: 'Track Any Token Status', icon: Search },
+    { id: 'citizen-upvote', label: 'Community Project Support', icon: ThumbsUp },
+    { id: 'citizen-scorecard', label: 'Ward Swachhata Scorecard', icon: Trophy },
+    { id: 'citizen-settings', label: 'Settings & Live Location', icon: Settings },
+    { id: 'citizen-emergency', label: '24/7 Red Alert Hotline', icon: AlertOctagon, isEmergency: true },
   ];
 
   const adminNavItems = [
-    { id: 'admin-gis', label: 'City GIS Map & Demand Overview', icon: MapPin, badge: 'GIS' },
-    { id: 'admin-heatmap', label: 'City Heatmap Analytics', icon: Flame, badge: 'Heatmap' },
-    { id: 'admin-clusters', label: 'Master Complaints Approval', icon: Layers, badge: 'Approve' },
-    { id: 'admin-analytics', label: 'Data Fusion Analytics', icon: TrendingUp, badge: 'Analytics' },
-    { id: 'admin-dpr', label: 'AI DPR & Priority Rankings', icon: Sparkles, badge: 'AI DPR' },
-    { id: 'admin-roles', label: 'Super Admin Gmail Roles', icon: Shield, badge: 'RBAC' },
-    { id: 'admin-emergency', label: 'District 181 Control Room', icon: ShieldAlert, badge: '181 Hotline', isEmergency: true },
+    { id: 'admin-gis', label: 'City GIS Map & Demand Overview', icon: MapPin },
+    { id: 'admin-heatmap', label: 'City Heatmap Analytics', icon: Flame },
+    { id: 'admin-clusters', label: 'Master Complaints Approval', icon: Layers },
+    { id: 'admin-analytics', label: 'Data Fusion Analytics', icon: TrendingUp },
+    { id: 'admin-dpr', label: 'AI DPR & Priority Rankings', icon: Sparkles },
+    { id: 'admin-roles', label: 'Super Admin Gmail Roles', icon: Shield },
+    { id: 'admin-emergency', label: 'District 181 Control Room', icon: ShieldAlert, isEmergency: true },
   ];
 
   return (
@@ -165,28 +165,28 @@ export default function SidebarLayout({
             
             {/* PORTAL MODE BANNER */}
             {isSuperAdmin ? (
-              <div className="p-3 rounded-2xl border bg-stone-900 border-stone-800 text-white text-xs flex items-center justify-between shadow-xs">
+              <div className="p-3 rounded-xl border bg-stone-900 border-stone-800 text-white text-xs flex items-center justify-between shadow-2xs">
                 <div className="flex items-center space-x-2.5">
-                  <Shield className="w-4 h-4 text-orange-400" />
+                  <Shield className="w-4 h-4 text-orange-400 shrink-0" />
                   <div>
                     <p className="font-extrabold text-[11px] uppercase tracking-wider">Super Admin Suite</p>
                     <p className="text-[10px] text-stone-400">Executive Command Center</p>
                   </div>
                 </div>
-                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-orange-600 text-white">
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-orange-600 text-white">
                   ADMIN
                 </span>
               </div>
             ) : (
-              <div className="p-3 rounded-2xl border bg-orange-50/70 border-orange-200 text-orange-950 text-xs flex items-center justify-between shadow-xs">
+              <div className="p-3 rounded-xl border bg-orange-50/70 border-orange-200 text-orange-950 text-xs flex items-center justify-between shadow-2xs">
                 <div className="flex items-center space-x-2.5">
-                  <User className="w-4 h-4 text-orange-600" />
+                  <User className="w-4 h-4 text-orange-600 shrink-0" />
                   <div>
                     <p className="font-extrabold text-[11px] uppercase tracking-wider">Citizen Services</p>
                     <p className="text-[10px] text-orange-700">Public Grievances & Ward Tracking</p>
                   </div>
                 </div>
-                <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                <span className="text-[9px] font-black px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200">
                   CITIZEN
                 </span>
               </div>
@@ -194,117 +194,93 @@ export default function SidebarLayout({
 
             {/* IF CITIZEN: RENDER ONLY CITIZEN NAVIGATION */}
             {!isSuperAdmin && (
-              <div className="space-y-1.5">
-                <div className="px-2 text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
-                  Citizen Services
-                </div>
-                <div className="space-y-1">
-                  {citizenNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          setIsMobileOpen(false);
-                        }}
-                        className={`
-                          w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer
-                          ${item.isEmergency
-                            ? isActive
-                              ? 'bg-red-600 text-white shadow-md shadow-red-600/30 font-black'
-                              : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-                            : isActive
-                              ? 'bg-orange-50 text-orange-700 border border-orange-200 shadow-sm font-black'
-                              : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                          }
-                        `}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Icon className={`w-4 h-4 ${item.isEmergency ? (isActive ? 'text-white animate-pulse' : 'text-red-600 animate-pulse') : (isActive ? 'text-orange-600' : 'text-stone-400')}`} />
-                          <span>{item.label}</span>
-                        </div>
-                        <div className="flex items-center space-x-1.5">
-                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
-                            item.isEmergency
-                              ? 'bg-red-600 text-white'
-                              : (isActive ? 'bg-orange-200 text-orange-800' : 'bg-stone-100 text-stone-500')
-                          }`}>
-                            {item.badge}
-                          </span>
-                          {isActive && <ChevronRight className="w-3.5 h-3.5" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+              <div className="space-y-1">
+                {citizenNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsMobileOpen(false);
+                      }}
+                      className={`
+                        w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-left
+                        ${item.isEmergency
+                          ? isActive
+                            ? 'bg-red-600 text-white shadow-xs font-black'
+                            : 'bg-red-50 text-red-700 border border-red-200/80 hover:bg-red-100 font-bold'
+                          : isActive
+                            ? 'bg-orange-50 text-orange-950 border border-orange-200/90 shadow-2xs font-black'
+                            : 'text-stone-700 hover:bg-stone-100/80 hover:text-stone-900'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center space-x-2.5 min-w-0 flex-1">
+                        <Icon className={`w-4 h-4 shrink-0 ${
+                          item.isEmergency
+                            ? (isActive ? 'text-white animate-pulse' : 'text-red-600 animate-pulse')
+                            : (isActive ? 'text-orange-600' : 'text-stone-400')
+                        }`} />
+                        <span className="truncate whitespace-nowrap">{item.label}</span>
+                      </div>
+                      {isActive && (
+                        <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${item.isEmergency ? 'text-white' : 'text-orange-600'}`} />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
             {/* IF SUPER ADMIN: RENDER ONLY SUPER ADMIN NAVIGATION */}
             {isSuperAdmin && (
-              <div className="space-y-1.5">
-                <div className="px-2 flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold text-stone-400 uppercase tracking-wider">
-                    Administrative Intelligence
-                  </span>
-                  <span className="text-[9px] bg-emerald-50 text-emerald-800 font-bold px-1.5 py-0.5 rounded flex items-center gap-1 border border-emerald-200">
-                    <Shield className="w-2.5 h-2.5 text-emerald-600" /> Authorized
-                  </span>
-                </div>
+              <div className="space-y-1">
+                {adminNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
 
-                <div className="space-y-1">
-                  {adminNavItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = activeTab === item.id;
-
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          setIsMobileOpen(false);
-                        }}
-                        className={`
-                          w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all cursor-pointer
-                          ${item.isEmergency
-                            ? isActive
-                              ? 'bg-red-600 text-white shadow-md'
-                              : 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100'
-                            : isActive
-                              ? 'bg-stone-900 text-white shadow-sm font-black'
-                              : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                          }
-                        `}
-                      >
-                        <div className="flex items-center space-x-3">
-                          <Icon className={`w-4 h-4 ${item.isEmergency ? 'text-red-600' : (isActive ? 'text-orange-400' : 'text-stone-400')}`} />
-                          <span>{item.label}</span>
-                        </div>
-                        <div className="flex items-center space-x-1.5">
-                          <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded ${
-                            item.isEmergency
-                              ? 'bg-red-600 text-white'
-                              : (isActive ? 'bg-orange-500 text-white' : 'bg-stone-100 text-stone-500')
-                          }`}>
-                            {item.badge}
-                          </span>
-                          {isActive && <ChevronRight className="w-3.5 h-3.5" />}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsMobileOpen(false);
+                      }}
+                      className={`
+                        w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer text-left
+                        ${item.isEmergency
+                          ? isActive
+                            ? 'bg-red-600 text-white shadow-xs font-black'
+                            : 'bg-red-50 text-red-700 border border-red-200/80 hover:bg-red-100 font-bold'
+                          : isActive
+                            ? 'bg-stone-900 text-white shadow-2xs font-black'
+                            : 'text-stone-700 hover:bg-stone-100/80 hover:text-stone-900'
+                        }
+                      `}
+                    >
+                      <div className="flex items-center space-x-2.5 min-w-0 flex-1">
+                        <Icon className={`w-4 h-4 shrink-0 ${
+                          item.isEmergency
+                            ? (isActive ? 'text-white animate-pulse' : 'text-red-600 animate-pulse')
+                            : (isActive ? 'text-orange-400' : 'text-stone-400')
+                        }`} />
+                        <span className="truncate whitespace-nowrap">{item.label}</span>
+                      </div>
+                      {isActive && <ChevronRight className="w-3.5 h-3.5 shrink-0 text-orange-400" />}
+                    </button>
+                  );
+                })}
               </div>
             )}
 
           </div>
 
           {/* SIDEBAR FOOTER: USER AUTHENTICATION & LOGOUT HUB */}
-          <div className="space-y-2.5 pt-3 border-t border-stone-200/90">
+          <div className="space-y-2 pt-3 border-t border-stone-200/90">
             {currentUser ? (
-              <div className="bg-stone-50/90 hover:bg-stone-50 border border-stone-200/90 rounded-2xl p-2.5 space-y-2.5 shadow-2xs transition-all">
+              <div className="bg-stone-50/90 hover:bg-stone-50 border border-stone-200/90 rounded-xl p-2.5 space-y-2 shadow-2xs transition-all">
                 {/* User Identity Row (Avatar + Name + Citizen Badge) */}
                 <div className="flex items-center justify-between gap-2">
                   <div
@@ -319,7 +295,7 @@ export default function SidebarLayout({
                       <img
                         src={currentUser.photoURL || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120'}
                         alt="User Avatar"
-                        className="w-9 h-9 rounded-xl object-cover border border-stone-200 shadow-2xs group-hover:ring-2 group-hover:ring-orange-500/30 transition-all"
+                        className="w-9 h-9 rounded-lg object-cover border border-stone-200 shadow-2xs group-hover:ring-2 group-hover:ring-orange-500/30 transition-all"
                       />
                       <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full" title="Active Online"></span>
                     </div>
@@ -343,7 +319,7 @@ export default function SidebarLayout({
                       setActiveTab(isSuperAdmin ? 'admin-roles' : 'citizen-settings');
                       setIsMobileOpen(false);
                     }}
-                    className="w-7 h-7 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors cursor-pointer shrink-0"
+                    className="w-7 h-7 rounded-md flex items-center justify-center text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 transition-colors cursor-pointer shrink-0"
                     title="Civic Settings"
                   >
                     <Settings className="w-3.5 h-3.5" />
@@ -354,7 +330,7 @@ export default function SidebarLayout({
                 <button
                   type="button"
                   onClick={() => setShowLogoutConfirm(true)}
-                  className="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 transition-all cursor-pointer shadow-2xs group"
+                  className="w-full flex items-center justify-center space-x-2 px-3 py-2 rounded-lg text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 border border-red-200/80 transition-all cursor-pointer shadow-2xs group"
                   title="Log Out of NagarSeva"
                 >
                   <LogOut className="w-3.5 h-3.5 text-red-500 group-hover:scale-110 transition-transform" />
@@ -365,14 +341,14 @@ export default function SidebarLayout({
               <button
                 type="button"
                 onClick={onLogout}
-                className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 rounded-2xl text-xs font-bold text-stone-900 hover:text-white bg-stone-100 hover:bg-stone-900 border border-stone-200 transition-all cursor-pointer shadow-2xs"
+                className="w-full flex items-center justify-center space-x-2 px-3 py-2.5 rounded-xl text-xs font-bold text-stone-900 hover:text-white bg-stone-100 hover:bg-stone-900 border border-stone-200 transition-all cursor-pointer shadow-2xs"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Log In to NagarSeva</span>
               </button>
             )}
 
-            <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-2.5 text-center">
+            <div className="bg-stone-50 border border-stone-200/80 rounded-xl p-2.5 text-center">
               <p className="text-[11px] font-extrabold text-stone-800">
                 {isSuperAdmin ? 'NagarSeva Administrative Suite' : 'Swachh Survekshan #1 Indore'}
               </p>
